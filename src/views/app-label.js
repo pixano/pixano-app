@@ -61,6 +61,7 @@ class AppLabel extends AppExplore {
         this.jobId = j.data_id;
         this.annotatorName = this.jobObjective === 'to_validate' ? `(${j.annotator})` : '';
         mod.onActivate();
+        this.dataPath = this.path;
       }).catch((err) => {
         this.errorPopup(err);
         mod.onActivate();
@@ -113,6 +114,7 @@ class AppLabel extends AppExplore {
           this.el.newData();
           this.jobId = j.data_id;
           this.annotatorName = this.jobObjective === 'to_validate' ? `(${j.annotator})` : '';
+          this.dataPath = this.path;
         }).catch((err) => {
           this.errorPopup(err);
           this.el.newData();
@@ -124,6 +126,7 @@ class AppLabel extends AppExplore {
         this.jobId = j.data_id;
         this.annotatorName = this.jobObjective === 'to_validate' ? `(${j.annotator})` : '';
         this.el.newData();
+        this.dataPath = this.path;
       }).catch((err) => {
         this.errorPopup(err);
         this.el.newData();
@@ -159,7 +162,8 @@ class AppLabel extends AppExplore {
                        icon="keyboard_backspace"
                        title="Back"
                        @click=${() => this.goHome()}></mwc-icon-button>
-      <h1>${this.pluginName} ${this.jobId} ${this.annotatorName}</h1>
+      <h1>${this.pluginName} ${this.annotatorName}</h1>
+      <p style="user-select: text;">${this.dataPath}</p>
       <mwc-icon-button icon="undo"
                        title="undo"
                        @click=${() => this.undo()}></mwc-icon-button>

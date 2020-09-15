@@ -19,7 +19,7 @@ const fs = require('fs');
 const arg = require('arg');
 const pkg = require('../package');
 
-const port = process.env.PORT || 3000;
+let port = process.env.PORT || 3000;
 
 const getNetworkAddress = () => {
 	for (const name of Object.keys(interfaces)) {
@@ -37,6 +37,7 @@ const getHelp = () => chalk`
   {bold USAGE}
       {bold $} {cyan pixano} --help
       {bold $} {cyan pixano} --version
+      {bold $} {cyan pixano} --port 3001
       {bold $} {cyan pixano} workspace_path
   {bold OPTIONS}
       --help                              Shows this help message
@@ -44,17 +45,17 @@ const getHelp = () => chalk`
       -d, --debug                         Show debugging information
 `;
 
-
-
 let args = null;
 try {
   args = arg({
     '--help': Boolean,
     '--version': Boolean,
     '--debug': Boolean,
+    '--port': Number,
     '-h': '--help',
     '-v': '--version',
     '-d': '--debug',
+    '-p': '--port'
   });
 } catch (err) {
   console.error(err.message);
@@ -71,10 +72,14 @@ if (args['--help']) {
   return;
 }
 
-if (args._.length > 1) {
-  console.error('Please provide one workspace path argument at maximum');
-  process.exit(1);
+if (args['--port']) {
+  port = args['--port'];
 }
+
+// if (args._.length > 1) {
+//   console.error('Please provide one workspace path argument at maximum');
+//   process.exit(1);
+// }
 
 const entry = args._.length > 0 ? path.resolve(args._[0]) : '/data/';
 
@@ -131,7 +136,7 @@ initLevel(entry).then(() => {
 				padding: 1,
 				borderColor: 'green',
 				margin: 1
-			}));
+      }));
 		}
   });
 

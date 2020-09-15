@@ -15,7 +15,28 @@ RUN npm i abbrev && npm i osenv && npm i npmlog \
     && npm i end-of-stream \
     && npm i graceful-fs \
     && npm i camelcase \
-    && npm i emoji-regex
+    && npm i emoji-regex \
+    && npm i archiver \
+    && npm i arg \
+    && npm i bcrypt \
+    && npm i boxen \
+    && npm i chalk \
+    && npm i cli-progress \
+    && npm i cookie-parser \
+    && npm i express \
+    && npm i fs \
+    && npm i glob \
+    && npm i google-protobuf \
+    && npm i grpc \
+    && npm i jsonwebtoken \
+    && npm i level \
+    && npm i moment \
+    && npm i normalize-path \
+    && npm i object-sizeof \
+    && npm i path \
+    && npm i save \
+    && npm i short-uuid \
+    && npm i tmp
 
 EXPOSE 3000
 
@@ -23,11 +44,11 @@ COPY build build
 
 COPY server server
 
+COPY .logo-ascii .logo-ascii
+
 COPY package.json package.json
 
-
-RUN npm install --only=dev
-
-ENTRYPOINT ["node", "server/server.js"]
+# ENTRYPOINT ["node", "server/server.js"]
+ENTRYPOINT cat .logo-ascii && node server/server.js
 
 CMD []

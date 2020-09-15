@@ -10,7 +10,7 @@ import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
 import { commonJson } from '../helpers/utils';
-import { store } from '../store';
+import { store, getStoreState } from '../store';
 import { createAnnotation,
          updateAnnotation,
          deleteAnnotation } from '../actions/annotations';
@@ -44,7 +44,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     const value =  this.attributePicker.value;
     this.selectedIds.forEach((id) => {
       const label = {...this.annotations.find((l) => l.id === id)};
-      const shape = [...this.getView().shapes].find((s) => s.id === id);
+      const shape = [...this.element.shapes].find((s) => s.id === id);
       label.options = {};
       Object.keys(value).forEach((key) => {
         label[key] = JSON.parse(JSON.stringify(value[key]));
@@ -56,12 +56,12 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   }
 
   refresh() {
-    if (!this.getView()) {
+    if (!this.element) {
       return;
     }
     // need to make immutable variable as not to change directly
     // the redux store
-    this.getView().shapes = JSON.parse(JSON.stringify(this.annotations.map((l) => {
+    this.element.shapes = JSON.parse(JSON.stringify(this.annotations.map((l) => {
       return {...l, color: this._colorFor(l.category)}
     })));
   }
@@ -134,7 +134,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    */
   onUpdate(evt) {
     const updatedIds = evt.detail;
-    const new_shapes = [...this.getView().shapes].filter((s) => updatedIds.includes(s.id));
+    const new_shapes = [...this.element.shapes].filter((s) => updatedIds.includes(s.id));
     new_shapes.forEach((s) => {
       const s2 = JSON.parse(JSON.stringify(s));
       delete s2.color;

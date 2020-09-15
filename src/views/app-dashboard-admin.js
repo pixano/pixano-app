@@ -473,7 +473,7 @@ class AppDashboardAdmin extends TemplatePage {
           <mwc-icon class="status ${v[2]}">${v[1]}</mwc-icon>
           ${v[0]}
         </p>
-        <div title=${item.path}><p class="path"><span>${item.data_id}</span></p></div>
+        <div title=${item.path}><p class="path"><span>${item.path}</span></p></div>
         <p>${item.annotator}</p>
         <p>${item.validator}</p>
         <p>${this.assignedMap.get(item.assigned.toString())}</p>
@@ -503,7 +503,7 @@ class AppDashboardAdmin extends TemplatePage {
         </mwc-select>
       </div>
       <div>
-        <mwc-textfield label="Id" icon="filter_list" @input=${(evt) => this.updateFilter('data_id', getValue(evt))}></mwc-textfield>
+        <mwc-textfield label="Path" icon="filter_list" @input=${(evt) => this.updateFilter('path', getValue(evt))}></mwc-textfield>
       </div>
       <div>
         <mwc-textfield label="annotator" icon="filter_list" @input=${(evt) => this.updateFilter('annotator', getValue(evt))}></mwc-textfield>

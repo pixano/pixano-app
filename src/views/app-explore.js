@@ -18,12 +18,14 @@ export class AppExplore extends TemplatePage {
     static get properties() {
       return {
         pluginName : { type: String },
+        dataPath: { type: String }
       };
     }
 
     constructor() {
       super();
       installRouter(this._locationChanged.bind(this));
+      this.dataPath = '';
     }
 
     /**
@@ -46,6 +48,7 @@ export class AppExplore extends TemplatePage {
       this.launchPlugin(this.pluginName).then((mod) => {
         store.dispatch(fetchResult(dataId)).then(() => {
           mod.onActivate();
+          this.dataPath = this.path;
         });
       });
     }
@@ -100,6 +103,7 @@ export class AppExplore extends TemplatePage {
         const nextDataId = appState.dataId;
         if (nextDataId !== currentDataId) {
           window.history.pushState({}, '', `/#explore/${appState.taskName}/${nextDataId}`);
+          this.dataPath = this.path;
         }        
       });
     }
@@ -151,15 +155,22 @@ export class AppExplore extends TemplatePage {
                                           supported by Chrome, Opera and Firefox */
         }
         #plugin-container {
-          height: calc(100% - 48px);
+          height: calc(100% - 50px);
         }
       `]
+    }
+
+    get path() {
+      const media = getStoreState('media');
+      const task = media.info.path.replace('//', '/');
+      return task;
     }
 
     get headerContent() {
       return html`
       <mwc-icon-button style="margin: 0;" icon="keyboard_backspace" @click=${() => this.goHome()}></mwc-icon-button>
       <h1>${this.pluginName}-explore</h1>
+      <p style="user-select: text;">${this.dataPath}</p>
       <mwc-icon-button icon="arrow_back"
                        @click=${() => this.goBackward()}
                        title="Previous"></mwc-icon-button>

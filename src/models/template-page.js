@@ -327,7 +327,7 @@ export default class TemplatePage extends LitElement {
         </div>
         ${this.body}        
       </div>
-      <mwc-dialog heading="Error dialog" id="dialog-error">
+      <mwc-dialog heading="Message dialog" id="dialog-error">
         <div id="error-message"></div>
         <mwc-button slot="primaryAction" dialogAction="close">Ok</mwc-button>
       </mwc-dialog>

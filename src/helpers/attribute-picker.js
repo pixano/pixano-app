@@ -119,7 +119,9 @@ export class AttributePicker extends LitElement {
             showDetail: { type: Boolean },
             shortcuts: { type: Array },
             schema: { type: Object },
-            value: { type: Object }
+            value: { type: Object },
+            numDone: { type: Number },
+            numTotal: { type: Number }
         }
     }
 
@@ -371,6 +373,15 @@ export class AttributePicker extends LitElement {
             ${this.renderSimple}
         `;
     }
+    // render(){
+    //   return html`
+    //       ${this.shortcutsDialog}
+    //       <mwc-icon-button class="shortcut" icon="keyboard" @click=${this.openShortcuts}></mwc-icon-button>
+    //       ${this.renderDetail}
+    //       ${this.renderSimple}
+    //       <div id="todo2">keypoints faits ${this.numDone} / ${this.numTotal}</div>
+    //   `;
+    // }
 
 }
 

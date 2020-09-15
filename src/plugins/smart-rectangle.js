@@ -8,10 +8,9 @@ import { html } from 'lit-element';
 import '@pixano/graphics-2d/lib/pxn-smart-rectangle';
 import { store } from '../store';
 import { createAnnotation } from '../actions/annotations';
-import { views } from '../models/mixins/views-mixin';
 import { TemplatePluginInstance } from '../models/template-plugin-instance';
 
-export class PluginSmartRectangle extends views(TemplatePluginInstance) {
+export class PluginSmartRectangle extends TemplatePluginInstance {
 
     onCreate(evt) {
       const newObject = evt.detail;
@@ -44,9 +43,9 @@ export class PluginSmartRectangle extends views(TemplatePluginInstance) {
       `
     }
 
-    get views() {
+    get editor() {
       return html`
-        <pxn-smart-rectangle
+        <pxn-smart-rectangle id="main"
                     mode=${this.mode}
                     @create=${this.onCreate}
                     @update=${this.onUpdate}

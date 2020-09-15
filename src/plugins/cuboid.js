@@ -9,23 +9,12 @@ import '@pixano/graphics-3d';
 import '@material/mwc-icon-button';
 import { colorAnyToHexNumber } from '@pixano/core/lib/utils';
 import { camera } from '../my-icons.js';
-import { views } from '../models/mixins/views-mixin';
 import { store } from '../store';
 import { updateAnnotation, deleteAnnotation } from '../actions/annotations';
 import { TemplatePluginInstance } from '../models/template-plugin-instance';
 
 
-export class PluginCuboid extends views(TemplatePluginInstance) {
-
-    get views() {
-      return [
-        html`<pxn-cuboid-editor mode=${this.mode}
-        @create=${this.onCreate}
-        @update=${this.onUpdate}
-        @delete=${this.onDelete}
-        @selection=${this.onSelection}
-        @mode=${this.onModeChange}></pxn-cuboid-editor>`];
-    }
+export class PluginCuboid extends TemplatePluginInstance {
 
     updateObjectFromAnnotation(object, annotation) {
       Object.keys(annotation).forEach((key) => {
@@ -36,14 +25,14 @@ export class PluginCuboid extends views(TemplatePluginInstance) {
     }
 
     refresh() {
-      if (!this.getView()) {
+      if (!this.element) {
         return;
       }
       const shapes = JSON.parse(JSON.stringify(this.annotations.map((l) => {
         const color = this._colorFor(l.category);
         return { ...l, color: colorAnyToHexNumber(color) };
       })));
-      this.getView().editableCuboids = shapes;
+      this.element.editableCuboids = shapes;
     }
 
     /**
@@ -73,7 +62,7 @@ export class PluginCuboid extends views(TemplatePluginInstance) {
       const value =  this.attributePicker.value;
       this.selectedIds.forEach((id) => {
         const label = {...this.annotations.find((l) => l.id === id)};
-        const shape = [...this.getView().editableCuboids].find((s) => s.id === id);
+        const shape = [...this.element.editableCuboids].find((s) => s.id === id);
         label.options = {};
         Object.keys(value).forEach((key) => {
           label[key] = JSON.parse(JSON.stringify(value[key]));
@@ -95,22 +84,33 @@ export class PluginCuboid extends views(TemplatePluginInstance) {
       }
     }
 
+    get editor() {
+      return [
+        html`<pxn-cuboid-editor id="main"
+        mode=${this.mode}
+        @create=${this.onCreate}
+        @update=${this.onUpdate}
+        @delete=${this.onDelete}
+        @selection=${this.onSelection}
+        @mode=${this.onModeChange}></pxn-cuboid-editor>`];
+    }
+
     get toolDrawer() {
       return html`
           ${super.toolDrawer}
           <mwc-icon-button icon="3d_rotation" @click=${() => {
-            const obj = this.getView().rotate();
+            const obj = this.element.rotate();
             if (obj) {
               store.dispatch(updateAnnotation({...obj}));
             }
           }}></mwc-icon-button>
           <mwc-icon-button icon="swap_horiz" @click=${() => {
-            const obj = this.getView().swap();
+            const obj = this.element.swap();
             if (obj) {
               store.dispatch(updateAnnotation({...obj}));
             }
           }}></mwc-icon-button>
-          <mwc-icon-button @click="${() => this.getView().toggleView()}">${camera}</mwc-icon-button>
+          <mwc-icon-button @click="${() => this.element.toggleView()}">${camera}</mwc-icon-button>
       `
     }
 }

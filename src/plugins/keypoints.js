@@ -7,12 +7,11 @@
 import { html } from 'lit-element';
 import '@pixano/graphics-2d';
 import '@material/mwc-icon-button';
-import { views } from '../models/mixins/views-mixin';
 import { TemplatePluginInstance } from '../models/template-plugin-instance';
-import { store, getStoreState } from '../store';
+import { store } from '../store';
 import { updateAnnotation } from '../actions/annotations';
 
-export class PluginKeypoints extends views(TemplatePluginInstance) {
+export class PluginKeypoints extends TemplatePluginInstance {
 
   constructor() {
     super();
@@ -30,23 +29,13 @@ export class PluginKeypoints extends views(TemplatePluginInstance) {
   firstUpdated() {
     super.firstUpdated();
     // To edit skeleton structure:
-    // this.getView().graphType = {
+    // this.element.graphType = {
     //   names: ['center']
     // }
   }
-
-  get views() {
-    return [
-      html`<pxn-graph mode=${this.mode}
-                      @create=${this.onCreate}
-                      @update=${this.onUpdate}
-                      @delete=${this.onDelete}
-                      @selection=${this.onSelection}></pxn-graph>`
-    ];
-  }
   
   allVisible() {
-    const selectedLabels = this.getView().selectedShapes;
+    const selectedLabels = this.element.selectedShapes;
     if (selectedLabels.length === 1) {
       selectedLabels[0].geometry.visibles = selectedLabels[0].geometry.visibles.map(() => true);
       store.dispatch(updateAnnotation(
@@ -57,7 +46,7 @@ export class PluginKeypoints extends views(TemplatePluginInstance) {
   }
 
   swap() {
-    const selectedLabels = this.getView().selectedShapes;
+    const selectedLabels = this.element.selectedShapes;
     if (selectedLabels.length === 1) {
       const vs = selectedLabels[0].geometry.vertices;
       selectedLabels[0].geometry.vertices = [vs[0], vs[1], vs[4], vs[5], vs[2], vs[3]];
@@ -76,6 +65,15 @@ export class PluginKeypoints extends views(TemplatePluginInstance) {
                           title="Swap nodes (c)">
                           </mwc-icon-button>
     `
+  }
+
+  get editor() {
+    return html`<pxn-graph id="main"
+                      mode=${this.mode}
+                      @create=${this.onCreate}
+                      @update=${this.onUpdate}
+                      @delete=${this.onDelete}
+                      @selection=${this.onSelection}></pxn-graph>`;
   }
 }
 customElements.define('plugin-keypoints', PluginKeypoints);

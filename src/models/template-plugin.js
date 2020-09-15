@@ -20,12 +20,23 @@ export class TemplatePlugin extends LitElement  {
     };
   }
 
-  /**
-   * Invoked each time the user goes to the plugin page
-   */
-  onActivate() {
-    this.initDisplay();
-  }
+    /**
+     * Invoked after the element’s template has been created.
+     */
+    firstUpdated() {
+      this.dispatchEvent(new Event('ready'));
+    }
+
+    /**
+     * Invoked when the plugin is launched.
+     * Trigger display of data from the redux store.
+     */
+    onActivate() {
+      if (this.initDisplay) {
+        this.initDisplay();
+      }
+      this.newData();
+    }
 
   /**
    * Recompute labels to be displayed from
@@ -40,6 +51,29 @@ export class TemplatePlugin extends LitElement  {
     }
   }
 
+  /**
+   * Getter of redux store annotations
+   */
+  get annotations() {
+    const annotations = getStoreState('annotations')
+    return annotations;
+  }
+
+  /**
+   * Handle new media to display
+   */
+  newData() {
+    const media = getStoreState('media');
+    const path = media.info.path;
+    this.element.input = path;
+    
+    this.element.addEventListener('load', () => {
+      // refresh annoations on media loaded
+      this.refresh();
+    });
+  }
+
+  // TODO: bundle attributes into an element
   _colorFor(cat) {
     return this.attributePicker._colorFor(cat);
   }
@@ -49,8 +83,8 @@ export class TemplatePlugin extends LitElement  {
    * Repercute to parent mode.
    */
   onModeChange() {
-    if (this.getView()) {
-      this.mode = this.getView().mode;
+    if (this.element) {
+      this.mode = this.element.mode;
     }
   }
 
@@ -59,6 +93,10 @@ export class TemplatePlugin extends LitElement  {
    */
   get attributePicker() {
     return this.shadowRoot.querySelector('attribute-picker');
+  }
+
+  get element() {
+    return this.shadowRoot.getElementById('main');
   }
 
   render() {

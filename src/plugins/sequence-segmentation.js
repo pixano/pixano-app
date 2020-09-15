@@ -29,16 +29,16 @@ export class PluginSequenceSegmentation extends sequence(PluginSegmentation) {
       }
 
       refresh() {
-        if (!this.getView()) {
+        if (!this.element) {
           return;
         }
         const curr = this.annotations.find((l) => l.timestamp === this.targetFrameIdx);
         if (!curr) {
-          this.getView().setEmpty();
+          this.element.setEmpty();
           return;
         }
-        if (curr.mask != this.getView().getMask()) {
-          this.getView().setMask(curr.mask);
+        if (curr.mask != this.element.getMask()) {
+          this.element.setMask(curr.mask);
         }
       }
 

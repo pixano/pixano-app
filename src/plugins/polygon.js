@@ -6,38 +6,32 @@
 
 import { html } from 'lit-element';
 import '@pixano/graphics-2d/lib/pxn-polygon';
-import { views } from '../models/mixins/views-mixin';
 import { TemplatePluginInstance } from '../models/template-plugin-instance';
 
-export class PluginPolygon extends views(TemplatePluginInstance) {
-
-  constructor() {
-    super();
-  }
-
-  get views() {
-    return [
-      html`<pxn-polygon mode=${this.mode}
-                        @create=${this.onCreate}
-                        @update=${this.onUpdate}
-                        @delete=${this.onDelete}
-                        @selection=${this.onSelection}
-                        @mode=${this.onModeChange}></pxn-polygon>`
-    ];
-  }
+export class PluginPolygon extends TemplatePluginInstance {
 
   get toolDrawer() {
     return html`
         ${super.toolDrawer}
         <mwc-icon-button icon="call_merge"
-                         @click="${() => this.getView().merge()}"
+                         @click="${() => this.element.merge()}"
                          title="Group polygons">
                          </mwc-icon-button>
         <mwc-icon-button icon="call_split"
-                         @click="${() => this.getView().split()}"
+                         @click="${() => this.element.split()}"
                          title="Split polygon">
                          </mwc-icon-button>
     `
+  }
+
+  get editor() {
+    return html`<pxn-polygon id="main"
+                        mode=${this.mode}
+                        @create=${this.onCreate}
+                        @update=${this.onUpdate}
+                        @delete=${this.onDelete}
+                        @selection=${this.onSelection}
+                        @mode=${this.onModeChange}></pxn-polygon>`;
   }
 }
 customElements.define('plugin-polygon', PluginPolygon);
