@@ -12,7 +12,7 @@ RUN npm i \
     && npm i mime-types && npm i safer-buffer \
     && npm i xtend && npm i errno && npm i async \
     && npm i nan && npm i normalize-path \
-    && npm i end-of-stream \s
+    && npm i end-of-stream \
     && npm i graceful-fs \
     && npm i camelcase \
     && npm i emoji-regex \

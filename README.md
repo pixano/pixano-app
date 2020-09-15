@@ -16,13 +16,13 @@ The easiest way to get up-and-running is to install [Docker](https://www.docker.
 Here's the simplest way you can run the Pixano application using docker, assuming you're familiar with using -v argument to mount folders:
 
 ```bash
-sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 pixano
+sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 pixano/pixano-app
 ```
 
 In practice, we suggest you setup an alias called `pixano` to automatically expose the folder containing your specified image, so the script can read it and store results where you can access them. This is how you can do it in your terminal console on OSX or Linux:
 ```bash
 # Setup the alias. Put this in your .bashrc file so it's available at startup.
-alias pixano='function ne() { if [ -d "$(pwd)/$1" ]; then DATA="$(pwd)/$1" && shift; else DATA="$(pwd)"; fi; sudo docker run --init -it --rm --network host -v "$DATA":/data pixano:0.2.0 $@; }; ne'
+alias pixano='function ne() { if [ -d "$(pwd)/$1" ]; then DATA="$(pwd)/$1" && shift; else DATA="$(pwd)"; fi; sudo docker run --init -it --rm --network host -v "$DATA":/data pixano/pixano-app $@; }; ne'
 
 # Now run pixano using alias with workspace as argument
 pixano ./data-test --port 3001
