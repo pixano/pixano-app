@@ -11,7 +11,7 @@ Pixano App is a web-based annotation tool. It relies on web components dedicated
 
 ### 1.a) Using Docker Image [recommended]
 
-The easiest way to get up-and-running is to install [Docker](https://www.docker.com/). Then, you should be able to download and run the pre-built image using the docker command line tool. Find out more about the `pixano` image on its [Docker Hub](https://hub.docker.com/r/alexjc/neural-enhance/) page.
+The easiest way to get up-and-running is to install [Docker](https://www.docker.com/). Then, you should be able to download and run the pre-built image using the docker command line tool. Find out more about the `pixano` image on its [Docker Hub](https://hub.docker.com/r/pixano/pixano-app/) page.
 
 Here's the simplest way you can run the Pixano application using docker, assuming you're familiar with using -v argument to mount folders:
 
