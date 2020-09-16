@@ -9,6 +9,8 @@ COPY package.json package.json
 
 COPY src src
 
+COPY images images
+
 COPY server server
 
 COPY .logo-ascii .logo-ascii
