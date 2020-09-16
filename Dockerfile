@@ -7,6 +7,12 @@ RUN apt install -y nodejs
 
 COPY package.json package.json
 
+COPY src src
+
+COPY server server
+
+COPY .logo-ascii .logo-ascii
+
 RUN npm i \
     && npm i abbrev && npm i osenv && npm i npmlog \
     && npm i rimraf && npm i semver && npm i mkdirp \
@@ -39,15 +45,10 @@ RUN npm i \
     && npm i save \
     && npm i short-uuid \
     && npm i tmp \
-    && npm run build
+    && npm run build \
+    && rm -rf src
 
 EXPOSE 3000
-
-COPY server server
-
-COPY .logo-ascii .logo-ascii
-
-COPY package.json package.json
 
 # ENTRYPOINT ["node", "server/server.js"]
 ENTRYPOINT cat .logo-ascii && node server/server.js
