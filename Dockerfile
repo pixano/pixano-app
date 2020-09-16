@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y --reinstall ca-certificates curl build-
 RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
 RUN apt install -y nodejs
 
+COPY package.json package.json
+
 RUN npm i \
     && npm i abbrev && npm i osenv && npm i npmlog \
     && npm i rimraf && npm i semver && npm i mkdirp \
