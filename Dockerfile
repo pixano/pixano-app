@@ -7,6 +7,8 @@ RUN apt install -y nodejs
 
 COPY package.json package.json
 
+COPY webpack.config.js webpack.config.js
+
 COPY src src
 
 COPY images images
