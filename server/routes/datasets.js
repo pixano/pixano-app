@@ -189,7 +189,9 @@ function getAllPathsFromDataset(dataset_id) {
   const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), false, true)
   return new Promise((resolve) => {
     stream.on('data', (value) => { 
-      const relUrl = value.path.replace(populator.MOUNTED_WORKSPACE_PATH, '').replace(/\//g, '');
+      const p = Array.isArray(value.path) ? value.path[0] : value.path;
+      const relUrl = p.replace(populator.MOUNTED_WORKSPACE_PATH, '').replace(/\//g, '');
+      // console.log('relUrl', relUrl);
       dataMap[relUrl] = value.id;
     }).on('end', () => {
       resolve(dataMap);

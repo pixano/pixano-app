@@ -22,6 +22,8 @@ async function get_next_job(req, res) {
     // If objective is to_annotate also propose to_correct
     const objectiveList = objective === 'to_annotate' ? ['to_correct', 'to_annotate'] : ['to_validate']
     const user = await db.get(dbkeys.keyForUser(req.username));
+    if (!user.queue) { user.queue  = {} }
+
     for (const obj of objectiveList) {
         if (user.last_assigned_jobs[taskName+'/'+obj]) {
             try {
@@ -31,6 +33,16 @@ async function get_next_job(req, res) {
                 return res.send(job);
             } catch (err) {
                 console.log('\tjob does not exist anymore, continue !!!', taskName, obj, user.last_assigned_jobs[taskName+'/'+obj]);
+            }
+        }
+        if (user.queue[taskName+'/'+obj] && user.queue[taskName+'/'+obj].length) {
+            try {
+                const job_key = dbkeys.keyForJob(taskName, user.queue[taskName+'/'+obj][0]);
+                const job = await db.get(job_key);
+                await _assignJob(taskName, job, user);
+                return res.send(job);
+            } catch (err) {
+                console.log('\tjob does not exist anymore, continue !!!', taskName, obj, user.queue[taskName+'/'+obj]);
             }
         }
     }
@@ -97,7 +109,13 @@ async function put_job(req, res) {
     try {
         // job is done update unassigned job to user
         const user = await db.get(dbkeys.keyForUser(req.username));
+        if (!user.queue) { user.queue  = {} }
+        
         user.last_assigned_jobs[`${taskName}/${jobData.objective}`] = '';
+        if (user.queue[`${taskName}/${jobData.objective}`] &&
+            user.queue[`${taskName}/${jobData.objective}`][0] === jobData.id) {
+                user.queue[`${taskName}/${jobData.objective}`].shift();
+        }
         await db.put(dbkeys.keyForUser(user.username), user);
     } catch (user_err) {
         return res.status(400).json({
@@ -127,10 +145,17 @@ async function put_job(req, res) {
 
     if (status === 'to_correct') {
         resultData.assigned = true;
+        // TODO: resolve issue of overwriting lastassignedjobs but not assigned to
         newJob.assigned_to = resultData.annotator;
         // update user info
         const corrector = await db.get(dbkeys.keyForUser(resultData.annotator));
-        corrector.last_assigned_jobs[taskName+'/'+newJob.objective] = newJob.id;
+        if (!corrector.queue) { corrector.queue  = {} }
+        // push up the correction job in priority for the annotator
+        // corrector.last_assigned_jobs[taskName+'/'+newJob.objective] = newJob.id;
+        if (!corrector.queue[taskName+'/'+newJob.objective]) {
+            corrector.queue[taskName+'/'+newJob.objective] = [];
+        }
+        corrector.queue[taskName+'/'+newJob.objective].push(newJob.id);
         ops.push({ type: 'put', key: dbkeys.keyForUser(corrector.username), value: corrector});
     }
     resultData.current_job_id = newJob.id;

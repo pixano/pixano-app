@@ -80,7 +80,7 @@ async function import_tasks(req, res) {
         const filesList = fs.readdirSync(importPath);
 
         // filter all json files
-        const taskJsonFiles = filesList.filter(f => f.endsWith('.json'));
+        const taskJsonFiles = filesList.filter(f => f.endsWith('.json') && !f.startsWith('_'));
         const bm = new batchManager.BatchManager(db);
 
         // Create tasks  
@@ -90,6 +90,7 @@ async function import_tasks(req, res) {
         //  spec: { plugin_name: string, label_schema: {} },
         //  dataset: { path: string, data_type: string }
         // }
+        const importedTasks = [];
         for await (const jsonf of taskJsonFiles) {
             const taskData = utils.readJSON(path.join(importPath, jsonf));
             const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type}, workspace);
@@ -135,7 +136,8 @@ async function import_tasks(req, res) {
                 let sourcePath;
                 if (ann.data.path) {
                     // remove / to normalize path
-                    sourcePath = ann.data.path.replace(/\//g, '');
+                    const p = Array.isArray(ann.data.path) ? ann.data.path[0] : ann.data.path;
+                    sourcePath = p.replace(/\//g, '');
                 } else {
                     try {
                         // try to get first children image if path is not available
@@ -151,11 +153,14 @@ async function import_tasks(req, res) {
                 const dataId = dataMap[sourcePath];
                 if (!dataId) {
                     console.warn(`Unknown path ${sourcePath}`);
+                    importedTasks.forEach(remove_task);
                     return res.status(400).json({
                         error: 'wrong_url',
                         message: `Invalid data url in imported file.
-                                Please check consistency of ${fullPath}
-                                Task importation aborted and cancelled at '${newTask.name}' task.`
+                                Please check consistency of "${fullPath}"
+                                Task importation aborted and cancelled at '${newTask.name}' task.
+                                If you do not wish to load ${newTask.name}, please prefix ${path.join(importPath, jsonf)},
+                                with '_' so it can be ignored. Cancelling import.`
                     });
                 }
             
@@ -179,6 +184,7 @@ async function import_tasks(req, res) {
 
             }
             await bm.flush();
+            importedTasks.push(newTaskName);
         }
         console.log('Import done.');
         res.sendStatus(200);
@@ -245,11 +251,15 @@ async function export_tasks(req, res) {
                 const data = await getDataDetails(datasetId, labels.data_id, true);
                 delete data.id;
                 delete data.dataset_id;
+                let path = data.path;
+                path = Array.isArray(path) ? path[0] : path;
+                path = path.replace(dataset.path, '')
+                const filename = utils.pathToFilename(path);
 
                 const labelsJson = {...labels, data};
                 delete labelsJson.data_id;
 
-                const err = utils.writeJSON(labelsJson, `${taskFolder}/${labels.data_id}.json`);
+                const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
                 if (err) {
                 return;
                 }
@@ -306,6 +316,31 @@ async function get_task(req, res) {
     }    
 }
 
+async function remove_task(taskName) {
+    const key = dbkeys.keyForTask(taskName);
+    const bm = new batchManager.BatchManager(db);
+    await bm.add({ type: 'del', key});
+    
+    // delete  associated jobs
+    const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
+    for await (const job of streamJob) {
+        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)})
+    }
+    
+    // associated result
+    const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+    for await (const result of streamResults) {
+        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)})
+    }
+    
+    // associated labels WARNING !!!!
+    const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
+    for await (const label of streamLabels) {
+        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)})
+    }
+    await bm.flush();
+}
+
 /**
  * Delete a task for a given id.
  * @param {Request} req 
@@ -314,28 +349,7 @@ async function get_task(req, res) {
 function delete_task(req, res) {
     checkAdmin(req, async () => {
         const taskName = req.params.task_name;
-        const key = dbkeys.keyForTask(taskName);
-        const bm = new batchManager.BatchManager(db);
-        await bm.add({ type: 'del', key});
-        
-        // delete  associated jobs
-        const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
-        for await (const job of streamJob) {
-            await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)})
-        }
-        
-        // associated result
-        const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
-        for await (const result of streamResults) {
-            await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)})
-        }
-        
-        // associated labels WARNING !!!!
-        const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
-        for await (const label of streamLabels) {
-            await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)})
-        }
-        await bm.flush();      
+        await remove_task(taskName);
         return res.status(204).json({});
     });
 }

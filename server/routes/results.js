@@ -143,7 +143,12 @@ async function put_results(req,res) {
                         // Remove assigned user of this job 
                         try {
                             const user = await db.get(dbkeys.keyForUser(job.assigned_to));
+                            if (!user.queue) { user.queue  = {} }
+
                             user.last_assigned_jobs[taskName+'/'+job.objective] = '';
+                            if (user.queue[taskName+'/'+job.objective]) {
+                                user.queue[taskName+'/'+job.objective] = user.queue[taskName+'/'+job.objective].filter((j) => j.id !== currJobId);
+                            }
                             await bm.add({ type: 'put', key: dbkeys.keyForUser(job.assigned_to), value: user})
                         } catch (err) { }
 

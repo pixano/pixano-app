@@ -76,7 +76,7 @@ async function post_users(req, res) {
           message: 'Username already used'
         });
       } else {
-        await db.put(dbkeys.keyForUser(v.username), {...v, last_assigned_jobs: {}});
+        await db.put(dbkeys.keyForUser(v.username), {...v, last_assigned_jobs: {}, queue: {}});
         const user = await getUserData(v.username);
         return res.status(201).json(user);
       }
