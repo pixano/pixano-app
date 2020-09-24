@@ -219,6 +219,21 @@ const isEqual = (value, other) => {
 
 };
 
+const pathToFilename = (path, removeExt = true) => {
+  const regex = /[^\/]/g;
+  const idx0 = path.search(regex);
+  let idx1 = path.search('\\/$');
+  idx1 = idx1 <= 0 ? path.length : idx1;
+  // path with no leading or trailing slashes
+  let filename = path.slice(idx0, idx1);
+  filename = filename.replace(new RegExp('/', 'g'), '_');
+  if (removeExt) {
+    const exts = ['.jpg', '.jpeg', '.png', '.bin'];
+    exts.forEach((e) => filename = filename.replace(e, ''));
+  }
+  return filename;
+}
+
 
 
 module.exports = {
@@ -230,5 +245,6 @@ module.exports = {
   removeDir,
   readJSON,  
   writeJSON,
-  isSubFolder
+  isSubFolder,
+  pathToFilename
 }

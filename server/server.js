@@ -103,6 +103,8 @@ initLevel(entry).then(() => {
   // otherwise imported db value is not consistent with
   // exported db value.
   const router = require(__dirname + '/router');
+
+  // Mount the router at /api/v1 so all its routes start with /api/v1
   app.use('/api/v1', router);
   
   const server = app.listen(port, async () => {
