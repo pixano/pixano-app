@@ -41,8 +41,10 @@ import { connect } from 'pwa-helpers/connect-mixin.js';
 import { store, getStoreState } from './store';
 import { navigate, getTasks, interruptJob } from './actions/application';
 import { getProfile } from './actions/user';
-import 'material-design-icons/iconfont/material-icons.css'
+import 'material-design-icons/iconfont/material-icons.css';
 import 'typeface-roboto/index.css';
+import '@material/mwc-circular-progress-four-color';
+
 
 class MyApp extends connect(store)(LitElement)  {
   static get properties() {
@@ -123,21 +125,14 @@ class MyApp extends connect(store)(LitElement)  {
         .page[active] {
           display: block;
         }
-        .loader {
-          border: 16px solid #f3f3f3; /* Light grey */
-          border-top: 16px solid #3498db; /* Blue */
-          border-radius: 50%;
-          animation: spin 2s linear infinite;
+        mwc-circular-progress-four-color {
           position: absolute;
           top: 50%;
           left: 50%;
-          width: 20px;
-          height: 20px;
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          --mdc-circular-progress-bar-color-1: #79005D;
+          --mdc-circular-progress-bar-color-2: #FF5C64;
+          --mdc-circular-progress-bar-color-3: #FF5C64;
+          --mdc-circular-progress-bar-color-4: #79005D;
         }
         `]
   }
@@ -152,7 +147,7 @@ class MyApp extends connect(store)(LitElement)  {
         <app-label class="page" ?active="${this._page === 'label'}"></app-label>
         <app-explore class="page" ?active="${this._page === 'explore'}"></app-explore>
         <app-404 class="page" ?active="${this._page === 'view404'}"></app-404>
-        <div class="loader" ?hidden=${!this.waiting}></div>
+        <mwc-circular-progress-four-color indeterminate ?closed=${!this.waiting}></mwc-circular-progress-four-color>
       `;
     }
 }
