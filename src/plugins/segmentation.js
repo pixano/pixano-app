@@ -34,7 +34,7 @@ export class PluginSegmentation extends TemplatePlugin {
   constructor() {
     super();
     this.mode = 'select';
-    this.maskVisuMode = 'INSTANCE';
+    this.maskVisuMode = 'SEMANTIC';
     this.selectedIds = [0,0,0];
     window.addEventListener('keydown', (evt) => {
       if (evt.key === 'Alt') {

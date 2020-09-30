@@ -18,7 +18,7 @@ export class PluginSequenceSegmentation extends sequence(PluginSegmentation) {
 
       onUpdate() {
         const curr = this.annotations.find((l) => l.timestamp === this.targetFrameIdx);
-        const im = this.getView().getMask();
+        const im = this.element.getMask();
         const fn = curr ? updateAnnotation : createAnnotation;
         store.dispatch(fn(
           {
