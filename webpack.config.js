@@ -20,7 +20,8 @@ module.exports = {
       '@material/mwc-dialog': path.resolve(path.join(__dirname, 'node_modules', '@material/mwc-dialog')),
       '@material/mwc-list': path.resolve(path.join(__dirname, 'node_modules', '@material/mwc-list')),
       '@material/mwc-menu': path.resolve(path.join(__dirname, 'node_modules', '@material/mwc-menu')),
-      '@material/mwc-select': path.resolve(path.join(__dirname, 'node_modules', '@material/mwc-select'))
+      '@material/mwc-select': path.resolve(path.join(__dirname, 'node_modules', '@material/mwc-select')),
+      'lit-element': path.resolve(path.join(__dirname, 'node_modules', 'lit-element'))
      }
   },
   module: {
