@@ -55,6 +55,6 @@ RUN npm i \
 EXPOSE 3000
 
 # ENTRYPOINT ["node", "server/server.js"]
-ENTRYPOINT cat .logo-ascii && node server/server.js
-
+RUN echo 'cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh
+ENTRYPOINT ["sh", "entrypoint.sh" ]
 CMD []
