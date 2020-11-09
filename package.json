@@ -5,6 +5,7 @@
   "scripts": {
     "copyindex": "cp src/index.html build",
     "copyimage": "cp -r images build/",
+    "watch": "watch 'npm run build' ./src",
     "copywc": "cp -r node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js build && cp node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js build",
     "build": "rm -rf build && mkdir build && npm run copyindex && npm run copyimage && npm run copywc && webpack --config webpack.config.js"
   },
@@ -65,10 +66,10 @@
     "@material/mwc-tab-bar": "0.18.0",
     "@material/mwc-textarea": "0.18.0",
     "@material/mwc-textfield": "0.18.0",
-    "@pixano/ai": "0.4.1",
-    "@pixano/core": "0.4.1",
-    "@pixano/graphics-2d": "0.4.1",
-    "@pixano/graphics-3d": "0.4.1",
+    "@pixano/ai": "0.4.3",
+    "@pixano/core": "0.4.3",
+    "@pixano/graphics-2d": "0.4.3",
+    "@pixano/graphics-3d": "0.4.3",
     "@polymer/paper-dropdown-menu": "^3.1.0",
     "@polymer/paper-item": "^3.0.1",
     "@polymer/paper-listbox": "^3.0.1",
@@ -94,6 +95,7 @@
     "style-loader": "^1.0.2",
     "typeface-roboto": "0.0.75",
     "url-loader": "^3.0.0",
+    "watch": "^1.0.2",
     "web-animations-js": "^2.3.2",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
