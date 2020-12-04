@@ -51,8 +51,20 @@ First authentification is: `username: admin` `password: admin`.
 
 You can then create your annotation project in the `Tasks` tab or update your login in the `Users` tab.
 
+If your `data-test` folder has the following structure:
+```
+data-test   
+│
+└───images
+    │   xxx.jpg
+    │   yyy.jpg
+    │
+    │   ...
+```
+You can fill the task configuration as follows, which will create as many annotation jobs as there are images in your `image` folder:
+![task-creation](./images/task-creation.png)
 
-*NB: When creating an annotation task, you will refer to the folder containing the images you want to annotate by a relative path from the `workspace` folder. Make sure when typing `node server/server.js /path/to/workspace/` that it contains all of the data you want to use.*
+*Update 2020.12.04: Make sure your image extension are either `png` or `jpg`.
 
 ### 1.b) Manual Installation [developers]
 
