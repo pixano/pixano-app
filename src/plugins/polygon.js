@@ -10,9 +10,28 @@ import { TemplatePluginInstance } from '../models/template-plugin-instance';
 
 export class PluginPolygon extends TemplatePluginInstance {
 
+  constructor(){
+    super()
+    this.isOpenedPolygon = true;
+  }
+
   get toolDrawer() {
     return html`
-        ${super.toolDrawer}
+        <mwc-icon-button ?selected=${this.mode === 'edit'}
+                          title="Edit"
+                          icon="navigation"
+                          @click="${() => this.mode = 'edit'}">
+        </mwc-icon-button>
+        <mwc-icon-button ?selected=${this.mode === 'create'}
+                          icon="add_circle_outline"
+                          title="Create polygon"
+                          @click="${() => {this.element.isOpenedPolygon = false; this.mode = 'create'}}">
+        </mwc-icon-button>
+        <mwc-icon-button ?selected=${this.mode === 'create'}
+                          icon="add_circle_outline"
+                          title="Create line"
+                          @click="${() => {this.element.isOpenedPolygon = true; this.mode = 'create'}}">
+        </mwc-icon-button>
         <mwc-icon-button icon="call_merge"
                          @click="${() => this.element.merge()}"
                          title="Group polygons">
@@ -27,6 +46,7 @@ export class PluginPolygon extends TemplatePluginInstance {
   get editor() {
     return html`<pxn-polygon id="main"
                         mode=${this.mode}
+                        isOpenedPolygon=${this.isOpenedPolygon}
                         @create=${this.onCreate}
                         @update=${this.onUpdate}
                         @delete=${this.onDelete}
