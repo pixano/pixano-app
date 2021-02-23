@@ -20,7 +20,7 @@ const toRelative = (url) => {
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
 async function image(db, mediaRelativePath, hostWorkspacePath, datasetId) {
-  return populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png'], 'image');
+  return populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image');
 }
 
 async function pcl(db, mediaRelativePath, hostWorkspacePath, datasetId) {
@@ -32,7 +32,7 @@ async function pcl_image(db, mediaRelativePath, hostWorkspacePath, datasetId) {
 }
 
 async function sequence_image(db, mediaRelativePath, hostWorkspacePath, datasetId) {
-  return populateSequence(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png'], 'sequence_image');
+  return populateSequence(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'sequence_image');
 }
 
 async function sequence_pcl(db, mediaRelativePath, hostWorkspacePath, datasetId) {

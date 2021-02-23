@@ -17,6 +17,7 @@ export const pluginsList = [
     'tracking',
     'keypoints',
     'smart-rectangle',
+    'smart-segmentation',
     'sequence-rectangle',
     'sequence-cuboid',
     'sequence-polygon',
@@ -54,6 +55,7 @@ export const getDataType = (pluginName) => {
 export const defaultLabelValues = (pluginName) => {
     switch(pluginName) {
         case 'sequence-segmentation':
+        case 'smart-segmentation':
         case 'segmentation': {
             return {
                 category: [

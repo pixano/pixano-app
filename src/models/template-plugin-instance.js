@@ -29,11 +29,6 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     super();
     this.mode = 'edit';
     this.selectedIds = [];
-    window.addEventListener('keydown', (evt) => {
-      if (evt.key === 'Alt') {
-        this.mode = this.mode === 'create' ? 'edit' : 'create';
-      }
-    });
   }
 
   /**

@@ -29,9 +29,13 @@ export class PluginKeypoints extends TemplatePluginInstance {
   firstUpdated() {
     super.firstUpdated();
     // To edit skeleton structure:
-    // this.element.graphType = {
-    //   names: ['center']
-    // }
+    // this.element.settings.vertexNames = ['center']
+    console.log(this.element.settings)
+    this.element.settings.colorFillType = "order";
+    this.element.settings.orderedColors = [
+      0xffff00, 0xF44336, 0x008000
+    ];
+
   }
   
   allVisible() {
@@ -73,7 +77,8 @@ export class PluginKeypoints extends TemplatePluginInstance {
                       @create=${this.onCreate}
                       @update=${this.onUpdate}
                       @delete=${this.onDelete}
-                      @selection=${this.onSelection}></pxn-graph>`;
+                      @selection=${this.onSelection}
+                      @mode=${this.onModeChange}></pxn-graph>`;
   }
 }
 customElements.define('plugin-keypoints', PluginKeypoints);

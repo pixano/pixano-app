@@ -5,7 +5,7 @@
  * @license CECILL-C
 */
 
-import { LitElement, html, css, customElement, property} from 'lit-element';
+import { LitElement, html, css } from 'lit-element';
 import '@material/mwc-dialog';
 import '@polymer/paper-dropdown-menu/paper-dropdown-menu';
 import '@polymer/paper-listbox/paper-listbox';

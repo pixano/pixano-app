@@ -36,11 +36,6 @@ export class PluginSegmentation extends TemplatePlugin {
     this.mode = 'select';
     this.maskVisuMode = 'SEMANTIC';
     this.selectedIds = [0,0,0];
-    window.addEventListener('keydown', (evt) => {
-      if (evt.key === 'Alt') {
-        this.mode = this.mode === 'create' ? 'select' : 'create';
-      }
-    });
   }
 
   get toolDrawer() {

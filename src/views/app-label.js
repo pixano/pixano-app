@@ -98,9 +98,9 @@ class AppLabel extends AppExplore {
   save() {
     store.dispatch(putJob()).then(() => {
       store.dispatch(putLabels()).then(() => {
-        this.snack.open();
-      }).catch(() => {
-        console.warn('Saving failed.')
+        this.snack.show();
+      }).catch((e) => {
+        console.warn('Saving failed.', e);
       })
     }).catch((error) => {
       this.errorPopup(error.message);
