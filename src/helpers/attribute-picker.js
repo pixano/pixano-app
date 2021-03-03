@@ -7,11 +7,10 @@
 
 import { LitElement, html, css } from 'lit-element';
 import '@material/mwc-dialog';
-import '@polymer/paper-dropdown-menu/paper-dropdown-menu';
-import '@polymer/paper-listbox/paper-listbox';
-import '@polymer/paper-item/paper-item';
 import '@material/mwc-checkbox';
 import '@material/mwc-formfield';
+import '@material/mwc-select';
+import '@material/mwc-list/mwc-list-item';
 
 const default_schema = {
   category: [
@@ -100,10 +99,8 @@ export class AttributePicker extends LitElement {
           background-color: #4CAF50;
           color: white;
         }
-        paper-dropdown-menu {
-            margin: auto;
-            width: 70%;
-            display: flex;
+        mwc-select {
+            width: 100%;
         }
         mwc-formfield {
           margin: auto;
@@ -221,9 +218,7 @@ export class AttributePicker extends LitElement {
      */
     setAttributes(entity) {
       if (entity) {
-          if (!entity.options) {
-            entity.options = {};
-          }
+          entity.options = entity.options || {};
           const options = this.getDefaultAttributesForCategory(this.schema, entity.category);
           Object.keys(options).forEach((key) => {
               if (entity.options.hasOwnProperty(key)) {
@@ -232,7 +227,16 @@ export class AttributePicker extends LitElement {
                   options[key] = "";
               }
           });
+          // update property choices
           this.value = {category: entity.category, options};
+
+          // update property values
+          const childDivs = this.shadowRoot.getElementById('updateEditor').getElementsByTagName('mwc-select');
+          const propList = this.schema.category.find((c) => c.name === this.value.category).properties;
+          [ ...childDivs].forEach((c) => {
+            const enumList = propList.find((p) => p.name == c.label).enum;
+            c.select(enumList.findIndex((e) => e === options[c.label]))
+          });
       } 
     }
 
@@ -287,24 +291,20 @@ export class AttributePicker extends LitElement {
 
     htmlProp(prop) {
         if (prop.type === 'dropdown') {
+            // list of attribute choices
+            
             return html`
-            <paper-dropdown-menu label="${prop.name}" no-animations >
-            <paper-listbox slot="dropdown-content"
-                            attr-for-selected="value"
-                            @selected-changed=${(e) => {
-                                if (e.detail.value != "undefined" && this.value.options[prop.name] != e.detail.value) {
-                                    this.value.options[prop.name] = e.detail.value;
-                                    this._notifyUpdate();
-                                }
-                            }}
-                            selected="${this.value.options[prop.name]}">
-            ${
-            prop.enum.map((sub) => {
-                return html`<paper-item value="${sub}">${sub}</paper-item>`
-            })
-            }
-            </paper-listbox>
-            </paper-dropdown-menu>
+            <mwc-select label="${prop.name}" @selected=${ (e) => {
+                const idx = e.detail.index;
+                if (this.value.options[prop.name] != prop.enum[idx]) {
+                  this.value.options[prop.name] = prop.enum[idx];
+                  this._notifyUpdate();
+                }
+              }}>
+              ${prop.enum.map((sub) => {
+                  return html`<mwc-list-item value="${sub}" ?selected=${this.value.options[prop.name] === sub}>${sub}</mwc-list-item>`
+              })}
+            </mwc-select>
             `
         } else if (prop.type === 'checkbox') {
           const checked = this.value.options[prop.name];
@@ -336,9 +336,7 @@ export class AttributePicker extends LitElement {
                         <span class="step" .style="background: ${this._colorFor(category.name)}">${idx}</span><p>${category.name}</p>
                     </div>
                     ${category.properties && category.name === this.value.category ? html`
-                    ${category.properties.map((prop) => {
-                    return this.htmlProp(prop)
-                    })}
+                      ${category.properties.map((prop) => this.htmlProp(prop))}
                     `: html``}
                     `
                 })
