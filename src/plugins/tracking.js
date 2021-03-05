@@ -74,10 +74,11 @@ export class PluginTracking extends sequence(TemplatePlugin) {
 
     render() {
         return html`<pxn-tracking
-                              @create-track=${(e) => console.log('create track', e.detail)}
+                              .tracks = ${this.tracks}
+                              @create-track=${this.onUpdate}
                               @selection-track=${(e) => console.log('selection track', e.detail)}
-                              @update-tracks=${(e) => console.log('update tracks', e.detail)}
-                              @delete-track=${(e) => console.log('delete track', e.detail)}></pxn-tracking>`;
+                              @update-tracks=${this.onUpdate}
+                              @delete-track=${this.onUpdate}></pxn-tracking>`;
     }
 }
 

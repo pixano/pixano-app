@@ -1,6 +1,6 @@
 {
   "name": "pixano-app",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "This is a Pixano app.",
   "scripts": {
     "copyindex": "cp src/index.html build",
