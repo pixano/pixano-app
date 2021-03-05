@@ -67,6 +67,7 @@ You can fill the task configuration as follows, which will create as many annota
 ![task-creation](./images/task-creation.png)
 
 *Update 2020.12.04: Make sure your image extensions are either `png` or `jpg`.
+
 *Update 2021.03.05: Videos are not directly handled: extract the video frames beforehand. For every plugin taking a sequence as input (e.g. `sequence-rectangle`, `sequence-polygon`, `tracking`, etc), each subfolder containing images will be considered as a sequence.
 
 ### 1.b) Manual Installation [developers]
