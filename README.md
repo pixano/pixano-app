@@ -19,7 +19,9 @@ Here's the simplest way you can run the Pixano application using docker, assumin
 sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 pixano/pixano-app
 ```
 
-In practice, we suggest you setup an alias called `pixano` to automatically expose the folder containing your specified image, so the script can read it and store results where you can access them. This is how you can do it in your terminal console on OSX or Linux:
+The path where you run this command must contain your folder of images.
+
+[Optional] In practice, we suggest you setup an alias called `pixano` to automatically expose the folder containing your specified image, so the script can read it and store results where you can access them. This is how you can do it in your terminal console on OSX or Linux:
 ```bash
 # Setup the alias. Put this in your .bashrc file so it's available at startup.
 alias pixano='function ne() { if [ -d "$(pwd)/$1" ]; then DATA="$(pwd)/$1" && shift; else DATA="$(pwd)"; fi; sudo docker run --init -it --rm --network host -v "$DATA":/data pixano/pixano-app $@; }; ne'
@@ -65,6 +67,7 @@ You can fill the task configuration as follows, which will create as many annota
 ![task-creation](./images/task-creation.png)
 
 *Update 2020.12.04: Make sure your image extensions are either `png` or `jpg`.
+*Update 2021.03.05: Videos are not directly handled: extract the video frames beforehand. For every plugin taking a sequence as input (e.g. `sequence-rectangle`, `sequence-polygon`, `tracking`, etc), each subfolder containing images will be considered as a sequence.
 
 ### 1.b) Manual Installation [developers]
 
