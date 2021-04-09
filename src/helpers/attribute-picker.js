@@ -235,7 +235,9 @@ export class AttributePicker extends LitElement {
           const propList = this.schema.category.find((c) => c.name === this.value.category).properties;
           [ ...childDivs].forEach((c) => {
             const enumList = propList.find((p) => p.name == c.label).enum;
-            c.select(enumList.findIndex((e) => e === options[c.label]))
+            // cast to number
+            const val = isNaN(options[c.label]) ? options[c.label] : parseInt(options[c.label]);
+            c.select(enumList.findIndex((e) => e === val))
           });
       } 
     }
