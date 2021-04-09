@@ -1,3 +1,7 @@
+# Pixano API
+
+This document lists the API of the Pixano server that enable the creation of new users, annotation tasks and labels. They can be used if you want to automate some processes without using the interface (e.g. create users, populate labels with pre-annotation, etc.). A [powershell](../server/scripts/autogen.ps1) is available for example.
+
 ## REST API definition
 
 | Action                            | Verb      | URL               | Input Body      | Response                          |
