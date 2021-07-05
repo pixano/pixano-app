@@ -147,5 +147,7 @@ If you want to edit the application to your liking, fork this repository.
 To create a docker image of the application, build the application (step 1.b) and then run:
 ```bash
 # You can change `pixano` by your choosen image name
-sudo docker build -t pixano .
+sudo docker build -t pixano/pixano-app:my-tag .
+# You can use the local Dockerfile if the build folder already exists
+sudo docker build -t pixano/pixano-app:my-tag -f Dockerfile-local .
 ```

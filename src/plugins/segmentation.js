@@ -50,6 +50,11 @@ export class PluginSegmentation extends TemplatePlugin {
                          title="Create"
                          @click="${() => this.mode = 'create'}">
                          </mwc-icon-button>
+        <mwc-icon-button ?selected=${this.mode === 'create-brush'}
+                         icon="brush"
+                         title="Create Brush"
+                         @click="${() => this.mode = 'create-brush'}">
+                         </mwc-icon-button>
         <mwc-icon-button ?selected=${this.mode === 'edit-add'}
                          title="Union"
                          @click="${() => this.mode = 'edit-add'}">
