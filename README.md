@@ -24,6 +24,7 @@ The path where you run this command must contain your folder of images.
 [Optional] In practice, we suggest you setup an alias called `pixano` to automatically expose the folder containing your specified image, so the script can read it and store results where you can access them. This is how you can do it in your terminal console on OSX or Linux:
 ```bash
 # Setup the alias. Put this in your .bashrc file so it's available at startup.
+# Note that the --network host works only on Linux, use explicit port mapping for Windows and Mac
 alias pixano='function ne() { if [ -d "$(pwd)/$1" ]; then DATA="$(pwd)/$1" && shift; else DATA="$(pwd)"; fi; sudo docker run --init -it --rm --network host -v "$DATA":/data pixano/pixano-app $@; }; ne'
 
 # Now run pixano using alias with workspace as argument
@@ -151,3 +152,23 @@ sudo docker build -t pixano/pixano-app:my-tag .
 # You can use the local Dockerfile if the build folder already exists
 sudo docker build -t pixano/pixano-app:my-tag -f Dockerfile-local .
 ```
+
+## 3. Import existing annotations / predictions
+
+Create an `annotation` folder as such:
+```
+data-test   
+│
+│───images
+│   │   xxx.jpg
+│   │   yyy.jpg
+│   │   ...
+│       
+└───annotations
+    │─── task1.json
+    └─── task1
+        │   xxx.json
+        │   yyy.json
+
+```
+The `task1` json contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image.
