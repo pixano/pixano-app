@@ -160,15 +160,13 @@ Create an `annotation` folder as such:
 data-test   
 │
 │───images
-│   │   xxx.jpg
-│   │   yyy.jpg
-│   │   ...
+│   │    xxx.jpg
+│   └─── yyy.jpg
 │       
 └───annotations
     │─── task1.json
     └─── task1
-        │   xxx.json
-        │   yyy.json
-
+        │    xxx.json
+        └─── yyy.json
 ```
-The `task1` json contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image.
+The `task1.json` file contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image. To prepare those files check the [import documentation](documentation/import-annotations.md).
