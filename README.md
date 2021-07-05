@@ -150,3 +150,23 @@ To create a docker image of the application, build the application (step 1.b) an
 # You can change `pixano` by your choosen image name
 sudo docker build -t pixano .
 ```
+
+## 3. Import existing annotations / predictions
+
+Create an `annotation` folder as such:
+```
+data-test   
+│
+│───images
+│   │   xxx.jpg
+│   │   yyy.jpg
+│   │   ...
+│       
+└───annotations
+    │─── task1.json
+    └─── task1
+        │   xxx.json
+        │   yyy.json
+
+```
+The `task1` json contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image.
