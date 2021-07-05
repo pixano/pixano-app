@@ -147,7 +147,7 @@ class MyApp extends connect(store)(LitElement)  {
         <app-label class="page" ?active="${this._page === 'label'}"></app-label>
         <app-explore class="page" ?active="${this._page === 'explore'}"></app-explore>
         <app-404 class="page" ?active="${this._page === 'view404'}"></app-404>
-        <mwc-circular-progress-four-color indeterminate ?closed=${!this.waiting}></mwc-circular-progress-four-color>
+        <mwc-circular-progress-four-color indeterminate ?closed=${!this.waiting} style="display: ${this.waiting ? "block" : "none"}"></mwc-circular-progress-four-color>
       `;
     }
 }

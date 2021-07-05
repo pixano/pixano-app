@@ -1,6 +1,6 @@
 {
   "name": "pixano-app",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "This is a Pixano app.",
   "scripts": {
     "copyindex": "cp src/index.html build",
@@ -65,10 +65,10 @@
     "@material/mwc-tab-bar": "0.19.1",
     "@material/mwc-textarea": "0.19.1",
     "@material/mwc-textfield": "0.19.1",
-    "@pixano/ai": "0.5.12",
-    "@pixano/core": "0.5.12",
-    "@pixano/graphics-2d": "0.5.12",
-    "@pixano/graphics-3d": "0.5.12",
+    "@pixano/ai": "0.5.13",
+    "@pixano/core": "0.5.13",
+    "@pixano/graphics-2d": "0.5.13",
+    "@pixano/graphics-3d": "0.5.13",
     "@polymer/paper-dropdown-menu": "^3.1.0",
     "@polymer/paper-item": "^3.0.1",
     "@polymer/paper-listbox": "^3.0.1",
