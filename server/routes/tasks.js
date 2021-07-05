@@ -174,13 +174,13 @@ async function import_tasks(req, res) {
                 await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels});
 
                 // Mark result as done
-                const resultData = await db.get(dbkeys.keyForResult(newTask.name, dataId));
-                if(resultData.current_job_id) {
-                    await bm.add({ type: 'del', key: dbkeys.keyForJob(newTask.name, resultData.current_job_id)})
-                }
-                resultData.current_job_id = '';
-                resultData.status = 'done';
-                await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, dataId), value: resultData});
+                // const resultData = await db.get(dbkeys.keyForResult(newTask.name, dataId));
+                // if(resultData.current_job_id) {
+                //     await bm.add({ type: 'del', key: dbkeys.keyForJob(newTask.name, resultData.current_job_id)})
+                // }
+                // resultData.current_job_id = '';
+                // resultData.status = 'done';
+                // await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, dataId), value: resultData});
 
             }
             await bm.flush();
