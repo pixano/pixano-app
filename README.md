@@ -79,9 +79,11 @@ You can then create your annotation project in the `Tasks` tab or update your lo
 npm i
 ```
 
-Node: if you want to use custom `pixano-element` modules from local path instead of the NPM registry, link them as explained below:
+##### Using a local pixano-element
+If you want to use custom `pixano-element` modules from local path instead of the NPM registry, link them as explained below:
 
 ```bash
+npm run cleanPixano
 # Install application dependencies
 npm i ../pixano-elements/packages/core ../pixano-elements/packages/ai ../pixano-elements/packages/graphics-2d ../pixano-elements/packages/graphics-3d
 ```
