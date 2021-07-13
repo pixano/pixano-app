@@ -83,9 +83,12 @@ npm i
 If you want to use custom `pixano-element` modules from local path instead of the NPM registry, link them as explained below:
 
 ```bash
-npm run cleanPixano
-# Install application dependencies
-npm i ../pixano-elements/packages/core ../pixano-elements/packages/ai ../pixano-elements/packages/graphics-2d ../pixano-elements/packages/graphics-3d
+npm run cleanPixanoElements
+# Install application dependencies and local pixano-elements
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=core
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=ai
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=graphics-2d
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=graphics-3d
 ```
 *NB: Make sure you have the git repository of pixano-elements next to the pixano-app folder and that you have followed the pixano-elements build instructions before running the above commands.*
 
