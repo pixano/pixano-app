@@ -65,9 +65,13 @@ For each task you must add a corresponding task json file with the following str
 ```
 
 Note: for each possible object category, you can list additionnal `properties` which are either:
-- `checkbox` (boolean value) : default value is `true` or `false`
+- `checkbox` (boolean value) : default value is `true` or `false` (make sure not to add quotation marks)
 - `dropdown` type (list of choices) : default value if one of the choices.
 We advise you to select default category and properties as the most frequent ones.
+
+Note 2: When using `sequence` data type, make sure to prefix the plugin name by `sequence-` (eg. `sequence-polygon`), except for specific plugins which only work with sequences (eg. `tracking`).
+
+Note 3: Unless specified otherwise, all 2d object coordinates are normalized by the image dimension. The object lines drawn in-between pixels, 0 corresponds to the left (or top) of the pixel 0, and 1 corresponds to the right (or bottom) of the right-most (or bottom-most) pixel.
 
 ### Import bounding box annotations / predictions
 
