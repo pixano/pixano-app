@@ -100,6 +100,7 @@ Node: if you want to use custom `pixano-element` modules from local path instead
 
 ```bash
 # Install application dependencies
+npm rm @pixano/core @pixano/ai @pixano/graphics-2d @pixano/graphics-3d
 npm i ../pixano-elements/packages/core ../pixano-elements/packages/ai ../pixano-elements/packages/graphics-2d ../pixano-elements/packages/graphics-3d
 ```
 *NB: Make sure you have the git repository of pixano-elements next to the pixano-app folder and that you have followed the pixano-elements build instructions before running the above commands.*
