@@ -71,6 +71,8 @@ We advise you to select default category and properties as the most frequent one
 
 ### Import bounding box annotations / predictions
 
+![box](./box.png)
+
 Example of annotation specification file for bounding box annotation. 
 
 ```json
@@ -151,6 +153,8 @@ Example of annotation file for bounding box annotation:
 ```
 
 ### Import polygon annotations / predictions
+
+![polygon](./polygon.png)
 
 Example of annotation specification file for polygon annotation. 
 
@@ -252,6 +256,8 @@ Note: notice that occluded objects can be formatted as multiple associated polyg
 
 ### Import keypoints annotations / predictions
 
+![keypoints](./keypoints.png)
+
 Example of annotation specification file for keypoints annotation. 
 
 ```json
@@ -318,6 +324,8 @@ Example of annotation file for skeleton annotation:
 ```
 
 ### Import segmentation annotation / prediction
+
+![segmentation](./segmentation.png)
 
 Example of annotation specification file for panoptic segmentation annotation. 
 
@@ -516,6 +524,8 @@ Example of annotation file for bounding box tracking annotation:
 ```
 
 ### Import cuboid annotations / predictions
+
+![cuboid](./cuboid.png)
 
 Example of annotation specification file for cuboid annotation. 
 
