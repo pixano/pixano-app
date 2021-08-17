@@ -51,6 +51,10 @@ export class TemplatePlugin extends LitElement  {
     }
   }
 
+  get info() {
+    return getStoreState('application');
+  }
+
   /**
    * Getter of redux store annotations
    */

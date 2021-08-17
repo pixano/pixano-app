@@ -261,9 +261,6 @@ export default class TemplatePage extends LitElement {
       mwc-linear-progress {
         --mdc-theme-primary: var(--primary-color);
       }
-      .jsoneditor-menu {
-        background-color: darkgrey;
-      }
       .group_buttons {
         display: flex;
         flex-direction: row;
