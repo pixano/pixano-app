@@ -18,6 +18,19 @@ import { PluginSegmentation } from './segmentation';
  */
 export class PluginSmartSegmentation extends PluginSegmentation {
 
+  initDisplay() {
+    super.initDisplay();
+    const tasks = this.info.tasks;
+    const taskName = this.info.taskName;
+    const task = tasks.find((t) => t.name === taskName);
+    if (!task) {
+      return;
+    }
+    if (task.spec.settings && task.spec.settings.model) {
+      this.element.model = task.spec.settings.model;
+    }
+  }
+
   get toolDrawer() {
     return html`
         ${super.toolDrawer}
