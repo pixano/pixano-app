@@ -30,12 +30,24 @@ export class PluginKeypoints extends TemplatePluginInstance {
     super.firstUpdated();
     // To edit skeleton structure:
     // this.element.settings.vertexNames = ['center']
-    console.log(this.element.settings)
-    this.element.settings.colorFillType = "order";
-    this.element.settings.orderedColors = [
-      0xffff00, 0xF44336, 0x008000
-    ];
-
+    // console.log(this.element.settings)
+    // this.element.settings.colorFillType = "order";
+    // this.element.settings.orderedColors = [
+    //   0xffff00, 0xF44336, 0x008000
+    // ];
+    const tasks = this.info.tasks;
+    const taskName = this.info.taskName;
+    const task = tasks.find((t) => t.name === taskName);
+    if (!task) {
+      return;
+    }
+    const inputSettings = task.spec.settings || {};
+    this.element.settings.radius = inputSettings.radius || this.element.settings.radius;
+    this.element.settings.colorFillType = inputSettings.colorFillType || this.element.settings.colorFillType;
+    this.element.settings.nodeColors = inputSettings.nodeColors || this.element.settings.nodeColors;
+    this.element.settings.vertexNames = inputSettings.vertexNames || this.element.settings.vertexNames;
+    this.element.settings.edges = inputSettings.edges || this.element.settings.edges;
+    this.element.settings.edgeColorType = inputSettings.edgeColorType || this.element.settings.edgeColorType;
   }
   
   allVisible() {

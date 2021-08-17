@@ -288,7 +288,7 @@ async function put_task(req, res) {
         try {
             const oldTask = await db.get(dbkeys.keyForTask(req.params.task_name));
             const oldSpec = await db.get(dbkeys.keyForSpec(oldTask.spec_id));
-            const newSpec = {...oldSpec, label_schema: task.spec.label_schema};
+            const newSpec = {...oldSpec, ...task.spec};
             await db.put(dbkeys.keyForSpec(newSpec.id), newSpec);
             res.status(201).json({});
         } catch (err) {
