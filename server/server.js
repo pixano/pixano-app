@@ -88,6 +88,7 @@ const entry = args._.length > 0 ? path.resolve(args._[0]) : '/data/';
 app.use(bodyParser.json({limit: '50mb', extended: true}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use('/data/', express.static(entry));
+app.use('/data/', express.static(path.resolve('server/'), { maxAge: '1d' }));
 app.use(cookieParser());
 
 if (!fs.existsSync(entry)) {

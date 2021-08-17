@@ -22,8 +22,13 @@ export class PluginPolygon extends TemplatePluginInstance {
                          title="Split polygon">
                          </mwc-icon-button>
         <mwc-icon-button icon="timeline"
-                         ?selected=${this.element && this.mode === this.element.isOpenedPolygon}
-                         @click="${() => this.element.isOpenedPolygon = !this.element.isOpenedPolygon}"
+                         style="display: ${this.mode == 'create' ?  "block" : "none"}"
+                         ?selected=${this.element && this.element.isOpenedPolygon == true}
+                         @click="${() => {
+                           this.element.isOpenedPolygon = !this.element.isOpenedPolygon;
+                           this.requestUpdate();
+                           }
+                          }"
                          title="Polyline/Polygon">
                          </mwc-icon-button>
     `

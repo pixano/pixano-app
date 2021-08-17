@@ -19,10 +19,9 @@ import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
 import '@material/mwc-select';
 import '@material/mwc-list/mwc-list-item';
+import '@trystan2k/fleshy-jsoneditor/fleshy-jsoneditor.js';
 
-import JSONEditor from 'jsoneditor';
-
-import { defaultLabelValues, pluginsList, getDataType } from '../models/plugins';
+import { defaultLabelValues, pluginsList, getDataType, defaultSettings } from '../models/plugins';
 
 import {
   snapshotProject,
@@ -44,6 +43,14 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     };
   }
 
+  get taskSettings() {
+    return this.shadowRoot.getElementById('taskSettings');
+  }
+
+  get pluginSettings() {
+    return this.shadowRoot.getElementById('pluginSettings');
+  }
+
   constructor() {
     super();
     this.tasks = [];
@@ -60,8 +67,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
   updated(changedProperties) {
     super.updated(changedProperties);
     if (changedProperties.has('taskIdx') && this.taskIdx >= 0) {
-      this.updateJsonEditorFromValue();
-      this.shadowRoot.getElementById('plugin').layout();
+      this.updateDisplayedSettings();
     }
   }
 
@@ -70,32 +76,10 @@ class AppProjectManager extends connect(store)(TemplatePage) {
    * from the label_schema of the current
    * selected task.
    */
-  updateJsonEditorFromValue() {
-    const jsonContainer = this.shadowRoot.getElementById("jsoneditor");
-    if (!jsonContainer){
-      return;
-    }
-
-    if (!this.jsoneditor) {
-      const options = {
-        mode: 'form',
-        modes: ['form', 'text'],
-        search: false,
-        navigationBar: false,
-        
-        onModeChange: (newMode) => {
-          if (newMode === 'form') {
-            this.jsoneditor.expandAll();
-          }
-        }
-      }
-      this.jsoneditor = new JSONEditor(jsonContainer, options);
-    }
+   updateDisplayedSettings() {
     if (this.taskIdx >= 0) {
-      this.jsoneditor.set(this.tasks[this.taskIdx].spec.label_schema);
-      if (this.jsoneditor.options.mode === 'form') {
-        this.jsoneditor.expandAll();
-      }
+      this.taskSettings.json = this.tasks[this.taskIdx].spec.label_schema || { category: []};
+      this.pluginSettings.json = this.tasks[this.taskIdx].spec.settings || {};
     } 
   }
 
@@ -146,7 +130,12 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     const plugin_name = pluginsList[0];
     const task = {
       name : '',
-      spec: {plugin_name, label_schema: defaultLabelValues(plugin_name), data_type: getDataType(plugin_name)},
+      spec: {
+        plugin_name,
+        label_schema: defaultLabelValues(plugin_name),
+        settings: defaultSettings(plugin_name),
+        data_type: getDataType(plugin_name)
+      },
       dataset: { path: 'images/'} };
     const newTasks = [...this.tasks, task];
     this.creatingTask = true;
@@ -192,7 +181,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
       window.alert("Enter a correct task name");
       return;
     }
-    task.spec.label_schema = this.jsoneditor.get();
+    task.spec.label_schema = this.taskSettings.json;
+    task.spec.settings = this.pluginSettings.json;
     store.dispatch(postTask(task)).then(() => {
       this.creatingTask = false;
     });    
@@ -216,7 +206,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
       window.alert("Enter a task name");
       return;
     }
-    task.spec.label_schema = this.jsoneditor.get();
+    task.spec.label_schema = this.taskSettings.json;
+    task.spec.settings = this.pluginSettings.json;
     store.dispatch(putTask(task)).then(() => {
       this.creatingTask = false;
     });
@@ -268,6 +259,10 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     .add-task {
       flex-direction: column;
       --mdc-button-outline-color: transparent;
+    }
+    fleshy-jsoneditor {
+      width: 50%;
+      height: 400px;
     }
     `]
   } 
@@ -358,7 +353,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                                     t.spec.plugin_name = newValue;
                                     t.spec.data_type = getDataType(newValue);
                                     t.spec.label_schema = defaultLabelValues(newValue);
-                                    this.updateJsonEditorFromValue();
+                                    t.spec.settings = defaultSettings(newValue);
+                                    this.updateDisplayedSettings();
                                   }
                                 }}>
                 ${pluginsList.map((v) => html`<mwc-list-item value=${v} ?selected=${pluginName == v}>${v}</mwc-list-item>`)}
@@ -366,9 +362,10 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 
             </div>
             <div>
-              <h1 style="font-size: 16px; color: #626262; margin-top: 20px; margin-bottom: 20px;">Label configurator</h1>
-              <div>
-                  <div id="jsoneditor" style="width: calc(100% - 40px); height: 400px; margin: 20px 20px 20px 20px;"></div>
+              <h1 style="font-size: 16px; color: #626262; margin-top: 20px; margin-bottom: 20px;">Label and plugin configurator</h1>
+              <div style="display: flex;">
+                <fleshy-jsoneditor id="taskSettings" mode="code"></fleshy-jsoneditor>
+                <fleshy-jsoneditor id="pluginSettings" mode="code"></fleshy-jsoneditor>
               </div>
             </div>
             ${this.creatingTask ? html`
@@ -402,7 +399,6 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 
   get pageContent() {
     return html`
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/7.0.4/jsoneditor.min.css">
     <div id="project-page">
       ${this.taskSection}
     </div>
