@@ -27,7 +27,7 @@ const INITIAL_APP_STATE = {
       data_id: '',
       path: '',
       status: '',
-      assigned: '',
+      in_progress: '',
       user: ''
     },
     tasks: [],

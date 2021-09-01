@@ -8,9 +8,12 @@ const batchManager = require('../helpers/batch-manager');
 
 
 /**
- * Export database to a zipped dated snapshot folder.
- * @param {Request} _ 
- * @param {Response} res 
+ * @api {post} /project/snapshot Export database to a zipped dated snapshot folder
+ * @apiName PostProject
+ * @apiGroup Project
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
  */
 async function snapshot_project(_, res) {
     const archivePath = path.join(workspace, '/dev.ldb-' + moment().format() + '.zip');

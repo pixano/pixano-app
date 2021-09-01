@@ -8,6 +8,7 @@ import { html } from 'lit-element';
 import { store, getStoreState } from '../store';
 import { undo, redo, putLabels } from '../actions/annotations';
 import { updateTaskName, fetchNewJob, putJob, interruptJob } from '../actions/application';
+import { timeConverter } from '../helpers/utils';
 import '@material/mwc-icon-button';
 import '@material/mwc-snackbar';
 
@@ -18,15 +19,15 @@ class AppLabel extends AppExplore {
     return {
       pluginName: super.pluginName,
       jobObjective: { type: String },
-      jobId: { type: String }
+      job: { type: Object }
     };
   }
 
   constructor() {
     super();
     this.jobDefaultObjective = 'to_annotate';
-    this.annotatorName = '';
-    this.jobId = '';
+    this.job = {};
+    this.onDesactivate = this.onDesactivate.bind(this);
     window.addEventListener('keydown', (evt) => {
       if(this.active) {
         const lowerKey = evt.key.toLowerCase();
@@ -58,15 +59,14 @@ class AppLabel extends AppExplore {
     this.pluginName = task.spec.plugin_name;
     this.launchPlugin(this.pluginName).then((mod) => {
       store.dispatch(fetchNewJob(this.jobObjective)).then((j) => {
-        this.jobId = j.data_id;
-        this.annotatorName = this.jobObjective === 'to_validate' ? `(${j.annotator})` : '';
+        this.job = JSON.parse(JSON.stringify(j));
         mod.onActivate();
         this.dataPath = this.path;
       }).catch((err) => {
-        this.errorPopup(err);
-        mod.onActivate();
+        this.errorPopup(err, ["home"]).then(() => this.goHome());
       });
     });
+    window.addEventListener('beforeunload', this.onDesactivate);
   }
 
   /**
@@ -74,6 +74,7 @@ class AppLabel extends AppExplore {
    */
   onDesactivate() {
     store.dispatch(interruptJob());
+    window.removeEventListener('beforeunload', this.onDesactivate);
   }
 
   /**
@@ -96,6 +97,7 @@ class AppLabel extends AppExplore {
    * Save labels for a given data id.
    */
   save() {
+    console.log('save');
     store.dispatch(putJob()).then(() => {
       store.dispatch(putLabels()).then(() => {
         this.snack.show();
@@ -107,32 +109,26 @@ class AppLabel extends AppExplore {
     });
   }
 
-  _submissionHelper(objective) {
-    store.dispatch(putJob(objective)).then(() => {
-      store.dispatch(putLabels()).then(() => {
-        store.dispatch(fetchNewJob(this.jobObjective)).then((j) => {
-          this.el.newData();
-          this.jobId = j.data_id;
-          this.annotatorName = this.jobObjective === 'to_validate' ? `(${j.annotator})` : '';
-          this.dataPath = this.path;
-        }).catch((err) => {
-          this.errorPopup(err);
-          this.el.newData();
-        });
-      });
-    }).catch((error) => {
-      this.errorPopup(error.message);
-      store.dispatch(fetchNewJob(this.jobObjective)).then((j) => {
-        this.jobId = j.data_id;
-        this.annotatorName = this.jobObjective === 'to_validate' ? `(${j.annotator})` : '';
-        this.el.newData();
-        this.dataPath = this.path;
-      }).catch((err) => {
-        this.errorPopup(err);
-        this.el.newData();
-      });
-    });
-  
+  async _submissionHelper(objective) {
+    // Try to save and update current job
+    try {
+      console.log('_submissionHelper');
+      await store.dispatch(putJob(objective));
+      await store.dispatch(putLabels());
+    } // Job has either been reassigned to someone else or is dead.
+    catch(err) { console.log('err1', err); this.errorPopup(err.message); }
+
+    // Try to get next job
+    try {
+      console.log('getting next job')
+      const j =  await store.dispatch(fetchNewJob(this.jobObjective));
+      this.el.newData();
+      this.dataPath = this.path;
+    }
+    catch(msg) { // End of queue
+      await this.errorPopup(msg, ['home']);
+      this.goHome();
+    }
   }
 
   /**
@@ -162,7 +158,7 @@ class AppLabel extends AppExplore {
                        icon="keyboard_backspace"
                        title="Back"
                        @click=${() => this.goHome()}></mwc-icon-button>
-      <h1>${this.pluginName} ${this.annotatorName}</h1>
+      <h1 title="${this.jobInfo}">${this.pluginName}</h1>
       <p style="user-select: text;">${this.dataPath}</p>
       <mwc-icon-button icon="undo"
                        title="undo"
@@ -175,6 +171,15 @@ class AppLabel extends AppExplore {
                        @click=${() => this.save()}></mwc-icon-button>
       ${this.buttons}
     `
+  }
+
+  get jobInfo() {
+    return `
+    \n
+    Data id: ${this.job.data_id}\n
+    Last annotated by: ${this.job.annotator}\n
+    Last validated by: ${this.job.validator}\n
+    Last updated at: ${timeConverter(this.job.last_update_at)}\n`
   }
 
   get buttons() {
