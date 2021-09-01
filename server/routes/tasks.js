@@ -16,9 +16,17 @@ const { getAllDataFromDataset,
         getDataDetails } = require('./datasets');
 
 /**
- * Get list of all the tasks and their details.
- * @param {*} _ 
- * @param {Response} res 
+ * @api {get} /tasks Get list of tasks details
+ * @apiName GetTasks
+ * @apiGroup Tasks
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     [{
+ *        "name": "my_task",
+ *        "dataset": DbDataset,
+ *        "spec": DbSpec
+ *     }]: RestTask[]
  */
 async function get_tasks(_, res) {
     const tasks = await getAllTasksDetails();
@@ -26,15 +34,29 @@ async function get_tasks(_, res) {
 }
 
 /**
- * Add a new task.
- * @param {Request} req 
- * @param {Result} res 
+ * @api {post} /tasks Add new task
+ * @apiName PostTasks
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiParam {RestTask} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Task already existing
  */
 async function post_tasks(req, res) {
     checkAdmin(req, async () => {
         const task = req.body;
         const spec = await getOrcreateSpec(task.spec);
         const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
+
+        try {
+            await db.get(dbkeys.keyForTask(task.name));
+            return res.status(400).json({message: 'Taskname already existing'});
+        } catch(e) {}
         
         // Task does not exist create it
         const newTask = {name: task.name, dataset_id: dataset.id, spec_id: spec.id}
@@ -49,10 +71,20 @@ async function post_tasks(req, res) {
     });
 }
 
+
 /**
- * Import annotation to fill an existing project from json files
- * @param {Request} req 
- * @param {Response} res 
+ * @api {post} /tasks/import Import annotation task from json files
+ * @apiName PostImportTasks
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiParam {string} [path] Relative path to tasks folder
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Import error
  */
 async function import_tasks(req, res) {
     checkAdmin(req, async () => {
@@ -193,17 +225,26 @@ async function import_tasks(req, res) {
 
 
 /**
- * Export annotations to json format
- * @param {Request} req 
- * @param {Response} res 
+ * @api {post} /tasks/export Export annotations to json format
+ * @apiName PostExportTasks
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiParam {string} [path] Relative path to tasks folder
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Failed to create export folder
  */
 async function export_tasks(req, res) {
     checkAdmin(req, async () => {
         if (!req.body.path) {
-        return res.status(400).json({
-            error: 'wrong_path',
-            message: 'Invalid path.'
-        });
+            return res.status(400).json({
+                error: 'wrong_path',
+                message: 'Invalid path.'
+            });
         }
         const exportPath = path.join(workspace, req.body.path);
         console.log('##### Exporting to ', exportPath);
@@ -270,9 +311,20 @@ async function export_tasks(req, res) {
 }
 
 /**
- * Update task details.
- * @param {Request} req 
- * @param {Result} res 
+ * @api {put} /tasks/:task_name Update task details
+ * @apiName PutTask
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiParam {RestTask} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 204 No Content
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Unknown task
  */
 async function put_task(req, res) {
     checkAdmin(req, async () => {
@@ -301,9 +353,20 @@ async function put_task(req, res) {
 }
 
 /**
- * Get task for a given id.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {get} /task/:task_name Get task details
+ * @apiName GetTask
+ * @apiGroup Tasks
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "name": "my_task",
+ *       "spec_id": "feffezf",
+ *       "dataset_id": "dezge"
+ *     }: DbTask
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
  */
 async function get_task(req, res) {
     try {
@@ -316,35 +379,15 @@ async function get_task(req, res) {
     }    
 }
 
-async function remove_task(taskName) {
-    const key = dbkeys.keyForTask(taskName);
-    const bm = new batchManager.BatchManager(db);
-    await bm.add({ type: 'del', key});
-    
-    // delete  associated jobs
-    const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
-    for await (const job of streamJob) {
-        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)})
-    }
-    
-    // associated result
-    const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
-    for await (const result of streamResults) {
-        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)})
-    }
-    
-    // associated labels WARNING !!!!
-    const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
-    for await (const label of streamLabels) {
-        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)})
-    }
-    await bm.flush();
-}
 
 /**
- * Delete a task for a given id.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {delete} /tasks/:task_name Delete task
+ * @apiName DeleteTask
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 204 No Content
  */
 function delete_task(req, res) {
     checkAdmin(req, async () => {
@@ -353,6 +396,9 @@ function delete_task(req, res) {
         return res.status(204).json({});
     });
 }
+
+
+///// Utils
 
 /**
  * Get all tasks details.
@@ -429,10 +475,10 @@ async function generateJobResultAndLabelsLists(task) {
 
 /**
  * Create result item for a given dataId and jobId with status
- * @param {*} taskName 
- * @param {*} dataId 
- * @param {*} currJobId 
- * @param {*} currStatus 
+ * @param {string} taskName 
+ * @param {string} dataId 
+ * @param {string} currJobId 
+ * @param {string} currStatus 
  */
 function createResult(taskName, dataId, currJobId, currStatus, path) {
     return {
@@ -441,12 +487,48 @@ function createResult(taskName, dataId, currJobId, currStatus, path) {
         finished_job_ids: [],
         current_job_id: currJobId,
         status: currStatus,
-        assigned: false,
+        in_progress: false,
         cumulated_time: 0,
         annotator: '',
         validator: '',
         path
     };
+}
+
+async function remove_task(taskName) {
+    const key = dbkeys.keyForTask(taskName);
+    const bm = new batchManager.BatchManager(db);
+    await bm.add({ type: 'del', key});
+    
+    // delete  associated jobs
+    const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
+    for await (const job of streamJob) {
+        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)})
+    }
+    
+    // delete associated result
+    const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+    for await (const result of streamResults) {
+        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)})
+    }
+    
+    // delete associated labels WARNING !!!!
+    const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
+    for await (const label of streamLabels) {
+        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)})
+    }
+
+    // delete associated user information
+    const streamUsers = utils.iterateOnDB(db, dbkeys.keyForUser(), false, true);
+    for await (const user of streamUsers) {
+        ['to_annotate', 'to_validate', 'to_correct'].forEach((obj) => {
+            // Delete assigned or queued jobs
+            delete user.curr_assigned_jobs[taskName+'/'+obj];
+            delete user.queue[taskName+'/'+obj];
+        });
+        await bm.add({ type: 'put', key: dbkeys.keyForUser(user.username), value: user})
+    }
+    await bm.flush();
 }
 
 module.exports = {
@@ -456,5 +538,6 @@ module.exports = {
     put_task,
     delete_task,
     import_tasks,
-    export_tasks
+    export_tasks,
+    getAllTasksDetails
 }

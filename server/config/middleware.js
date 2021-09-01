@@ -49,6 +49,7 @@ const checkToken = (req, res, next) => {
           expires: new Date(Date.now() + 604800000),
           secure: false, // set to true if your using https
           httpOnly: true,
+          sameSite: 'lax'
         });
         next();
       }

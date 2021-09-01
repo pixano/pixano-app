@@ -18,7 +18,8 @@ const { get_datasets,
         post_datasets,
         get_dataset,
         delete_dataset,
-        get_data } = require('./routes/datasets');
+        get_data,
+        get_datas } = require('./routes/datasets');
 const { get_specs,
         post_specs,
         get_spec,
@@ -71,6 +72,7 @@ router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
 router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);
 
 router.get('/datasets/:dataset_id/data/:data_id', middleware.checkToken, get_data);
+router.get('/datasets/:dataset_id/data/', middleware.checkToken, get_datas);
 
 router.get('/specs', middleware.checkToken, get_specs);
 router.post('/specs', middleware.checkToken, post_specs);
@@ -86,7 +88,7 @@ router.put('/tasks/:task_name', middleware.checkToken, put_task);
 router.get('/tasks/:task_name', middleware.checkToken, get_task);
 router.delete('/tasks/:task_name', middleware.checkToken, delete_task);
 
-// For label
+// For labelling jobs
 router.get('/tasks/:task_name/jobs/next', middleware.checkToken, get_next_job);
 router.put('/tasks/:task_name/jobs/:job_id', middleware.checkToken, put_job);
 
@@ -97,6 +99,7 @@ router.get('/tasks/:task_name/results/:data_id/previous', middleware.checkToken,
 router.get('/tasks/:task_name/results/:data_id/next', middleware.checkToken, get_next_result);
 router.put('/tasks/:task_name/results', middleware.checkToken, put_results);
 
+// For label
 router.get('/tasks/:task_name/labels/:data_id', middleware.checkToken, get_labels);
 router.put('/tasks/:task_name/labels/:data_id', middleware.checkToken, put_labels);
 
