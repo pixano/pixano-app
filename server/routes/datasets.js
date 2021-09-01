@@ -1,7 +1,5 @@
 const path = require('path');
-const normalize = require('normalize-path');
-const { db,
-  workspace } = require('../config/db');
+const { db, workspace } = require('../config/db');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -9,9 +7,19 @@ const populator = require('../helpers/data-populator');
 
 
 /**
- * Get list of datasets. Admin only.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {get} /datasets Get list of datasets
+ * @apiName GetDatasets
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     [{
+ *        id: "random_string";
+ *        path: "images/"; // relative to workspace
+ *        data_type: "image"
+ *     }]: DbDataset[]
+ * 
  */
 async function get_datasets(req, res) {
     checkAdmin(req, async () => {
@@ -32,9 +40,18 @@ async function get_datasets(req, res) {
 }
 
 /**
- * Add a new dataset.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {post} /datasets Add new dataset
+ * @apiName PostDatasets
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 204 Dataset already existing
  */
 async function post_datasets(req, res) {
     checkAdmin(db, req, async () => {
@@ -49,10 +66,21 @@ async function post_datasets(req, res) {
 });
 }
 
+
 /**
- * Get dataset detail from its id. Admin only.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {get} /datasets/:dataset_id Get dataset detail
+ * @apiName GetDataset
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *        id: "random_string";
+ *        path: "images/"; // relative to workspace
+ *        data_type: "image"
+ *     }: DbDataset
+ * 
  */
 async function get_dataset(req, res) {
     checkAdmin(req, async () => {
@@ -68,9 +96,16 @@ async function get_dataset(req, res) {
 }
 
 /**
- * Delete dataset from its its. Admin only.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {delete} /dataset/:dataset_id Delete dataset
+ * @apiName DeleteDataset
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 204 No Content
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
  */
 async function delete_dataset(req, res) {
     checkAdmin(req, async () => {
@@ -82,9 +117,20 @@ async function delete_dataset(req, res) {
 
 
 /**
- * Get data information from its id and its dataset_id.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {get} /datasets/:dataset_id/data/:data_id Get data item info
+ * @apiName GetData
+ * @apiGroup Dataset
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *        id: dataData.id, 
+ *        dataset_id: dataData.dataset_id, 
+ *        type: dataData.type,
+ *        children,
+ *        path
+ *     }: DbData
+ * 
  */
 async function get_data(req, res) {
     try {
@@ -98,6 +144,37 @@ async function get_data(req, res) {
     }
 }
 
+
+/**
+ * @api {get} /datasets/:dataset_id/data Get all data items
+ * @apiName GetDatas
+ * @apiGroup Dataset
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     []: DbData[]
+ * 
+ */
+async function get_datas(req, res) {
+  const datasetId = req.params.dataset_id;
+  const stream = utils.iterateOnDB(db, dbkeys.keyForData(datasetId), false, true);
+  const datas = []
+  for await(const data of stream) {
+    datas.push(data);
+  }
+  return res.send(datas);
+}
+
+
+///// Utils
+
+/**
+ * Get data content from its id
+ * @param {string} dataset_id 
+ * @param {string} data_id 
+ * @param {boolean} relative whether the media path is relative or not to root
+ * @returns 
+ */
 const getDataDetails = async (dataset_id, data_id, relative = false) => {
     const dataData = await db.get(dbkeys.keyForData(dataset_id, data_id));
     let path = dataData.path;
@@ -190,7 +267,7 @@ function getAllPathsFromDataset(dataset_id) {
   return new Promise((resolve) => {
     stream.on('data', (value) => { 
       const p = Array.isArray(value.path) ? value.path[0] : value.path;
-      const relUrl = p.replace(populator.MOUNTED_WORKSPACE_PATH, '').replace(/\//g, '');
+      const relUrl = path.normalize(p.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
       // console.log('relUrl', relUrl);
       dataMap[relUrl] = value.id;
     }).on('end', () => {
@@ -205,6 +282,7 @@ module.exports = {
     get_dataset,
     delete_dataset,
     get_data,
+    get_datas,
     getOrcreateDataset,
     getAllDataFromDataset,
     getAllPathsFromDataset,

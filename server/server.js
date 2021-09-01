@@ -4,7 +4,6 @@
  * @license CECILL-C
 */
 
-const bodyParser = require('body-parser');
 const express = require('express');
 const app = express();
 const serveStatic = require('serve-static');
@@ -19,6 +18,7 @@ const fs = require('fs');
 const arg = require('arg');
 const pkg = require('../package');
 
+// TODO: port starting with 443 should have https
 let port = process.env.PORT || 3000;
 
 const getNetworkAddress = () => {
@@ -85,8 +85,8 @@ const entry = args._.length > 0 ? path.resolve(args._[0]) : '/data/';
 
 // support json encoded bodies
 // and set maximal entity request size (default is 100Kb)
-app.use(bodyParser.json({limit: '50mb', extended: true}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(express.json({limit: '50mb', extended: true}));
+app.use(express.urlencoded({limit: '50mb', extended: true}));
 app.use('/data/', express.static(entry));
 app.use('/data/', express.static(path.resolve('server/'), { maxAge: '1d' }));
 app.use(cookieParser());
@@ -107,8 +107,8 @@ initLevel(entry).then(() => {
 
   // Mount the router at /api/v1 so all its routes start with /api/v1
   app.use('/api/v1', router);
-  
-  const server = app.listen(port, async () => {
+
+  function displayNetworkInfo(server, protocol="http") {
     const details = server.address();
     let localAddress = null;
 		let networkAddress = null;
@@ -119,8 +119,8 @@ initLevel(entry).then(() => {
 			const address = details.address === '::' ? 'localhost' : details.address;
 			const ip = getNetworkAddress();
 
-			localAddress = `http://${address}:${details.port}`;
-      networkAddress = `http://${ip}:${details.port}`;
+			localAddress = `${protocol}://${address}:${details.port}`;
+      networkAddress = `${protocol}://${ip}:${details.port}`;
       
       let message = chalk.green('Serving', entry);
 
@@ -141,7 +141,11 @@ initLevel(entry).then(() => {
 				margin: 1
       }));
 		}
-  });
+  }
 
+  // const makeCert = require('make-cert');
+  // const {key, cert} = makeCert('localhost');
+  // const server = https.createServer({ key, cert }, app).listen(44301, async () => displayNetworkInfo(server, "https"))
+  const server = app.listen(port, async () => displayNetworkInfo(server));
 });
 

@@ -24,6 +24,7 @@ import '@material/mwc-tab';
 import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
 import '@material/mwc-dialog';
+import '../helpers/pop-up';
 
 
 export default class TemplatePage extends LitElement {
@@ -113,9 +114,10 @@ export default class TemplatePage extends LitElement {
    * Generic pop up
    * @param {string} message 
    */
-  errorPopup(message) {
-    this.shadowRoot.getElementById('error-message').innerHTML = message.replace(/\n/g, '<br>');
-    this.shadowRoot.getElementById('dialog-error').open = true;
+  errorPopup(message, options = ['ok']) {
+    this.popUp.message = message;
+    this.popUp.buttons = options;
+    return this.popUp.prompt();
   }
 
   static get styles() {
@@ -272,7 +274,11 @@ export default class TemplatePage extends LitElement {
         user-select: none;
       }
     `;
-  } 
+  }
+
+  get popUp() {
+    return this.shadowRoot.querySelector('pop-up');
+  }
 
   get leftPanelContent() {
     return html``
@@ -324,10 +330,7 @@ export default class TemplatePage extends LitElement {
         </div>
         ${this.body}        
       </div>
-      <mwc-dialog heading="Message dialog" id="dialog-error">
-        <div id="error-message"></div>
-        <mwc-button slot="primaryAction" dialogAction="close">Ok</mwc-button>
-      </mwc-dialog>
+      <pop-up></pop-up>
     `;
   }
 }

@@ -39,7 +39,7 @@ import { LitElement, html, css } from 'lit-element';
 import { installRouter } from 'pwa-helpers/router.js';
 import { connect } from 'pwa-helpers/connect-mixin.js';
 import { store, getStoreState } from './store';
-import { navigate, getTasks, interruptJob } from './actions/application';
+import { navigate, getTasks } from './actions/application';
 import { getProfile } from './actions/user';
 import 'material-design-icons/iconfont/material-icons.css';
 import 'typeface-roboto/index.css';
@@ -57,11 +57,6 @@ class MyApp extends connect(store)(LitElement)  {
     super();
     this.ready = false;
     this.waiting = false;
-
-    window.addEventListener('beforeunload', (event) => {
-      store.dispatch(interruptJob());
-    });
-
   }
 
   _locationChanged(location) {
