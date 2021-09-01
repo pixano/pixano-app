@@ -23,7 +23,8 @@ async function initLevel(workspacePath) {
                 password: 'admin',
                 role: 'admin',
                 preferences: {theme: 'white'},
-                last_assigned_jobs: {}
+                curr_assigned_jobs: {},
+                queue: {}
             })
         });
     })

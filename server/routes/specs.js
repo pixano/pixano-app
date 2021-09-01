@@ -4,9 +4,21 @@ const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
 
 /**
- * Get list of specifications.
- * @param {*} _ 
- * @param {Response} res 
+ * @api {get} /specs Get list of specifications
+ * @apiName GetSpecs
+ * @apiGroup Specs
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     [{
+ *       "id": "cjeiceue",
+ *       "plugin_name": "rectangle",
+ *       "data_type": "image",
+ *       "label_schema": {}
+ *     }]: DbSpec[]
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Error
  */
 async function get_specs(_, res) {
     try {
@@ -25,9 +37,15 @@ async function get_specs(_, res) {
 }
 
 /**
- * Add a new specification.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {post} /specs Add new specification
+ * @apiName PostSpecs
+ * @apiGroup Specs
+ * @apiPermission admin
+ * 
+ * @apiParam {object} [body] RestSpec
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
  */
 async function post_specs(req, res) {
     checkAdmin(req, async () => {
@@ -39,9 +57,21 @@ async function post_specs(req, res) {
 }
 
 /**
- * Get specification for a given id.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {get} /specs/spec_id Get specification with given it
+ * @apiName GetSpec
+ * @apiGroup Specs
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "id": "cjeiceue",
+ *       "plugin_name": "rectangle",
+ *       "data_type": "image",
+ *       "label_schema": {}
+ *     }: DbSpec
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
  */
 async function get_spec(req, res) {
     try {
@@ -55,15 +85,24 @@ async function get_spec(req, res) {
 }
 
 /**
- * Update specification for a given id.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {put} /specs/:spec_id Update specification info
+ * @apiName PutSpec
+ * @apiGroup Specs
+ * @apiPermission admin
+ * 
+ * @apiParam {RestSpec} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 204 No Content
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Unknown spec or forbidden change
  */
 async function put_spec(req, res) {
     checkAdmin(db, req, async () => {
         const config = req.body;
         try {
-        //Invalid request
+        // Invalid request
         if (config.id !== req.params.spec_id) {
                 res.status(400).json({
                 type: 'bad_id',
@@ -97,9 +136,13 @@ async function put_spec(req, res) {
 }
 
 /**
- * Delete a specification for a given id.
- * @param {Request} req 
- * @param {Response} res 
+ * @api {delete} /specs/:spec_id Delete specification
+ * @apiName DeleteSpec
+ * @apiGroup Specs
+ * @apiPermission admin
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 204 No Content
  */
 async function delete_spec(req, res) {
     checkAdmin(req, async () => {
@@ -108,6 +151,9 @@ async function delete_spec(req, res) {
         return res.status(204).json({});
     });
 }
+
+
+//// Utils
 
 /**
  * Get or create spec in database from its content.

@@ -52,6 +52,7 @@ class AppDashboardAdmin extends TemplatePage {
     this.pageSizes = [5, 100, 200];
     this.globalCounter = 0;
     this.doneCounter = 0;
+    this.toValidateCounter = 0;
 
     this.statusMap = new Map([['', ['', '', '']], 
                               ['to_annotate', ['to annotate', 'create', 'blue']], 
@@ -73,6 +74,7 @@ class AppDashboardAdmin extends TemplatePage {
       this.resultsLength = data.counter;
       this.globalCounter = data.globalCounter;
       this.doneCounter = data.doneCounter;
+      this.toValidateCounter = data.toValidateCounter;
       return data.results;
     } catch (err) {
       return [];
@@ -336,7 +338,7 @@ class AppDashboardAdmin extends TemplatePage {
       .list-header {
         display: flex;
         background: whitesmoke;
-        box-shadow: 0px -1px 0px black inset;
+        box-shadow: #8e8e8e 0px -1px 0px inset;
       }
       .list-header > mwc-checkbox {
         padding-left: 14px;
@@ -476,7 +478,7 @@ class AppDashboardAdmin extends TemplatePage {
         <div title=${item.path}><p class="path"><span>${item.path}</span></p></div>
         <p>${item.annotator}</p>
         <p>${item.validator}</p>
-        <p>${this.assignedMap.get(item.assigned.toString())}</p>
+        <p>${this.assignedMap.get(item.in_progress.toString())}</p>
         <p>${format(item.cumulated_time)}</p>
         <p><mwc-icon-button class="launch" icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
       </div>
@@ -515,9 +517,9 @@ class AppDashboardAdmin extends TemplatePage {
         <mwc-select label="state"
                     icon="filter_list"
                     style="position: absolute;"
-                    @selected=${(evt) => this.updateFilter('assigned', assignedList[evt.detail.index][0])}>
+                    @selected=${(evt) => this.updateFilter('in_progress', assignedList[evt.detail.index][0])}>
           ${assignedList.map((s) => {
-              return html`<mwc-list-item ?selected=${filters.assigned === s[0]} value=${s[0]}>${s[1]}</mwc-list-item>`;
+              return html`<mwc-list-item ?selected=${filters.in_progress === s[0]} value=${s[0]}>${s[1]}</mwc-list-item>`;
             })}
         </mwc-select>
       </div>
@@ -608,7 +610,8 @@ class AppDashboardAdmin extends TemplatePage {
                   @click="${() => this.refreshGrid()}"
                   title="Refresh">
       </mwc-icon-button>
-      <mwc-linear-progress progress="${this.doneCounter/this.globalCounter}"></mwc-linear-progress>
+      <mwc-linear-progress progress="${this.doneCounter/this.globalCounter}"
+                           buffer="${(this.doneCounter+ this.toValidateCounter)/this.globalCounter}"></mwc-linear-progress>
       <div style="margin: auto;">
         <p>${this.doneCounter}</p>
         <p>-</p>

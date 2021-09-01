@@ -258,7 +258,7 @@ export const putJob = (status) => (dispatch, getState) => {
     if(taskName && jobId) {
         return PUT(`/api/v1/tasks/${taskName}/jobs/${jobId}`, body);            
     } else {
-        return Promise.resolve('failure');
+        return Promise.reject({message: `Job ${jobId} is dead.`});
     }
 }
 

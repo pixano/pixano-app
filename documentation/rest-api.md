@@ -57,7 +57,7 @@ This document lists the API of the Pixano server that enable the creation of new
 type Objective =  'to_annotate' | 'to_validate' | 'to_correct';
 
 // possible status a data item can have
-type LabellingStatus =  'to_annotate' | 'to_validate' | 'to_correct' | 'done';
+type LabellingStatus =  Objective | 'done';
 
 // possible types a data item can have
 type DataType =  'image' | 'pcl' | 'pcl_image' | 'sequence_pcl' | 'sequence_image' | 'sequence_pcl_image';
@@ -80,7 +80,19 @@ interface DbUser {
     password: string;
     role: string;
     preferences: object;
-    last_assigned_jobs: string;
+    // list of ongoing jobs for user for each task/objective
+    // Format:
+    // - key = taskName + '/' + Objective
+    // - value = job id
+    curr_assigned_jobs: {[string]: string};
+    // list of queued jobs for user for each task/objective
+    // priority at the beginning:
+    // - shift if you want to add a priority job
+    // - push if you want to add a standard job
+    // Format:
+    // - key = taskName + '/' + Objective
+    // - value = list of job ids
+    queue: {[string]: string[]};
 }
 
 // Dataset info
@@ -124,26 +136,30 @@ interface DbTask {
 }
 
 // Element of an annotation process with immutable objective
+// No information on whether it is over or not => refer to result for that
 interface DbJob {
-    id: string;
-    task_name: string;
-    data_id: string;
-    objective: Objective;
-    assigned_to: string;
-    start_at: number;
-    duration: number
+    id: string; // unique id (immutable)
+    task_name: string; // task name (immutable)
+    data_id: string; // image id (immutable)
+    objective: Objective; // job objective (immutable)
+    assigned_to: string; // username assignment, empty ONLY if job not started <=> result `in_progress` <=> user curr_assigned_jobs
+    start_at: number; // most recent start of the job, 0 if job has not started / was interrupted / ended
+    duration: number; // total accumulated duration
+    last_update_at: number; // last time the job was saved / updated
 }
 
 // Annotation jobs summary for a data item
 interface DbResult {
-    task_name: string;
-    data_id: string;
-    status: LabellingStatus;
-    finished_job_ids: string[];
-    current_job_id: string;
-    cumulated_time: number;
-    annotator: string;
-    validator: string;
+    task_name: string; // task name (immutable)
+    data_id: string; // image id (immutable)
+    finished_job_ids: string[]; // list of finished job ids (oldest to newest)
+    current_job_id: string; // current job id (always filled unless the image is verified and done, job id is not necessarily started)
+    // other stored info taken from jobs (always synchronize!)
+    status: LabellingStatus; // computed from status of current_job_id or done if none
+    cumulated_time: number; // total accumulated duration: for display only, duplicate from job
+    annotator: string; // last annotator to annotate/correct image (empty is none): for display only, duplicate from job (empty if current job not assigned)
+    validator: string; // last annotator to validate/reject image: for display only, duplicate from job
+    in_progress: boolean; // whether the image is currently being worked on (in pause counts as being worked on): in progress vs idle (= if current job is assigned)
 }
 
 // Labels for an image
