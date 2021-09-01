@@ -41,18 +41,18 @@ export class PluginSegmentation extends TemplatePlugin {
   get toolDrawer() {
     return html`
         <mwc-icon-button ?selected=${this.mode === 'select'}
-                         title="Edit"
+                         title="Select instance"
                          icon="navigation"
                          @click="${() => this.mode = 'select'}">
                          </mwc-icon-button>
         <mwc-icon-button ?selected=${this.mode === 'create'}
                          icon="add_circle_outline"
-                         title="Create"
+                         title="Add instance (Polygon)"
                          @click="${() => this.mode = 'create'}">
                          </mwc-icon-button>
         <mwc-icon-button ?selected=${this.mode === 'create-brush'}
                          icon="brush"
-                         title="Create Brush"
+                         title="Add instance (Brush)"
                          @click="${() => this.mode = 'create-brush'}">
                          </mwc-icon-button>
         <mwc-icon-button ?selected=${this.mode === 'edit-add'}
@@ -83,7 +83,6 @@ export class PluginSegmentation extends TemplatePlugin {
                          title="Switch color"
                          @click="${() => this.maskVisuMode = this.maskVisuMode === 'INSTANCE' ? 'SEMANTIC': 'INSTANCE'}">
                          </mwc-icon-button>
-    </div>
     `
   }
 
