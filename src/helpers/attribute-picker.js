@@ -323,7 +323,16 @@ export class AttributePicker extends LitElement {
               }></mwc-checkbox>
             </mwc-formfield>
             `
-        }
+        } else if (prop.type === 'textfield') {
+			const checked = this.value.options[prop.name];
+			  return html`
+			  <mwc-formfield label="${prop.name}">
+				<mwc-textfield @change=${
+				  (evt) => { console.log("change textfield"); }
+				}></mwc-textfield>
+			  </mwc-formfield>
+			  `
+		  }
         return html``;
     }
 
