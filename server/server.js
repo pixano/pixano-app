@@ -76,10 +76,6 @@ if (args['--port']) {
   port = args['--port'];
 }
 
-// if (args._.length > 1) {
-//   console.error('Please provide one workspace path argument at maximum');
-//   process.exit(1);
-// }
 
 const entry = args._.length > 0 ? path.resolve(args._[0]) : '/data/';
 

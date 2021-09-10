@@ -1,6 +1,5 @@
 # Automatic user generation
 import requests
-import json
 
 # Change this url if needed
 PixanoUrl = 'http://localhost:3000/api/v1'

@@ -14,7 +14,11 @@ const dbkeys = require('../config/db-keys');
 const MOUNTED_WORKSPACE_PATH = '/data/';
 
 const toRelative = (url) => {
-  return url.replace(MOUNTED_WORKSPACE_PATH, '');
+  if (Array.isArray(url)) {
+    return url.map((u) => u.replace(MOUNTED_WORKSPACE_PATH, ''));
+  } else {
+    return url.replace(MOUNTED_WORKSPACE_PATH, '');
+  }
 }
 
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
@@ -127,7 +131,6 @@ async function populateMultiviewSequence(db, mediaRelativePath, hostWorkspacePat
   
     const folders = files.reduce(folderReducer, {});
     let counter = 0;
-    console.log('folders', files, hostFolder, ext);
     for await (const folderPath of Object.keys(folders)) {
         const id = generateKey();
         const sortedFrames = folders[folderPath].sort((a, b) => a.localeCompare(b))
@@ -189,7 +192,7 @@ async function populateSequence(db, mediaRelativePath, hostWorkspacePath, datase
 }
 
 const workspaceToMount = (hostWorkspacePath, f) => {
-  return f.replace(hostWorkspacePath, MOUNTED_WORKSPACE_PATH);
+  return path.normalize(f.replace(hostWorkspacePath, MOUNTED_WORKSPACE_PATH));
 }
 
 /**
@@ -200,6 +203,10 @@ const workspaceToMount = (hostWorkspacePath, f) => {
 function parseFolder(dir, extensions = ['jpg', 'png']) {
   return new Promise((resolve, reject) => {
     console.info(`Parsing folder ${dir}`);
+    if (!(fs.existsSync(dir))) {
+      console.log("Directory does not exist.")
+      return resolve({folders: {}});
+    }
     // bar.start(0, 0);
     walk(dir, extensions, (err, result) => {
       // bar.stop();
