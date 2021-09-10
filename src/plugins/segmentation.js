@@ -97,6 +97,9 @@ export class PluginSegmentation extends TemplatePlugin {
           return [c.idx, [color[0], color[1], color[2], c.instance ? 1 : 0]]
       })
     );
+    if (!schema.default) {
+      schema.default = schema.category[0].name;
+    }
     this.element.targetClass = schema.category.find((c) => c.name === schema.default).idx;
   }
 
