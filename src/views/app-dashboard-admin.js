@@ -604,7 +604,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   get leftSection() {
     return html`
-    <div id="left-panel" class="section">
+    <div id="left-panel" class="section" title="To annotate: ${this.globalCounter-this.toValidateCounter-this.doneCounter} \n To validate: ${this.toValidateCounter}\n Done: ${this.doneCounter}">
       <mwc-icon-button icon="refresh"
                   style="margin-left: auto; margin-right: auto;"
                   @click="${() => this.refreshGrid()}"

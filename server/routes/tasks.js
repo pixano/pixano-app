@@ -168,14 +168,15 @@ async function import_tasks(req, res) {
                 let sourcePath;
                 if (ann.data.path) {
                     // remove / to normalize path
-                    sourcePath = Array.isArray(ann.data.path) ? ann.data.path[0] : ann.data.path;
+                    const p = Array.isArray(ann.data.path) ? ann.data.path[0] : ann.data.path;
+                    sourcePath = path.normalize(p);
                 } else {
                     try {
                         // try to get first children image if path is not available
                         const children = ann.data.url || ann.data.children;
                         let firstItemPath = children[0].path || children[0].url;
                         firstItemPath = Array.isArray(firstItemPath) ? firstItemPath[0] : firstItemPath;
-                        sourcePath = path.dirname(firstItemPath);
+                        sourcePath = path.normalize(path.dirname(firstItemPath));
                     } catch(err) {
                         console.warn('Should be: { annotations: any[], data: { type: string, path: string | string[], children: array<{path, timestamp}>} ')
                     }

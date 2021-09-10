@@ -25,7 +25,7 @@ async function initLevel(workspacePath) {
                 preferences: {theme: 'white'},
                 curr_assigned_jobs: {},
                 queue: {}
-            })
+            });
         });
     })
 }

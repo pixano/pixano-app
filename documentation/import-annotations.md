@@ -408,6 +408,7 @@ for ann in annotations:
   # should be (height,width,3)
   # corresponding to [id1, id2, classIdx]
   # id1 and id2 are zeros in case of semantic segmentation
+  # in case of instance segmentation, they should be incremental: (id1:1, id2:0), then (id1:2, id2:0), then (id1:3, id2:0), etc...
 ```
 
 ### Import bounding box tracking annotations / predictions

@@ -129,12 +129,14 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    */
   onUpdate(evt) {
     const updatedIds = evt.detail;
-    const new_shapes = [...this.element.shapes].filter((s) => updatedIds.includes(s.id));
-    new_shapes.forEach((s) => {
-      const s2 = JSON.parse(JSON.stringify(s));
-      delete s2.color;
-      store.dispatch(updateAnnotation(s2));
-    });
+    if (Array.isArray(updatedIds)) {
+      const new_shapes = [...this.element.shapes].filter((s) => updatedIds.includes(s.id));
+      new_shapes.forEach((s) => {
+        const s2 = JSON.parse(JSON.stringify(s));
+        delete s2.color;
+        store.dispatch(updateAnnotation(s2));
+      });
+    }
   }
 
   /**

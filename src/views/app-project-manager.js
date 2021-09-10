@@ -128,6 +128,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
    */
   onAddTask() {
     const plugin_name = pluginsList[0];
+    // fill default values
     const task = {
       name : '',
       spec: {
@@ -293,6 +294,13 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     this.tasks[this.taskIdx].dataset.path = getValue(e);
   }
 
+  autoCreateSegmentationTask() {
+    const taskName = this.tasks[this.taskIdx].name;
+    store.dispatch(autoCreateTask(taskName)).then(() => {
+      this.onActivate();
+    })
+  }
+
   get taskHeader() {
     return html`
       <div class="section-header"> Task Configuration
@@ -359,7 +367,6 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                                 }}>
                 ${pluginsList.map((v) => html`<mwc-list-item value=${v} ?selected=${pluginName == v}>${v}</mwc-list-item>`)}
               </mwc-select>
-
             </div>
             <div>
               <h1 style="font-size: 16px; color: #626262; margin-top: 20px; margin-bottom: 20px;">Label and plugin configurator</h1>

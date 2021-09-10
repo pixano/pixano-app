@@ -97,7 +97,6 @@ class AppLabel extends AppExplore {
    * Save labels for a given data id.
    */
   save() {
-    console.log('save');
     store.dispatch(putJob()).then(() => {
       store.dispatch(putLabels()).then(() => {
         this.snack.show();
