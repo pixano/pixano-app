@@ -141,6 +141,29 @@ export class AttributePicker extends LitElement {
       return {}
     }
 
+    onKeyDown(event) {
+      if (event.ctrlKey) {
+        event.preventDefault();
+      }
+    }
+
+    onKeyUp(event) {
+      const isNumber = event.code.replace('Digit', '').replace('Numpad', '')
+      if (Number(isNumber) >= 0 && Number(isNumber) <= 9 && event.ctrlKey) {
+          event.preventDefault();
+          this.mem += isNumber;
+          
+      }
+      if (event.key === 'Control' && this.mem !== '') {
+        event.preventDefault();
+        const c = this.schema.category[Number(this.mem)];
+        if (c) {
+          this.setCategory(c.name);
+        }
+        this.mem = '';
+      }
+    }
+
     constructor() {
         super();
         this.shortcuts = [
@@ -159,27 +182,20 @@ export class AttributePicker extends LitElement {
         const options = this.getDefaultAttributesForCategory(default_schema, default_schema.default);
         this.value = {category: default_schema.default, options };
         this.mem = '';
-        window.addEventListener('keydown', (event) => {
-          if (event.ctrlKey) {
-            event.preventDefault();
-          }
-        });
-        window.addEventListener('keyup', (event) => {
-          const isNumber = event.code.replace('Digit', '').replace('Numpad', '')
-          if (Number(isNumber) >= 0 && Number(isNumber) <= 9 && event.ctrlKey) {
-              event.preventDefault();
-              this.mem += isNumber;
-              
-          }
-          if (event.key === 'Control' && this.mem !== '') {
-            event.preventDefault();
-            const c = this.schema.category[Number(this.mem)];
-            if (c) {
-              this.setCategory(c.name);
-            }
-            this.mem = '';
-          }
-        });
+        this.onKeyDown = this.onKeyDown.bind(this);
+        this.onKeyUp = this.onKeyUp.bind(this);
+    }
+
+    connectedCallback() {
+      super.connectedCallback();
+      window.addEventListener('keydown', this.onKeyDown);
+      window.addEventListener('keyup', this.onKeyUp);
+    }
+
+    disconnectedCallback() {
+      super.disconnectedCallback();
+      window.removeEventListener('keydown', this.onKeyDown);
+      window.removeEventListener('keyup', this.onKeyUp);
     }
 
     openShortcuts() {

@@ -1,9 +1,9 @@
 FROM ubuntu:18.04
 
 # Install Node.js
-RUN apt-get update && apt-get install -y --reinstall ca-certificates curl build-essential
+RUN apt update && apt install -y --reinstall ca-certificates curl build-essential
 RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
-RUN apt install -y nodejs
+RUN apt install -y nodejs && apt install -y python-requests
 
 COPY package.json package.json
 
@@ -50,7 +50,12 @@ RUN npm i \
     && npm i short-uuid \
     && npm i tmp \
     && npm run build \
-    && rm -rf src
+    && rm -rf src \
+    && rm -rf node_modules \
+    && rm -rf images \
+    && rm -rf package.json \
+    && rm -rf package-lock.json \
+    && rm -rf webpack.config.js
 
 EXPOSE 3000
 
