@@ -100,8 +100,18 @@ npm i
 If you want to use custom `pixano-element` modules from local path instead of the NPM registry, link them as explained below:
 
 ```bash
+<<<<<<< HEAD
+# Install application dependencies
+npm rm @pixano/core @pixano/ai @pixano/graphics-2d @pixano/graphics-3d
+npm i ../pixano-elements/packages/core ../pixano-elements/packages/ai ../pixano-elements/packages/graphics-2d ../pixano-elements/packages/graphics-3d
+=======
+npm run cleanPixanoElements
 # Install application dependencies and local pixano-elements
-npm run installLocalPixanoElement --path=../pixano-elements
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=core
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=ai
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=graphics-2d
+npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=graphics-3d
+>>>>>>> d004d009ad7d36d01f4b4abc9c1b9ed94f55bad4
 ```
 *NB: Make sure you have the git repository of pixano-elements next to the pixano-app folder and that you have followed the pixano-elements build instructions before running the above commands.*
 
@@ -149,6 +159,7 @@ If you want to edit the application to your liking, fork this repository.
 To create a docker image of the application, build the application (step 1.b) and then run:
 ```bash
 # You can change `pixano` by your choosen image name
+<<<<<<< HEAD
 sudo docker build -t pixano/pixano-app:my-tag .
 # You can use the local Dockerfile if the build folder already exists
 sudo docker build -t pixano/pixano-app:my-tag -f Dockerfile-local .
@@ -171,3 +182,7 @@ data-test
         └─── yyy.json
 ```
 The `task1.json` file contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image. To prepare those files check the [import documentation](documentation/import-annotations.md).
+=======
+sudo docker build -t pixano .
+```
+>>>>>>> d004d009ad7d36d01f4b4abc9c1b9ed94f55bad4
