@@ -17,45 +17,11 @@ COPY server server
 
 COPY .logo-ascii .logo-ascii
 
-RUN npm i \
-    && npm i abbrev && npm i osenv && npm i npmlog \
-    && npm i rimraf && npm i semver && npm i mkdirp \
-    && npm i ms && npm i yallist && npm i chownr \
-    && npm i mime-types && npm i safer-buffer \
-    && npm i xtend && npm i errno && npm i async \
-    && npm i nan && npm i normalize-path \
-    && npm i end-of-stream \
-    && npm i graceful-fs \
-    && npm i camelcase \
-    && npm i emoji-regex \
-    && npm i archiver \
-    && npm i arg \
-    && npm i bcrypt \
-    && npm i boxen \
-    && npm i chalk \
-    && npm i cli-progress \
-    && npm i cookie-parser \
-    && npm i express \
-    && npm i fs \
-    && npm i glob \
-    && npm i google-protobuf \
-    && npm i grpc \
-    && npm i jsonwebtoken \
-    && npm i level \
-    && npm i moment \
-    && npm i normalize-path \
-    && npm i object-sizeof \
-    && npm i path \
-    && npm i save \
-    && npm i short-uuid \
-    && npm i tmp \
+RUN npm install -g npm@7.23.0 && npm i \
     && npm run build \
-    && rm -rf src \
-    && rm -rf node_modules \
-    && rm -rf images \
-    && rm -rf package.json \
-    && rm -rf package-lock.json \
-    && rm -rf webpack.config.js
+    && rm -rf src node_modules images \
+    && npm i -D \
+    && rm -rf package-lock.json webpack.config.js
 
 EXPOSE 3000
 
