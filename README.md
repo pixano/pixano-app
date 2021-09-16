@@ -1,4 +1,4 @@
-# <img src="images/pixano_logo.png" alt="Pixano" height="100"/>
+# <img src="frontend/images/pixano_logo.png" alt="Pixano" height="100"/>
 
 Pixano App
 ===============
@@ -48,7 +48,7 @@ You’ll see something similar to this.
 
 Open your browser and hit `localhost:3000`. You should see the login page of the application.
 
-![pixano-elements](./images/login.png)
+![pixano-elements](./frontend/images/login.png)
 
 First authentification is: `username: admin` `password: admin`.
 
