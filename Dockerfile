@@ -2,26 +2,21 @@ FROM ubuntu:18.04
 
 # Install Node.js
 RUN apt update && apt install -y --reinstall ca-certificates curl build-essential
-RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
+RUN curl --silent --location https://deb.nodesource.com/setup_12.x | bash -
 RUN apt install -y nodejs && apt install -y python-requests
+RUN npm install -g npm@6.10.0
 
+# Copy files for the frontend
+COPY frontend frontend
+
+# Copy files for the backend
 COPY package.json package.json
-
-COPY webpack.config.js webpack.config.js
-
-COPY src src
-
-COPY images images
-
 COPY server server
-
 COPY .logo-ascii .logo-ascii
 
-RUN npm install -g npm@7.23.0 && npm i \
-    && npm run build \
-    && rm -rf src node_modules images \
-    && npm i -D \
-    && rm -rf package-lock.json webpack.config.js
+# Build frontend and install backend dependencies
+RUN npm run installApp && npm run buildApp && npm install \
+    && rm -rf src frontend
 
 EXPOSE 3000
 

@@ -1,5 +1,4 @@
 # Build Docker image 
-
 FROM ubuntu:18.04
 
 # Install Node.js
@@ -7,20 +6,16 @@ RUN apt-get update && apt-get install -y --reinstall ca-certificates curl build-
 RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
 RUN apt install -y nodejs && apt install -y python-requests
 
-COPY package.json package.json
-
-COPY webpack.config.js webpack.config.js
-
+# Copy bundled frontend
 COPY build build
 
-COPY images images
-
+# Copy files for the backend
+COPY package.json package.json
 COPY server server
-
 COPY .logo-ascii .logo-ascii
 
-RUN npm install -g npm@7.23.0 && npm i -D
-
+# Install backend dependencies
+RUN npm install
 EXPOSE 3000
 
 # ENTRYPOINT ["node", "server/server.js"]
