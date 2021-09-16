@@ -65,7 +65,7 @@ data-test
     │   ...
 ```
 You can fill the task configuration as follows, which will create as many annotation jobs as there are images in your `image` folder:
-![task-creation](./images/task-creation.png)
+![task-creation](./frontend/images/task-creation.png)
 
 *Update 2020.12.04: Make sure your image extensions are either `png` or `jpg`.
 
