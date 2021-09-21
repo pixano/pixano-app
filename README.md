@@ -1,4 +1,4 @@
-# <img src="images/pixano_logo.png" alt="Pixano" height="100"/>
+# <img src="frontend/images/pixano_logo.png" alt="Pixano" height="100"/>
 
 Pixano App
 ===============
@@ -48,7 +48,7 @@ You’ll see something similar to this.
 
 Open your browser and hit `localhost:3000`. You should see the login page of the application.
 
-![pixano-elements](./images/login.png)
+![pixano-elements](./frontend/images/login.png)
 
 First authentification is: `username: admin` `password: admin`.
 
@@ -65,7 +65,7 @@ data-test
     │   ...
 ```
 You can fill the task configuration as follows, which will create as many annotation jobs as there are images in your `image` folder:
-![task-creation](./images/task-creation.png)
+![task-creation](./frontend/images/task-creation.png)
 
 *Update 2020.12.04: Make sure your image extensions are either `png` or `jpg`.
 
@@ -75,37 +75,35 @@ You can fill the task configuration as follows, which will create as many annota
 
 #### Global dependencies
 
-- NodeJS (>=10)
+- NodeJS (>=12)
   To install on ubuntu:
   ```bash
   # Make sure you have curl installed
   sudo apt install curl
   # Then download and execute the Node.js 10.x installer
-  curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
   # Once the installer is done doing its thing, you will need to install (or upgrade) Node.js
   sudo apt install nodejs
   # Make sure the version is now correct
   nodejs --version
+  npm install -g npm@6.10.0
   ```
   You can read this nice [introduction](https://codeburst.io/the-only-nodejs-introduction-youll-ever-need-d969a47ef219) to NodeJS in case you're curious on how it works:
 
 #### Application dependencies
 
 ```bash
-# Install application dependencies
+# Install application backend and frontend dependencies
 npm i
+npm run installApp
 ```
 
 ##### Using a local pixano-element
 If you want to use custom `pixano-element` modules from local path instead of the NPM registry, link them as explained below:
 
 ```bash
-npm run cleanPixanoElements
 # Install application dependencies and local pixano-elements
-npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=core
-npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=ai
-npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=graphics-2d
-npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements --element=graphics-3d
+cd frontend/ && npm run installLocalElements --path=../../pixano-elements && cd ../
 ```
 *NB: Make sure you have the git repository of pixano-elements next to the pixano-app folder and that you have followed the pixano-elements build instructions before running the above commands.*
 
@@ -114,7 +112,7 @@ npm run installLocalPixanoElement --pixano-elements-address=../pixano-elements -
 ```bash
 # Bundle the application using Webpack
 # This will create a build folder containing all the sources to be served
-npm run build
+npm run buildApp
 ```
 
 #### Run the application

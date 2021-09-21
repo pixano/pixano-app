@@ -2,60 +2,21 @@ FROM ubuntu:18.04
 
 # Install Node.js
 RUN apt update && apt install -y --reinstall ca-certificates curl build-essential
-RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
+RUN curl --silent --location https://deb.nodesource.com/setup_12.x | bash -
 RUN apt install -y nodejs && apt install -y python-requests
+RUN npm install -g npm@6.10.0
 
+# Copy files for the frontend
+COPY frontend frontend
+
+# Copy files for the backend
 COPY package.json package.json
-
-COPY webpack.config.js webpack.config.js
-
-COPY src src
-
-COPY images images
-
 COPY server server
-
 COPY .logo-ascii .logo-ascii
 
-RUN npm i \
-    && npm i abbrev && npm i osenv && npm i npmlog \
-    && npm i rimraf && npm i semver && npm i mkdirp \
-    && npm i ms && npm i yallist && npm i chownr \
-    && npm i mime-types && npm i safer-buffer \
-    && npm i xtend && npm i errno && npm i async \
-    && npm i nan && npm i normalize-path \
-    && npm i end-of-stream \
-    && npm i graceful-fs \
-    && npm i camelcase \
-    && npm i emoji-regex \
-    && npm i archiver \
-    && npm i arg \
-    && npm i bcrypt \
-    && npm i boxen \
-    && npm i chalk \
-    && npm i cli-progress \
-    && npm i cookie-parser \
-    && npm i express \
-    && npm i fs \
-    && npm i glob \
-    && npm i google-protobuf \
-    && npm i grpc \
-    && npm i jsonwebtoken \
-    && npm i level \
-    && npm i moment \
-    && npm i normalize-path \
-    && npm i object-sizeof \
-    && npm i path \
-    && npm i save \
-    && npm i short-uuid \
-    && npm i tmp \
-    && npm run build \
-    && rm -rf src \
-    && rm -rf node_modules \
-    && rm -rf images \
-    && rm -rf package.json \
-    && rm -rf package-lock.json \
-    && rm -rf webpack.config.js
+# Build frontend and install backend dependencies
+RUN npm run installApp && npm run buildApp && npm install \
+    && rm -rf src frontend
 
 EXPOSE 3000
 
