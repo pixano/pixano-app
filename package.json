@@ -4,7 +4,7 @@
   "description": "This is a Pixano app.",
   "scripts": {
     "installApp": "npm --prefix frontend/ install",
-    "buildApp": "npm --prefix frontend/ run build && mv frontend/build/ build"
+    "buildApp": "npm --prefix frontend/ run build"
   },
   "keywords": [],
   "license": "CECILL-C",
