@@ -17,6 +17,12 @@ import { createAnnotation,
          updateAnnotation } from '../actions/annotations';
 import { TemplatePlugin } from '../models/template-plugin';
 
+const EditionMode = {
+	ADD_TO_INSTANCE: 'add_to_instance',
+	REMOVE_FROM_INSTANCE: 'remove_from_instance',
+	NEW_INSTANCE: 'new_instance'
+};
+
 /**
  * Plugin segmentation.
  * Reads labels as:
@@ -27,7 +33,8 @@ export class PluginSegmentation extends TemplatePlugin {
   static get properties() {
     return {
       ...super.properties,
-      maskVisuMode: { type: String }
+      maskVisuMode: { type: String },
+	  currentEditionMode: { type: String }
     };
   }
 
@@ -36,6 +43,7 @@ export class PluginSegmentation extends TemplatePlugin {
     this.mode = 'select';
     this.maskVisuMode = 'SEMANTIC';
     this.selectedIds = [0,0,0];
+	this.currentEditionMode = EditionMode.NEW_INSTANCE;
   }
 
   get toolDrawer() {
@@ -55,14 +63,14 @@ export class PluginSegmentation extends TemplatePlugin {
                          title="Add instance (Brush)"
                          @click="${() => this.mode = 'create-brush'}">
                          </mwc-icon-button>
-        <mwc-icon-button ?selected=${this.mode === 'edit-add'}
-                         title="Union"
-                         @click="${() => this.mode = 'edit-add'}">
+        <mwc-icon-button ?selected=${this.getEditionMode()===EditionMode.ADD_TO_INSTANCE}
+                         title="Add to instance (Shift)"
+                         @click="${() => this.setEditionMode(EditionMode.ADD_TO_INSTANCE)}">
                          ${union}
                          </mwc-icon-button>
-        <mwc-icon-button ?selected=${this.mode === 'edit-remove'}
-                         title="Subtract"
-                         @click="${() => this.mode = 'edit-remove'}">
+        <mwc-icon-button ?selected=${this.getEditionMode()===EditionMode.REMOVE_FROM_INSTANCE}
+                         title="Remove from instance (Ctrl)"
+                         @click="${() => this.setEditionMode(EditionMode.REMOVE_FROM_INSTANCE)}">
                          ${subtract}
                          </mwc-icon-button>
         <mwc-icon-button ?selected=${this.mode === 'lock'}
@@ -155,6 +163,15 @@ export class PluginSegmentation extends TemplatePlugin {
     if (mask != this.element.getMask()) {
       this.element.setMask(mask);
     }
+  }
+  
+  getEditionMode() {
+    if (this.element) return this.element.editionMode;
+    else return undefined;
+  }
+  setEditionMode(editionMode) {
+    if (this.element) this.element.editionMode=editionMode;
+    this.currentEditionMode = editionMode;
   }
 
   get editor() {
