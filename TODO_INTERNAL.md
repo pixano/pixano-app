@@ -27,6 +27,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#feature] intégration Semfeat/Élise
 
 - [ ] [#interface] à la création d'une nouvelle tâche, il faudrait pouvoir décider si on souhaite étiqueter en mode shuffle (par défaut) ou linéaire (en suivant le nom des fichiers)
+- [ ] [#interface] add an error message when creating task/dataset in a path which does not exist
 
 
 - Q :
