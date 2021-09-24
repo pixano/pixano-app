@@ -19,14 +19,18 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [-] [#bogue #firefox] les propriétés sous forme de checkbox ne fonctionnent pas (uniquement sous firefox) :
 	- ils reprennent la valeur par défaut si on passe à une annotation de classe différente puis qu'on y revient
 	- si on modifie la valeur sur une boite, c'est propagé à toutes les autres boites de même classe sur lesquelles on clique
-- [-] [#bogue] quand on édite les annotations, puis qu'on crée de nouveau sur la même image, les propriétés restent celles de la dernière annotation modifiée (et on la modifie donc) (à vérifier : ce n'est pas le cas chez Camille => problème de version ou de firefox ?)
+- [-] [#bogue #firefox] quand on édite les annotations, puis qu'on crée de nouveau sur la même image, les propriétés restent celles de la dernière annotation modifiée (et on la modifie donc) (uniquement sous firefox)
 - [ ] [#bogue] pour modifier une tâche il faut créer une nouvelle tâche, puis revenir dessus... Action à déterminer
 - [ ] [#feature] affichage sous forme d’imagettes plutôt qu’une liste
 
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
 - [ ] [#feature] intégration Semfeat/Élise
 
+- [ ] [#interface] à la création d'une nouvelle tâche, il faudrait pouvoir décider si on souhaite étiqueter en mode shuffle (par défaut) ou linéaire (en suivant le nom des fichiers)
+- [ ] [#interface] add an error message when creating task/dataset in a path which does not exist
+
 
 - Q :
 	- [ ] [#feature] possibilité de ne pas annoter tous les keypoints (non visibles) ?
 	- [ ] [#feature] possibilité de sélectionner plusieurs éléments pour leur donner des caractéristiques communes ?
+	- [ ] [#feature] passerelle Mturk / Amazon SageMaker
