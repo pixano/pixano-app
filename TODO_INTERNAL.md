@@ -33,3 +33,4 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - Q :
 	- [ ] [#feature] possibilité de ne pas annoter tous les keypoints (non visibles) ?
 	- [ ] [#feature] possibilité de sélectionner plusieurs éléments pour leur donner des caractéristiques communes ?
+	- [ ] [#feature] passerelle Mturk / Amazon SageMaker
