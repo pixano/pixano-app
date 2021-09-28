@@ -42,6 +42,7 @@ async function get_results(req, res) {
     let toValidateCounter = 0;
 
     const stream = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+	const task = await db.get(dbkeys.keyForTask(taskName));
     for await (const result of stream) {
         let included = true;
         for (let k of keys) {
@@ -54,7 +55,8 @@ async function get_results(req, res) {
         }
         if (included) {
             if (counter >= (match.page - 1) * match.count && counter < match.page * match.count) {
-                results.push(result);
+				const imgData = await db.get(dbkeys.keyForData(task.dataset_id,result.data_id));
+                results.push({...result,thumbnail: imgData.thumbnail});
             }
             counter += 1;
         }

@@ -12,6 +12,7 @@ const batchManager = require('./batch-manager');
 const { generateKey } = require('../helpers/utils');
 const dbkeys = require('../config/db-keys');
 const MOUNTED_WORKSPACE_PATH = '/data/';
+const imageThumbnail = require('image-thumbnail');
 
 const toRelative = (url) => {
   if (Array.isArray(url)) {
@@ -68,7 +69,7 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
     for await (const f of files) {
       const id = generateKey();
       const url = workspaceToMount(hostWorkspacePath, f);
-      const value = { id, dataset_id: datasetId, type: dataType, path: url, children: ''};
+      const value = { id, dataset_id: datasetId, type: dataType, path: url, children: '', thumbnail: await imageThumbnail(f, {responseType: 'base64'})};
       await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value});
       bar1.increment();
     }
