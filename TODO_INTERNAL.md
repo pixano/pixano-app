@@ -21,7 +21,10 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- si on modifie la valeur sur une boite, c'est propagé à toutes les autres boites de même classe sur lesquelles on clique
 - [-] [#bogue #firefox] quand on édite les annotations, puis qu'on crée de nouveau sur la même image, les propriétés restent celles de la dernière annotation modifiée (et on la modifie donc) (uniquement sous firefox)
 - [ ] [#bogue] pour modifier une tâche il faut créer une nouvelle tâche, puis revenir dessus... Action à déterminer
-- [ ] [#feature] affichage sous forme d’imagettes plutôt qu’une liste
+- [o] [#feature] affichage sous forme d’imagettes plutôt qu’une liste
+	- [x] [#feature] création des imagettes et intégration dans la liste de fichiers
+	- [ ] [#feature] généralisation des imagettes à toutes les formes de fichiers en entrée
+- [ ] [#feature] affichage sous forme d'un mur d'imagette + étiquetage rapide directement sur le mur
 
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
 - [ ] [#feature] intégration Semfeat/Élise
