@@ -44,14 +44,15 @@ async function get_results(req, res) {
     const stream = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
 	const task = await db.get(dbkeys.keyForTask(taskName));
     for await (const result of stream) {
+		// filter results
         let included = true;
         for (let k of keys) {
             const query = queries[k];
             const r = JSON.stringify(result[k]) || '';
-            if (!r.includes(query)) {
-                included = false;
-                break;
-            }
+			// if the filter is a (semicolon separated) list, include all result that satisfies at least one of them
+			const queryList = query.split(";").filter((q) => q != "");
+			included = queryList.some((q) => r.includes(q));
+			if (!included) break;
         }
         if (included) {
             if (counter >= (match.page - 1) * match.count && counter < match.page * match.count) {
