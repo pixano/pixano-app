@@ -164,6 +164,10 @@ export class TemplatePluginInstance extends TemplatePlugin  {
                             title="Create"
                             @click="${() => this.mode = 'create'}">
           </mwc-icon-button>
+		  <mwc-icon-button icon="tonality"
+						   title="Hide/Show labels"
+						   @click="${() => this.element.toggleLabels()}">
+						   </mwc-icon-button>
       `
   }
 
