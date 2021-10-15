@@ -183,12 +183,6 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
     }
   }
 
-  get toolDrawer() {
-    return html`
-        ${super.toolDrawer}
-    `
-  }
-
   get editor() {
     return html`<pxn-graph id="main"
                       enableOutsideDrawing
