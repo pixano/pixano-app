@@ -112,7 +112,9 @@ interface DbData {
     // if the data item is a sequence, `path` is only for information
     path: string | string[];
     // if data item is a sequence, each sub item is defined as a `frame`
-    children: DbFrame[]
+    children: DbFrame[];
+	// if data is an image, a 'base64' imageThumbnail corresponding to this data
+	thumbnail: imageThumbnail;
 }
 
 interface DbFrame {
