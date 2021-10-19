@@ -30,8 +30,12 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#bogue] le REJECT ne fonctionne pas (firefox sur rectangle sans annotation dans l'image)
 - [ ] [#bogue] après une sélection via un filtre, on reste sur la même page d'affichage, mais s'il n'y a plus autant d'images à afficher => il faudrait revenir à 0
 - [ ] [#bogue] quand on clique sur l'affichage d'image après avoir filtré une partie du contenu, il ne fait rien (image vide ou image précédente s'il y en avait une
+- [ ] [#feature] possibilité de prendre en compte une modification de la base de données images => bouton "refresh database" ?
 
-
+- [ ] [#feature] revoir les rôles :
+	- [ ] [#feature] possibilité d'utiliser des annotations multiples et concurrente et valider par consensus plutôt que d'avoir un validateur
+	- [ ] [#feature] séparation complète des tâches d'admin qui ne devrait ni annoter, ni valider
+	- [ ] [#feature] annotateurs à compétence différenciée, par ex : les annotateurs de niveau 1 font les BB autour des voitures, les annotateurs de niveau 2 complètent les marques et modèles
 
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
 - [ ] [#feature] intégration Semfeat/Élise
