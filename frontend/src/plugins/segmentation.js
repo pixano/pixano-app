@@ -13,9 +13,9 @@ import { colorToRGBA } from '@pixano/core/lib/utils';
 import { store, getStoreState } from '../store';
 import '../helpers/attribute-picker';
 import { subtract, union } from '../my-icons';
-import { createAnnotation,
-         updateAnnotation } from '../actions/annotations';
-import { TemplatePlugin } from '../models/template-plugin';
+import { createAnnotation, updateAnnotation, deleteAnnotation } from '../actions/annotations';
+import { TemplatePluginInstance } from '../models/template-plugin-instance';
+import { commonJson } from '../helpers/utils';
 
 const EditionMode = {
 	ADD_TO_INSTANCE: 'add_to_instance',
@@ -28,7 +28,7 @@ const EditionMode = {
  * Reads labels as:
  * { id: 0, mask: Base64 }
  */
-export class PluginSegmentation extends TemplatePlugin {
+export class PluginSegmentation extends TemplatePluginInstance {
 
   static get properties() {
     return {
@@ -40,18 +40,17 @@ export class PluginSegmentation extends TemplatePlugin {
 
   constructor() {
     super();
-    this.mode = 'select';
+    this.mode = 'create';
     this.maskVisuMode = 'SEMANTIC';
-    this.selectedIds = [0,0,0];
 	this.currentEditionMode = EditionMode.NEW_INSTANCE;
   }
 
   get toolDrawer() {
     return html`
-        <mwc-icon-button ?selected=${this.mode === 'select'}
-                         title="Select instance"
+        <mwc-icon-button ?selected=${this.mode === 'edit'}
+                         title="Select/Edit instance"
                          icon="navigation"
-                         @click="${() => this.mode = 'select'}">
+                         @click="${() => this.mode = 'edit'}">
                          </mwc-icon-button>
         <mwc-icon-button ?selected=${this.mode === 'create'}
                          icon="add_circle_outline"
@@ -111,45 +110,91 @@ export class PluginSegmentation extends TemplatePlugin {
     this.element.targetClass = schema.category.find((c) => c.name === schema.default).idx;
   }
 
-  onUpdate() {
-    const curr = this.annotations.find((l) => l.id === 0);
-    const im = this.element.getMask();
-    const fn = curr ? updateAnnotation : createAnnotation;
-    store.dispatch(fn(
-      {
-        id: 0,
-        mask: im
-      }));
-  }
+  	/**
+	 * Invoked on instance selection in the canvas.
+	 * @param {CustomEvent} evt 
+	 */
+	onSelection(evt) {
+		this.selectedIds = evt.detail;
+		if (this.selectedIds) {//only one id at a time for segmentation
+			const annot = this.annotations.filter((a) => JSON.stringify(this.selectedIds)===(a.id));// search the corresponding id 
+			const common = commonJson(annot);
+			this.attributePicker.setAttributes(common);
+		} else {
+			// if null, nothing is selected
+			this.selectedIds = [];
+		}
+	}
 
-  onSelection(evt) {
-    this.selectedIds = evt.detail;
-    this.updateDisplayOfSelectedProperties();
-  }
+	/**
+	 * Invoked when a new instance is updated (created = updated for segmentation)
+	 * @param {CustomEvent} evt 
+	 */
+	onUpdate(evt) {
+		// 1) update annotation info when needed
+		const updatedIds = evt.detail;
+		const label = this.annotations.find((l) => l.id === JSON.stringify(updatedIds));// search the corresponding id
+		if (label) {//id exists in the database, update information
+			// nothing to do for annotation infos, only the mask has changed
+		} else {// this is a new id
+			// create the new label
+			let label = {...this.attributePicker.defaultValue};
+			// store the stringified values
+			const value = this.attributePicker.value;
+			Object.keys(label).forEach((key) => {
+				label[key] = JSON.parse(JSON.stringify(value[key]));
+			});
+			label.id = JSON.stringify(updatedIds);
+			store.dispatch(createAnnotation(label));
+		}
+		// 2) update the mask (always id 0)
+		const curr = this.annotations.find((l) => l.id === 0);
+		const im = this.element.getMask();
+		const fn = curr ? updateAnnotation : createAnnotation;
+		store.dispatch(fn({ id: 0, mask: im }));
+		this.selectedIds = updatedIds;
+	}
 
-  updateDisplayOfSelectedProperties() {
-    if (this.selectedIds && this.selectedIds.length) {
-      this.attributePicker.setAttributesIdx(this.selectedIds[2]);
-    } else {
-      this.attributePicker.setAttributesIdx();
-    }
-  }
+	/**
+	 * Invoked on attribute change from property panel.
+	 */
+	onAttributeChanged() {
+		if (!this.selectedIds.length) {//nothing is selected
+			// only set the category acordingly to the selected attribute
+			const category =  this.attributePicker.selectedCategory;
+			this.element.targetClass = category.idx;
+			return;
+		}
+		// 2) update the mask (always id 0)
+		// change category in element
+		const category =  this.attributePicker.selectedCategory;
+		this.element.targetClass = category.idx;
+		this.element.fillSelectionWithClass(category.idx);
+		// get the new mask and store it
+		const im = this.element.getMask();
+		store.dispatch(updateAnnotation({ id: 0, mask: im }));
+		// 1) update annotation info from attributes
+		const value = this.attributePicker.value;
+		const label = this.annotations.find((l) => l.id === JSON.stringify(this.selectedIds));// search the corresponding id
+		Object.keys(value).forEach((key) => {
+			label[key] = JSON.parse(JSON.stringify(value[key]));
+		});
+		// category has changed => selectedId has also changed, update it
+		const updatedIds = this.element.selectedId;
+		label.id = JSON.stringify(updatedIds);
+		this.selectedIds = updatedIds;
+		// update store
+		store.dispatch(updateAnnotation(label));
+	}
 
-  onAttributeChanged() {
-    const value =  this.attributePicker.selectedCategory;
-    this.element.targetClass = value.idx;
-    if (this.selectedIds && this.selectedIds.length
-        && (this.selectedIds[0] != 0 || this.selectedIds[1] != 0 || this.selectedIds[2] != 0)) {
-      this.element.fillSelectionWithClass(value.idx);
-      this.onUpdate();
-    }
-  }
-
-  get propertyPanel() {
-    return html`
-        <attribute-picker @update=${this.onAttributeChanged}></attribute-picker>
-    `
-  }
+	/**
+	 * Invoked on instance removal
+	 * @param {CustomEvent} evt 
+	 */
+	onDelete(evt) {
+		const ids = evt.detail;
+		store.dispatch(deleteAnnotation(JSON.stringify(ids)));// delete the corresponding id in the database
+	}
 
   refresh() {
     if (!this.element) {
@@ -180,7 +225,8 @@ export class PluginSegmentation extends TemplatePlugin {
                             maskVisuMode=${this.maskVisuMode}
                             @update=${this.onUpdate}
                             @selection=${this.onSelection}
-                            @mode=${this.onModeChange}></pxn-segmentation>`;
+                            @delete=${this.onDelete}
+                            @mode=${this.onModeChange}></pxn-segmentation>`;//onCreate never really called for segmentation : the mask is updated
   }
 
 }

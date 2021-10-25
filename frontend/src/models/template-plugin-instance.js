@@ -10,7 +10,7 @@ import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
 import { commonJson } from '../helpers/utils';
-import { store, getStoreState } from '../store';
+import { store } from '../store';
 import { createAnnotation,
          updateAnnotation,
          deleteAnnotation } from '../actions/annotations';
@@ -27,7 +27,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   
   constructor(){
     super();
-    this.mode = 'edit';
+    this.mode = 'create';
     this.selectedIds = [];
   }
 
@@ -39,14 +39,14 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     const value =  this.attributePicker.value;
     this.selectedIds.forEach((id) => {
       const label = {...this.annotations.find((l) => l.id === id)};
-      const shape = [...this.element.shapes].find((s) => s.id === id);
-      label.options = {};
-      Object.keys(value).forEach((key) => {
-        label[key] = JSON.parse(JSON.stringify(value[key]));
-        shape[key] = label[key];
-      });
-      shape.color = this._colorFor(label.category);
-      store.dispatch(updateAnnotation(label));
+	  const shape = [...this.element.shapes].find((s) => s.id === id);
+	  label.options = {};
+	  Object.keys(value).forEach((key) => {
+		label[key] = JSON.parse(JSON.stringify(value[key]));
+		shape[key] = label[key];
+	  });
+	  shape.color = this._colorFor(label.categoryName);
+	  store.dispatch(updateAnnotation(label));
     });
   }
 
@@ -57,30 +57,30 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     // need to make immutable variable as not to change directly
     // the redux store
     this.element.shapes = JSON.parse(JSON.stringify(this.annotations.map((l) => {
-      return {...l, color: this._colorFor(l.category)}
+      return {...l, color: this._colorFor(l.categoryName)}
     })));
   }
 
-  /**
-   * Invoked on instance selection in the canvas.
-   * @param {CustomEvent} evt 
-   */
-  onSelection(evt) {
-    this.selectedIds = evt.detail;
-    this.updateDisplayOfSelectedProperties();
-  }
+	/**
+	 * Invoked on instance selection in the canvas.
+	 * @param {CustomEvent} evt 
+	 */
+	onSelection(evt) {
+		this.selectedIds = evt.detail;
+		this.updateDisplayOfSelectedProperties();
+	}
 
-  /**
-   * Display in the property panel
-   * the labels of the selected instances.
-   */
-  updateDisplayOfSelectedProperties() {
-    if (this.selectedIds.length) {
-      const shapes = this.annotations.filter((s) => this.selectedIds.includes(s.id));
-      const common = commonJson(shapes);
-      this.attributePicker.setAttributes(common);
-    }
-  }
+	/**
+	 * Display in the property panel
+	 * the labels of the selected instances.
+	 */
+	updateDisplayOfSelectedProperties() {
+		if (this.selectedIds && this.selectedIds.length) {
+			const shapes = this.annotations.filter((s) => this.selectedIds.includes(s.id));
+			const common = commonJson(shapes);
+			this.attributePicker.setAttributes(common);
+		}
+	}
 
   /**
    * Invoked on instance creation
@@ -109,7 +109,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     Object.keys(annotation).forEach((key) => {
       object[key] = JSON.parse(JSON.stringify(annotation[key]));
     });
-    object.color = this._colorFor(annotation.category);
+    object.color = this._colorFor(annotation.categoryName);
   }
 
   /**
@@ -145,8 +145,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   get propertyPanel() {
     return html`
         <attribute-picker ?showDetail=${this.selectedIds.length === 0}
-                            @update=${this.onAttributeChanged}></attribute-picker>
-    `
+                            @update=${this.onAttributeChanged}></attribute-picker>`
   }
 
   /**
@@ -155,7 +154,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   get toolDrawer() {
       return html`
           <mwc-icon-button ?selected=${this.mode === 'edit'}
-                            title="Edit"
+                            title="Select/Edit shape"
                             icon="navigation"
                             @click="${() => this.mode = 'edit'}">
           </mwc-icon-button>

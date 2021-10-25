@@ -17,7 +17,7 @@ export class PluginSmartRectangle extends TemplatePluginInstance {
       let { color, ...newAnnotation } = {
         ...JSON.parse(JSON.stringify(newObject))
       };
-      if (!newAnnotation.category) {
+      if (!newAnnotation.categoryName) {
         newAnnotation = {...newAnnotation, ...this.attributePicker.defaultValue}
       }
       store.dispatch(createAnnotation(newAnnotation));

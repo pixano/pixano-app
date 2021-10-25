@@ -14,7 +14,7 @@ data-test
         │    xxx.json
         └─── yyy.json
 ```
-The `task1.json` file contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image.
+The `task1.json` file contains global task settings (task type, task category, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image.
 
 ### Common import information
 

@@ -20,7 +20,7 @@ export class PluginCuboid extends TemplatePluginInstance {
       Object.keys(annotation).forEach((key) => {
         object[key] = JSON.parse(JSON.stringify(annotation[key]));
       });
-      const color = this._colorFor(annotation.category);
+      const color = this._colorFor(annotation.categoryName);
       object.color = colorAnyToHexNumber(color);
     }
 
@@ -29,7 +29,7 @@ export class PluginCuboid extends TemplatePluginInstance {
         return;
       }
       const shapes = JSON.parse(JSON.stringify(this.annotations.map((l) => {
-        const color = this._colorFor(l.category);
+        const color = this._colorFor(l.categoryName);
         return { ...l, color: colorAnyToHexNumber(color) };
       })));
       this.element.editableCuboids = shapes;
@@ -68,7 +68,7 @@ export class PluginCuboid extends TemplatePluginInstance {
           label[key] = JSON.parse(JSON.stringify(value[key]));
           shape[key] = label[key];
         });
-        shape.color = this._colorFor(label.category);
+        shape.color = this._colorFor(label.categoryName);
         store.dispatch(updateAnnotation(label));
       });
     }
