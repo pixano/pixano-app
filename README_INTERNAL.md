@@ -148,7 +148,7 @@ Transform the tag in github release (makes the last tag more visible and detaile
 	sudo docker tag pixano/pixano-app:$VERSION pixano/pixano-app:latest
 	# make sure it built correctly
 	cd data-test/
-	sudo docker run -it --rm -v "$PWD":/data --network host pixano/app:$VERSION
+	sudo docker run -it --rm -v "$PWD":/data --network host pixano/pixano-app:$VERSION
 	cd ../
 	# push to docker hub
 	sudo docker push pixano/pixano-app:$VERSION
