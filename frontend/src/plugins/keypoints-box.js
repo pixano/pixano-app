@@ -108,7 +108,7 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
       freeBoxes.shift();
       this.attributePicker.numDone = this.attributePicker.numTotal - freeBoxes.length;
       store.dispatch(createAnnotation(newAnnotation));
-      this.element.shapes = freeBoxes.length ? [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].category) }] : [];
+      this.element.shapes = freeBoxes.length ? [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].categoryName) }] : [];
     } else {
       this.element.shapes = [];
     }
@@ -138,7 +138,7 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
                           .filter((r) => !ids.includes(r.id));
     if (freeBoxes.length) {
       
-      this.element.shapes = [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].category) }];
+      this.element.shapes = [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].categoryName) }];
     }
   }
   
@@ -157,12 +157,6 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
       selectedLabels[0].geometry.vertices = [vs[0], vs[1], vs[4], vs[5], vs[2], vs[3]];
       this.collect();
     }
-  }
-
-  get toolDrawer() {
-    return html`
-        ${super.toolDrawer}
-    `
   }
 
   get editor() {

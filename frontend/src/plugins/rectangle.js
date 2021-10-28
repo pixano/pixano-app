@@ -18,21 +18,6 @@ export class PluginRectangle extends TemplatePluginInstance {
       return 'image';
     }
 
-    get toolDrawer() {
-      return html`
-          <mwc-icon-button ?selected=${this.mode === 'edit'}
-                            title="Edit"
-                            icon="navigation"
-                            @click="${() => this.mode = 'edit'}">
-          </mwc-icon-button>
-          <mwc-icon-button ?selected=${this.mode === 'create'}
-                            icon="add_circle_outline"
-                            title="Create"
-                            @click="${() => this.mode = 'create'}">
-          </mwc-icon-button>
-      `
-    }
-
     get editor() {
       return html`<pxn-rectangle id="main"
                             mode=${this.mode}

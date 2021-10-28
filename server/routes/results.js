@@ -42,20 +42,22 @@ async function get_results(req, res) {
     let toValidateCounter = 0;
 
     const stream = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+    const task = await db.get(dbkeys.keyForTask(taskName));
     for await (const result of stream) {
+        // filter results
         let included = true;
         for (let k of keys) {
             const query = queries[k];
             const r = JSON.stringify(result[k]) || '';
-            const qs = query.split(";").filter((q) => q != "");
-            included = qs.some((q) => r.includes(q));
-            if (!included) {
-                break;
-            }
+            // if the filter is a (semicolon separated) list, include all result that satisfies at least one of them
+            const queryList = query.split(";").filter((q) => q != "");
+            included = queryList.some((q) => r.includes(q));
+            if (!included) break;
         }
         if (included) {
             if (counter >= (match.page - 1) * match.count && counter < match.page * match.count) {
-                results.push(result);
+                const imgData = await db.get(dbkeys.keyForData(task.dataset_id,result.data_id));
+                results.push({...result,thumbnail: imgData.thumbnail});
             }
             counter += 1;
         }

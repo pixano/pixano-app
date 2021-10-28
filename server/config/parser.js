@@ -45,7 +45,7 @@ async function parse(databasePath) {
           return {
             id: a.id,
             name: a.name,
-            category: a.category,
+            category: a.categoryName,
             geometry: a.geometry,
             options: {
               ...a.options,

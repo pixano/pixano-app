@@ -187,9 +187,7 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
       }
     }
     const output = {
-      id: dataData.id, 
-      dataset_id: dataData.dataset_id, 
-      type: dataData.type,
+		...dataData,
       children,
       path
     };
