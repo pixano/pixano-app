@@ -71,7 +71,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    * the labels of the selected instances.
    */
   updateDisplayOfSelectedProperties() {
-    if (this.selectedIds.length) {
+    if (this.selectedIds && this.selectedIds.length) {
       const shapes = this.annotations.filter((s) => this.selectedIds.includes(s.id));
       const common = commonJson(shapes);
       this.attributePicker.setAttributes(common);
@@ -94,7 +94,6 @@ export class TemplatePluginInstance extends TemplatePlugin  {
       newObject.timestamp = this.targetFrameIdx;
     }
     newObject.color = this._colorFor(newObject.category);
-    console.log('newObject', newObject)
     this.collect();
   }
 
@@ -147,6 +146,10 @@ export class TemplatePluginInstance extends TemplatePlugin  {
                             icon="add_circle_outline"
                             title="Create"
                             @click="${() => this.mode = 'create'}">
+          </mwc-icon-button>
+          <mwc-icon-button icon="tonality"
+						   title="Hide/Show labels"
+						   @click="${() => this.element.toggleLabels()}">
           </mwc-icon-button>
       `
   }
