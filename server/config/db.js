@@ -7,7 +7,7 @@ let db = null;
 let workspace = '';
 
 async function initLevel(workspacePath) {
-    const dbPath = path.join(workspacePath, 'dev.ldb');
+    const dbPath = path.join(workspacePath, 'db.ldb');
     db = level(dbPath, {valueEncoding: 'json'});
     workspace = workspacePath;
     // exporting new value

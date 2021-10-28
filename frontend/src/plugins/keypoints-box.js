@@ -8,9 +8,9 @@ import { html } from 'lit-element';
 import { settings } from '@pixano/graphics-2d/lib/pxn-graph';
 import '@material/mwc-icon-button';
 import { colorNames, shuffle } from '@pixano/core/lib/utils'
-import { TemplatePluginInstance } from '../models/template-plugin-instance';
+import { TemplatePluginInstance } from '../templates/template-plugin-instance';
 import { store } from '../store';
-import { updateAnnotation, createAnnotation, setAnnotations } from '../actions/annotations';
+import { setAnnotations } from '../actions/annotations';
 
 export class PluginKeypointsBox extends TemplatePluginInstance {
 
@@ -76,29 +76,11 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
   }
 
   /**
-   * Invoked on shape change
-   * @param {CustomEvent} evt 
-   */
-  onUpdate() {
-    const shapes = [...this.element.shapes].map((s) => {
-      const s2 = JSON.parse(JSON.stringify(s));
-      delete s2.color;
-      return s2;
-    });
-    store.dispatch(setAnnotations(shapes));
-  }
-
-  /**
    * Invoked on instance removal
    * @param {CustomEvent} evt 
    */
-  onDelete(evt) {
-    const shapes = [...this.element.shapes].map((s) => {
-      const s2 = JSON.parse(JSON.stringify(s));
-      delete s2.color;
-      return s2;
-    });
-    store.dispatch(setAnnotations(shapes));
+  onDelete() {
+    super.onDelete();
     this.attributePicker.numDone -= evt.detail.length;
   }
 
@@ -164,10 +146,7 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
     const selectedLabels = this.element.selectedShapes;
     if (selectedLabels.length === 1) {
       selectedLabels[0].geometry.visibles = selectedLabels[0].geometry.visibles.map(() => true);
-      store.dispatch(updateAnnotation(
-        {
-          ...JSON.parse(JSON.stringify(selectedLabels[0]))
-        }));
+      this.collect();
     }  
   }
 
@@ -176,10 +155,7 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
     if (selectedLabels.length === 1) {
       const vs = selectedLabels[0].geometry.vertices;
       selectedLabels[0].geometry.vertices = [vs[0], vs[1], vs[4], vs[5], vs[2], vs[3]];
-      store.dispatch(updateAnnotation(
-        {
-          ...JSON.parse(JSON.stringify(selectedLabels[0]))
-        }));
+      this.collect();
     }
   }
 

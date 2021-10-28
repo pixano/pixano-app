@@ -1,4 +1,7 @@
 /**
+ * Summary of plugins for the application:
+ * You need to add your plugin to the pluginsList in order for 
+ * it to be displayed when creating a new annotation task.
  * @copyright CEA-LIST/DIASI/SIALV/LVA (2019)
  * @author CEA-LIST/DIASI/SIALV/LVA <pixano@cea.fr>
  * @license CECILL-C
@@ -18,6 +21,7 @@ export const pluginsList = [
     'keypoints',
     'smart-rectangle',
     'smart-segmentation',
+    'smart-tracking',
     'sequence-rectangle',
     'sequence-cuboid',
     'sequence-polygon',
@@ -36,6 +40,7 @@ export const getDataType = (pluginName) => {
         case 'sequence-rectangle':
         case 'sequence-polygon':
         case 'tracking':
+        case 'smart-tracking':
         case 'sequence-segmentation': return 'sequence_image';
         case 'sequence-cuboid': return 'sequence_pcl';
         case 'cuboid': return 'pcl';
@@ -75,7 +80,7 @@ export const defaultLabelValues = (pluginName) => {
                 default: 'person'
             }
         }
-
+        case 'smart-tracking':
         case 'tracking': {
             return {
                 category: [

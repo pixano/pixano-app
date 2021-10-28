@@ -6,10 +6,10 @@
 
 import { html } from 'lit-element';
 import '@pixano/graphics-2d';
-import { sequence } from '../models/mixins/sequence-mixin';
-import { store, getStoreState } from '../store';
-import { TemplatePlugin } from "../models/template-plugin";
-import { updateAnnotation, setAnnotations, detections } from '../actions/annotations';
+import { sequence } from '../templates/sequence-mixin';
+import { store, getState } from '../store';
+import { TemplatePlugin } from "../templates/template-plugin";
+import { setAnnotations } from '../actions/annotations';
 
 export class PluginTrackingPoint extends sequence(TemplatePlugin) {
 
@@ -26,7 +26,7 @@ export class PluginTrackingPoint extends sequence(TemplatePlugin) {
    * Handle new media to display
    */
   newData() {
-    const mediaInfo = getStoreState('media').info;
+    const mediaInfo = getState('media').info;
     if (!mediaInfo.children) {
       return;
     }
@@ -76,7 +76,7 @@ export class PluginTrackingPoint extends sequence(TemplatePlugin) {
           t.keyShapes[this.element.timestamp].labels[this.targetAttribute] = attr.enum[num];
         });
         this.element.requestUpdate();
-        store.dispatch(setAnnotations({detections: getStoreState('annotations').detections, tracks: this.tracks}));
+        store.dispatch(setAnnotations({annotations: this.tracks}));
       }
     });
   }
@@ -86,8 +86,8 @@ export class PluginTrackingPoint extends sequence(TemplatePlugin) {
    * the redux store
    */
   initDisplay() {
-    const tasks = getStoreState('application').tasks;
-    const taskName = getStoreState('application').taskName;
+    const tasks = getState('application').tasks;
+    const taskName = getState('application').taskName;
     const task = tasks.find((t) => t.name === taskName);
     if (this.element && task.spec.label_schema) {
       this.element.categories = task.spec.label_schema.category;
@@ -102,7 +102,7 @@ export class PluginTrackingPoint extends sequence(TemplatePlugin) {
   }
 
   onUpdate() {
-    store.dispatch(setAnnotations({detections: getStoreState('annotations').detections, tracks: this.tracks}));
+    store.dispatch(setAnnotations({annotations: this.tracks}));
   }
 
   /**
@@ -111,11 +111,11 @@ export class PluginTrackingPoint extends sequence(TemplatePlugin) {
    * by timestamp at first and do not need to be filtred by timestamp.
    */
   get annotations() {
-    return JSON.parse(JSON.stringify(getStoreState('annotations'))).tracks;
+    return getAnnotations().annotations;
   }
 
   get detections() {
-    const detections = getStoreState('annotations').detections;
+    const detections = getState('detections');
     if (detections) {
       return detections.filter((l) => l.timestamp === this.targetFrameIdx); // && l.detection);
     } else {

@@ -5,7 +5,7 @@
 */
 
 import { PluginKeypoints } from './keypoints';
-import { sequence } from '../models/mixins/sequence-mixin';
+import { sequence } from '../templates/sequence-mixin';
 
 export class PluginSequenceKeypoints extends sequence(PluginKeypoints) {}
 

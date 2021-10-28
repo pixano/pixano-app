@@ -47,8 +47,9 @@ async function get_results(req, res) {
         for (let k of keys) {
             const query = queries[k];
             const r = JSON.stringify(result[k]) || '';
-            if (!r.includes(query)) {
-                included = false;
+            const qs = query.split(";").filter((q) => q != "");
+            included = qs.some((q) => r.includes(q));
+            if (!included) {
                 break;
             }
         }

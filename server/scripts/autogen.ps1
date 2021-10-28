@@ -18,7 +18,7 @@ if (!(Test-Path -Path $SeriePath -PathType Container)) {
 
 Set-Location $SeriePath
 
-$FirstLaunch = !(Test-Path .\dev.ldb -PathType Container)
+$FirstLaunch = !(Test-Path .\db.ldb -PathType Container)
 
 if (!(Test-Path .\images -PathType Container)) {
     New-Item -Path "." -Name "images" -ItemType "directory"

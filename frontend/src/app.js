@@ -38,7 +38,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 import { LitElement, html, css } from 'lit-element';
 import { installRouter } from 'pwa-helpers/router.js';
 import { connect } from 'pwa-helpers/connect-mixin.js';
-import { store, getStoreState } from './store';
+import { store, getState } from './store';
 import { navigate, getTasks } from './actions/application';
 import { getProfile } from './actions/user';
 import 'material-design-icons/iconfont/material-icons.css';
@@ -66,7 +66,7 @@ class MyApp extends connect(store)(LitElement)  {
   }
 
   goHome() {
-    const user = getStoreState('user');
+    const user = getState('user');
     const page = user.currentUser.role === 'admin' ? '/#dashboard-admin': '/#dashboard-user';
     window.history.pushState({}, '', page);
     store.dispatch(navigate(page));

@@ -6,8 +6,8 @@
 
 import { html, css } from 'lit-element';
 import { connect } from 'pwa-helpers/connect-mixin.js';
-import TemplatePage from '../models/template-page';
-import { store, getStoreState } from '../store';
+import TemplatePage from '../templates/template-page';
+import { store, getState } from '../store';
 import { logout } from '../actions/user';
 import { getValue } from '../helpers/utils';
 
@@ -21,7 +21,7 @@ import '@material/mwc-select';
 import '@material/mwc-list/mwc-list-item';
 import '@trystan2k/fleshy-jsoneditor/fleshy-jsoneditor.js';
 
-import { defaultLabelValues, pluginsList, getDataType, defaultSettings } from '../models/plugins';
+import { defaultLabelValues, pluginsList, getDataType, defaultSettings } from '../plugins/index';
 
 import {
   snapshotProject,
@@ -60,8 +60,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 
   onActivate() {
     this.taskIdx = -1; // To force taskIdx to change with stateChanged
-    this.tasks = getStoreState('application').tasks;
-    this.taskIdx = getStoreState('application').tasks.findIndex((t) => t.name === getStoreState('application').taskName);
+    this.tasks = getState('application').tasks;
+    this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
   }
 
   updated(changedProperties) {
@@ -157,8 +157,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
   removeTask() {
     const taskName = this.tasks[this.taskIdx].name;
     store.dispatch(deleteTask(taskName)).then(() => {
-      this.tasks = getStoreState('application').tasks;
-      this.taskIdx = getStoreState('application').tasks.findIndex((t) => t.name === getStoreState('application').taskName);
+      this.tasks = getState('application').tasks;
+      this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
     })
   }
 

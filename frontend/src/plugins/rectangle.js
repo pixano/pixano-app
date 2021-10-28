@@ -6,7 +6,7 @@
 
 import { html } from 'lit-element';
 import '@pixano/graphics-2d/lib/pxn-rectangle';
-import { TemplatePluginInstance } from '../models/template-plugin-instance';
+import { TemplatePluginInstance } from '../templates/template-plugin-instance';
 
 export class PluginRectangle extends TemplatePluginInstance {
 

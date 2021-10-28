@@ -6,7 +6,7 @@
 
 import { html } from 'lit-element';
 import '@pixano/graphics-2d/lib/pxn-polygon';
-import { TemplatePluginInstance } from '../models/template-plugin-instance';
+import { TemplatePluginInstance } from '../templates/template-plugin-instance';
 
 export class PluginPolygon extends TemplatePluginInstance {
 

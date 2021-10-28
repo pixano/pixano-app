@@ -5,7 +5,7 @@
 */
 
 import { html } from 'lit-element';
-import { store, getStoreState } from '../store';
+import { store, getState } from '../store';
 import { undo, redo, putLabels } from '../actions/annotations';
 import { updateTaskName, fetchNewJob, putJob, interruptJob } from '../actions/application';
 import { timeConverter } from '../helpers/utils';
@@ -55,7 +55,7 @@ class AppLabel extends AppExplore {
     const taskName = paths[1];
     this.jobObjective = paths[2] || this.jobDefaultObjective;
     store.dispatch(updateTaskName(taskName));
-    const task = getStoreState('application').tasks.find((t) => t.name === taskName);
+    const task = getState('application').tasks.find((t) => t.name === taskName);
     this.pluginName = task.spec.plugin_name;
     this.launchPlugin(this.pluginName).then((mod) => {
       store.dispatch(fetchNewJob(this.jobObjective)).then((j) => {

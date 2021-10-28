@@ -5,10 +5,9 @@
 */
 
 import { PluginSegmentation } from './segmentation';
-import { sequence } from '../models/mixins/sequence-mixin';
-import { store } from '../store';
-import { createAnnotation,
-    updateAnnotation } from '../actions/annotations';
+import { sequence } from '../templates/sequence-mixin';
+import { getAnnotations, store } from '../store';
+import { setAnnotations } from '../actions/annotations';
 /**
  * Plugin segmentation.
  * Reads labels as:
@@ -16,16 +15,25 @@ import { createAnnotation,
  */
 export class PluginSequenceSegmentation extends sequence(PluginSegmentation) {
 
+      /**
+       * Save current state to redux database (to keep history)
+       * Overwrite because mask api is different from instances.
+       * @param {CustomEvent} evt 
+       */
+      collect() {
+        const mask = {
+          id: this.targetFrameIdx,
+          mask: this.element.getMask(),
+          timestamp: this.targetFrameIdx
+        }
+        let allAnnotations = getAnnotations().annotations;
+        allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
+        allAnnotations = [...allAnnotations, mask];
+        store.dispatch(setAnnotations({ annotations: allAnnotations }));
+      }
+
       onUpdate() {
-        const curr = this.annotations.find((l) => l.timestamp === this.targetFrameIdx);
-        const im = this.element.getMask();
-        const fn = curr ? updateAnnotation : createAnnotation;
-        store.dispatch(fn(
-          {
-            id: this.targetFrameIdx,
-            timestamp: this.targetFrameIdx,
-            mask: im
-          }));
+        this.collect();
       }
 
       refresh() {

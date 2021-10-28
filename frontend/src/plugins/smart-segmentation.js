@@ -5,7 +5,7 @@
 */
 
 import { html } from 'lit-element';
-import '@pixano/graphics-2d/lib/pxn-segmentation-interactive';
+import '@pixano/graphics-2d/lib/pxn-smart-segmentation';
 import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
@@ -44,12 +44,12 @@ export class PluginSmartSegmentation extends PluginSegmentation {
   }
 
   get editor() {
-    return html`<pxn-segmentation-interactive id="main"
+    return html`<pxn-smart-segmentation id="main"
                             mode=${this.mode}
                             maskVisuMode=${this.maskVisuMode}
                             @update=${this.onUpdate}
                             @selection=${this.onSelection}
-                            @mode=${this.onModeChange}></pxn-segmentation-interactive>`;
+                            @mode=${this.onModeChange}></pxn-smart-segmentation>`;
   }
 
 }

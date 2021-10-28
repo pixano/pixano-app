@@ -7,22 +7,34 @@
 import { html } from 'lit-element';
 import '@pixano/graphics-2d/lib/pxn-smart-rectangle';
 import { store } from '../store';
-import { createAnnotation } from '../actions/annotations';
-import { TemplatePluginInstance } from '../models/template-plugin-instance';
+import { TemplatePluginInstance } from '../templates/template-plugin-instance';
+import { increase, decrease } from '@pixano/core/lib/style';
 
 export class PluginSmartRectangle extends TemplatePluginInstance {
 
+    /**
+     * Invoked on instance creation.
+     * Overwrite to keep automatic category if present
+     * @param {CustomEvent} evt 
+     */
     onCreate(evt) {
       const newObject = evt.detail;
-      let { color, ...newAnnotation } = {
-        ...JSON.parse(JSON.stringify(newObject))
-      };
-      if (!newAnnotation.category) {
-        newAnnotation = {...newAnnotation, ...this.attributePicker.defaultValue}
+      newObject.id = Math.random().toString(36);
+      // add attributes to object without deep copy
+      Object.entries(this.attributePicker.defaultValue).forEach(([key, value]) => {
+        // do not overwrite category if it was automatically found
+        if (key != 'category' || !newObject.category) {
+          newObject[key] = JSON.parse(JSON.stringify(value));
+        }
+      });
+      newObject.color = this._colorFor(newObject.category);
+      // add timestamp to object
+      if (this.isSequence) {
+        newObject.timestamp = this.frameIdx;
       }
-      store.dispatch(createAnnotation(newAnnotation));
-      this.updateObjectFromAnnotation(newObject, newAnnotation);
+      this.collect();
     }
+    
 
     get toolDrawer() {
       return html`
@@ -40,6 +52,8 @@ export class PluginSmartRectangle extends TemplatePluginInstance {
                           @click="${() => this.mode = 'smart-create'}"
                           title="Smart mode">
                           </mwc-icon-button>
+          <mwc-icon-button title="ROI increase (+)" @click=${() => this.element.roiUp()}>${increase}</mwc-icon-button>
+          <mwc-icon-button title="ROI decrease (-)" @click=${() => this.element.roiDown()}>${decrease}</mwc-icon-button>
       `
     }
 

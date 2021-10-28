@@ -4,7 +4,8 @@
  * @license CECILL-C
 */
 
-import { getStoreState } from '../../store';
+import { store, getAnnotations, getState } from '../store';
+import { setAnnotations } from '../actions/annotations';
 
 /**
  * Mixin wrapping editor sequenced views for a plugin class.
@@ -21,7 +22,7 @@ export const sequence = (baseElement) =>
      * Handle new media to display
      */
     newData() {
-      const mediaInfo = getStoreState('media').info;
+      const mediaInfo = getState('media').info;
       if (!mediaInfo.children) {
         return;
       }
@@ -38,7 +39,7 @@ export const sequence = (baseElement) =>
     }
 
     get targetFrameIdx() {
-      return this.element.targetFrameIdx;
+      return this.element.frameIdx;
     }
 
     /**
@@ -46,7 +47,21 @@ export const sequence = (baseElement) =>
      * by current timestamp.
      */
     get annotations() {
-      const labels = getStoreState('annotations');
+      const labels = getAnnotations().annotations || [];
       return labels.filter((l) => l.timestamp === this.targetFrameIdx);
+    }
+
+    /**
+     * Save current state to redux database (to keep history)
+     * Overwrite because elements generally only trace the current
+     * frame content.
+     * @param {CustomEvent} evt 
+     */
+    collect() {
+      const shapes = [...this.element.shapes].map(({color, ...s}) => s);
+      let allAnnotations = getAnnotations().annotations || [];
+      allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
+      allAnnotations = [...allAnnotations, ...shapes];
+      store.dispatch(setAnnotations({ annotations: allAnnotations }));
     }
 };

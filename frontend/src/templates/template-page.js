@@ -11,7 +11,7 @@
 
 import { LitElement, html, css } from 'lit-element';
 import { navigate } from '../actions/application';
-import { store, getStoreState } from '../store';
+import { store, getState } from '../store';
 
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
@@ -48,7 +48,7 @@ export default class TemplatePage extends LitElement {
    */
   firstUpdated() {
     this.loaded = true;
-    const pref = getStoreState('user').currentUser.preferences;
+    const pref = getState('user').currentUser.preferences;
     if (pref && pref.theme) {
       this.theme = pref.theme;
     }
@@ -96,7 +96,7 @@ export default class TemplatePage extends LitElement {
    */
   goHome() {
     // cancel current job ?
-    const state = getStoreState();
+    const state = getState();
     const role = (state.user && state.user) ? state.user.currentUser.role : '';
     let page = '';
     if (role === 'admin') {

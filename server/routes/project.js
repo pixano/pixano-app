@@ -16,7 +16,7 @@ const batchManager = require('../helpers/batch-manager');
  *     HTTP/1.1 201 OK
  */
 async function snapshot_project(_, res) {
-    const archivePath = path.join(workspace, '/dev.ldb-' + moment().format() + '.zip');
+    const archivePath = path.join(workspace, '/db.ldb-' + moment().format() + '.zip');
     const stream = db.createReadStream();
     tmp.dir({unsafeCleanup: true}, async (err, path, cleanupCallback) => {
         if (err) { throw err; }
