@@ -2,10 +2,6 @@
   "name": "pixano-app",
   "version": "0.4.7",
   "description": "This is a Pixano app.",
-  "scripts": {
-    "installApp": "npm --prefix frontend/ install",
-    "buildApp": "npm --prefix frontend/ run build"
-  },
   "keywords": [],
   "license": "CECILL-C",
   "engines": {

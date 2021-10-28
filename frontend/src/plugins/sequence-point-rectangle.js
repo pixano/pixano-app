@@ -6,9 +6,9 @@
 
 import { html } from 'lit-element';
 import { PluginRectangle } from './rectangle';
-import { sequence } from '../models/mixins/sequence-mixin';
+import { sequence } from '../templates/sequence-mixin';
 import { store } from '../store';
-import { updateAnnotation } from '../actions/annotations';
+import { setAnnotations } from '../actions/annotations';
 
 export class PluginSequencePointRectangle extends sequence(PluginRectangle) {
 
@@ -47,9 +47,9 @@ export class PluginSequencePointRectangle extends sequence(PluginRectangle) {
             [...this.element.targetShapes].forEach((s) => {
               if (num < attr.enum.length) {
                 s.options[this.targetAttribute] = attr.enum[num];
-                store.dispatch(updateAnnotation(s));
               }
             });
+            this.collect();
             this.updateDisplayOfSelectedProperties();
           }
         });
@@ -86,7 +86,8 @@ export class PluginSequencePointRectangle extends sequence(PluginRectangle) {
         if (predictions[0] && this.isInside(predictions[0].geometry.vertices, p)) {
             const containedBox = JSON.parse(JSON.stringify(predictions[0]));
             delete containedBox.detection;
-            store.dispatch(updateAnnotation(containedBox));
+            //store.dispatch(updateAnnotation(containedBox));
+            store.dispatch(setAnnotations({annotations: getAnnotations().annotations.map(ann => ann.id === containedBox.id ? containedBox : ann)}));
             this.refresh();
         }
     }

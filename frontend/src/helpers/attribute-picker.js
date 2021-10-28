@@ -248,9 +248,11 @@ export class AttributePicker extends LitElement {
 
           // update property values
           const childDivs = this.shadowRoot.getElementById('updateEditor').getElementsByTagName('mwc-select');
-          const propList = this.schema.category.find((c) => c.name === this.value.category).properties;
+          const childContent = this.schema.category.find((c) => c.name === this.value.category);
+          const propList = childContent ? childContent.properties : [];
           [ ...childDivs].forEach((c) => {
-            const enumList = propList.find((p) => p.name == c.label).enum;
+            const subprop = propList.find((p) => p.name == c.label);
+            const enumList = subprop ? subprop.enum : [];
             // cast to number
             const val = isNaN(options[c.label]) ? options[c.label] : parseInt(options[c.label]);
             c.select(enumList.findIndex((e) => e === val))

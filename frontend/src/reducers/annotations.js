@@ -7,28 +7,14 @@
 import undoable, {excludeAction, includeAction } from 'redux-undo';
 import {
     INIT_ANNOTATIONS,
-    SET_ANNOTATIONS,
-    CREATE_ANNOTATION,
-    UPDATE_ANNOTATION,
-    DELETE_ANNOTATION
+    SET_ANNOTATIONS
   } from '../actions/annotations';
 
-const _annotations = (state = [], action) => {
+const _annotations = (state = {}, action = {}) => {
   switch (action.type) {
     case INIT_ANNOTATIONS:
     case SET_ANNOTATIONS:
-      return JSON.parse(JSON.stringify(action.annotations));
-    case CREATE_ANNOTATION:
-      return [
-        ...state,     
-        action.annotation        
-      ]
-    case UPDATE_ANNOTATION:
-      return state.map(ann =>
-        ann.id === action.annotation.id ? action.annotation : ann
-      )
-    case DELETE_ANNOTATION:
-      return state.filter(ann => ann.id !== action.annotationId)
+      return {...state, ...JSON.parse(JSON.stringify(action.annotations))};
     default:
       return state
   }
@@ -36,7 +22,7 @@ const _annotations = (state = [], action) => {
 
 const annotations = undoable(_annotations, {
     limit: 10, // set a limit for the history
-    filter: includeAction([CREATE_ANNOTATION, UPDATE_ANNOTATION, DELETE_ANNOTATION, SET_ANNOTATIONS])
+    filter: includeAction([SET_ANNOTATIONS])
   });
 
 export default annotations;

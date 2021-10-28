@@ -496,26 +496,28 @@ function createResult(taskName, dataId, currJobId, currStatus, path) {
 }
 
 async function remove_task(taskName) {
+    // delete task
     const key = dbkeys.keyForTask(taskName);
+    const taskData = await db.get(key);
     const bm = new batchManager.BatchManager(db);
     await bm.add({ type: 'del', key});
     
-    // delete  associated jobs
+    // delete associated jobs
     const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
     for await (const job of streamJob) {
-        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)})
+        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)});
     }
     
     // delete associated result
     const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
     for await (const result of streamResults) {
-        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)})
+        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)});
     }
     
     // delete associated labels WARNING !!!!
     const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
     for await (const label of streamLabels) {
-        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)})
+        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)});
     }
 
     // delete associated user information
@@ -527,6 +529,25 @@ async function remove_task(taskName) {
             delete user.queue[taskName+'/'+obj];
         });
         await bm.add({ type: 'put', key: dbkeys.keyForUser(user.username), value: user})
+    }
+
+    // [temporary] if associated dataset is no longer associated
+    // to any other task, remove it as well
+    let foundAssociation = false;
+    const stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+    for await (const t of stream) {
+        console.log('task', t);
+        if (t.id != taskData.id && t.dataset_id == taskData.dataset_id) {
+            foundAssociation = true;
+            break; 
+        }
+    }
+    if (!foundAssociation) {
+        await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id)});
+        const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
+        for await(const dkey of stream) {
+            await bm.add({ type: 'del', key: dbkeys.keyForData(taskData.dataset_id, dkey)});
+        }
     }
     await bm.flush();
 }

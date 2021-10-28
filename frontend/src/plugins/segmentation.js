@@ -10,12 +10,11 @@ import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
 import { colorToRGBA } from '@pixano/core/lib/utils';
-import { store, getStoreState } from '../store';
+import { store, getState } from '../store';
 import '../helpers/attribute-picker';
 import { subtract, union } from '../my-icons';
-import { createAnnotation,
-         updateAnnotation } from '../actions/annotations';
-import { TemplatePlugin } from '../models/template-plugin';
+import { setAnnotations } from '../actions/annotations';
+import { TemplatePlugin } from '../templates/template-plugin';
 
 /**
  * Plugin segmentation.
@@ -33,17 +32,17 @@ export class PluginSegmentation extends TemplatePlugin {
 
   constructor() {
     super();
-    this.mode = 'select';
+    this.mode = 'edit';
     this.maskVisuMode = 'SEMANTIC';
     this.selectedIds = [0,0,0];
   }
 
   get toolDrawer() {
     return html`
-        <mwc-icon-button ?selected=${this.mode === 'select'}
+        <mwc-icon-button ?selected=${this.mode === 'edit'}
                          title="Select instance"
                          icon="navigation"
-                         @click="${() => this.mode = 'select'}">
+                         @click="${() => this.mode = 'edit'}">
                          </mwc-icon-button>
         <mwc-icon-button ?selected=${this.mode === 'create'}
                          icon="add_circle_outline"
@@ -88,8 +87,8 @@ export class PluginSegmentation extends TemplatePlugin {
 
   initDisplay() {
     super.initDisplay();
-    const taskName = getStoreState('application').taskName;
-    const task = getStoreState('application').tasks.find((t) => t.name === taskName);
+    const taskName = getState('application').taskName;
+    const task = getState('application').tasks.find((t) => t.name === taskName);
     const schema = task.spec.label_schema;
     this.element.clsMap = new Map(
       schema.category.map((c) => {
@@ -104,14 +103,8 @@ export class PluginSegmentation extends TemplatePlugin {
   }
 
   onUpdate() {
-    const curr = this.annotations.find((l) => l.id === 0);
-    const im = this.element.getMask();
-    const fn = curr ? updateAnnotation : createAnnotation;
-    store.dispatch(fn(
-      {
-        id: 0,
-        mask: im
-      }));
+    const frame = { mask: this.element.getMask()};
+    store.dispatch(setAnnotations({annotations: frame}));
   }
 
   onSelection(evt) {
@@ -147,11 +140,11 @@ export class PluginSegmentation extends TemplatePlugin {
     if (!this.element) {
       return;
     }
-    if (!this.annotations.length) {
+    if (!this.annotations.mask) {
       this.element.setEmpty();
       return;
     }
-    const mask = this.annotations[0].mask;
+    const mask = this.annotations.mask;
     if (mask != this.element.getMask()) {
       this.element.setMask(mask);
     }

@@ -6,8 +6,8 @@
 
 import { html, css } from 'lit-element';
 import { connect } from 'pwa-helpers/connect-mixin.js';
-import TemplatePage from '../models/template-page';
-import { store, getStoreState } from '../store';
+import TemplatePage from '../templates/template-page';
+import { store, getState } from '../store';
 import { logout, signup,
   getUsers,
   deleteUser,
@@ -108,7 +108,7 @@ class AppUserManager extends connect(store)(TemplatePage) {
     // force redraw of data table
     this.users = [];
     setTimeout(() => {
-      this.users = JSON.parse(JSON.stringify(getStoreState('user').users));
+      this.users = JSON.parse(JSON.stringify(getState('user').users));
     }, 0)
   }
 

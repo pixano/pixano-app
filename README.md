@@ -93,9 +93,11 @@ You can fill the task configuration as follows, which will create as many annota
 #### Application dependencies
 
 ```bash
-# Install application backend and frontend dependencies
+# Install backend dependencies
 npm i
-npm run installApp
+# Install frontend dependencies 
+cd frontend/
+npm i
 ```
 
 ##### Using a local pixano-element
@@ -103,7 +105,7 @@ If you want to use custom `pixano-element` modules from local path instead of th
 
 ```bash
 # Install application dependencies and local pixano-elements
-cd frontend/ && npm run installLocalElements --path=../../pixano-elements && cd ../
+npm run installLocalElements --path=../../pixano-elements
 ```
 *NB: Make sure you have the git repository of pixano-elements next to the pixano-app folder and that you have followed the pixano-elements build instructions before running the above commands.*
 
@@ -112,12 +114,12 @@ cd frontend/ && npm run installLocalElements --path=../../pixano-elements && cd 
 ```bash
 # Bundle the application using Webpack
 # This will create a build folder containing all the sources to be served
-npm run buildApp
+npm run build
 ```
 
 #### Run the application
 
- In the command prompt, type in `node server/server.js /path/to/workspace/` and hit enter. You’ll see something similar to this.
+ In the command prompt, type in `node server/server.js /path/to/workspace/` from the root folder and hit enter. You’ll see something similar to this.
 
 ```bash
    ┌────────────────────────────────────────────────────────────────────────┐

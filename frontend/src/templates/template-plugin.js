@@ -1,11 +1,13 @@
 /**
+ * Template of plugin page to inherit if you want to create
+ * your own plugin.
  * @copyright CEA-LIST/DIASI/SIALV/LVA (2019)
  * @author CEA-LIST/DIASI/SIALV/LVA <pixano@cea.fr>
  * @license CECILL-C
 */
 
 import { LitElement, html } from 'lit-element';
-import { getStoreState } from '../store';
+import { getState, getAnnotations } from '../store';
 import { PluginStyle } from './plugin-style';
 
 export class TemplatePlugin extends LitElement  {
@@ -43,8 +45,8 @@ export class TemplatePlugin extends LitElement  {
    * the redux store
    */
   initDisplay() {
-    const tasks = getStoreState('application').tasks;
-    const taskName = getStoreState('application').taskName;
+    const tasks = getState('application').tasks;
+    const taskName = getState('application').taskName;
     const task = tasks.find((t) => t.name === taskName);
     if (this.attributePicker && task) {
       this.attributePicker.reloadSchema(task.spec.label_schema);
@@ -52,22 +54,21 @@ export class TemplatePlugin extends LitElement  {
   }
 
   get info() {
-    return getStoreState('application');
+    return getState('application');
   }
 
   /**
    * Getter of redux store annotations
    */
   get annotations() {
-    const annotations = getStoreState('annotations')
-    return annotations;
+    return getAnnotations().annotations;
   }
 
   /**
    * Handle new media to display
    */
   newData() {
-    const media = getStoreState('media');
+    const media = getState('media');
     const path = media.info.path;
     this.element.input = path;
     

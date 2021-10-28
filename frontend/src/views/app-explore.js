@@ -5,8 +5,8 @@
 */
 
 import { html, css } from 'lit-element';
-import TemplatePage from '../models/template-page';
-import { store, getStoreState } from '../store';
+import TemplatePage from '../templates/template-page';
+import { store, getState } from '../store';
 import { installRouter } from 'pwa-helpers/router.js';
 import { updateTaskName, fetchResult, fetchBackwardResult, fetchForwardResult } from '../actions/application';
 import '@material/mwc-icon';
@@ -42,7 +42,7 @@ export class AppExplore extends TemplatePage {
       const taskName = paths[1];
       const dataId = paths[2];
       store.dispatch(updateTaskName(taskName));
-      const task = getStoreState('application').tasks.find((t) => t.name === taskName);
+      const task = getState('application').tasks.find((t) => t.name === taskName);
       this.pluginName = task.spec.plugin_name;
 
       this.launchPlugin(this.pluginName).then((mod) => {
@@ -95,11 +95,11 @@ export class AppExplore extends TemplatePage {
      * @param {*} fetchFn 
      */
     goNext(fetchFn) {
-      const currentDataId = getStoreState('application').dataId;
+      const currentDataId = getState('application').dataId;
       store.dispatch(fetchFn()).then(() => {
         this.el.newData();
         // Store new url with correct id if new
-        const appState = getStoreState('application');
+        const appState = getState('application');
         const nextDataId = appState.dataId;
         if (nextDataId !== currentDataId) {
           window.history.pushState({}, '', `/#explore/${appState.taskName}/${nextDataId}`);
@@ -161,7 +161,7 @@ export class AppExplore extends TemplatePage {
     }
 
     get path() {
-      const media = getStoreState('media');
+      const media = getState('media');
       const task = media.info.path.replace('//', '/');
       return task;
     }

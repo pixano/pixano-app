@@ -4,11 +4,11 @@
  * @license CECILL-C
 */
 
-import { TemplatePlugin } from "../models/template-plugin";
-import { sequence } from '../models/mixins/sequence-mixin';
+import { TemplatePlugin } from "../templates/template-plugin";
+import { sequence } from '../templates/sequence-mixin';
 import { html } from 'lit-element';
 import '@pixano/graphics-2d';
-import { store, getStoreState } from '../store';
+import { store, getState, getAnnotations } from '../store';
 import { initAnnotations, setAnnotations } from '../actions/annotations';
 
 export class PluginTracking extends sequence(TemplatePlugin) {
@@ -23,15 +23,68 @@ export class PluginTracking extends sequence(TemplatePlugin) {
     }
 
     constructor() {
-        super();
-        this.mode = 'edit';
-        this.selectedTracks = new Set();
-        this.tracks = {};
+      super();
+      this.mode = 'edit';
+      this.tracks = {};
+      ////// CUSTOM
+      this.targetAttribute = 'posture';
+      window.addEventListener('keydown', (evt) => {
+        const currId = [...this.element.selectedTrackIds][0];
+        if (currId) {
+          const currProps = currId ? this.element.categories.find((c) => c.name == this.tracks[currId].category).properties : undefined;
+          if (evt.key == "q") {
+            // select occlusion
+            const category = currProps.find((c) => c.name === "occlusion");
+            if (category) {
+              this.targetAttribute = category.name;
+            }
+          }
+          if (evt.key == "d") {
+            // select truncation
+            const category = currProps.find((c) => c.name === "truncation");
+            if (category) {
+              this.targetAttribute = category.name;
+            }
+          }
+          if (evt.key == "f") {
+            // select occlusion
+            const category = currProps.find((c) => c.name === "posture");
+            if (category) {
+              this.targetAttribute = category.name;
+            }
+          }
+          if (!isNaN(evt.key)) {
+            const attr = currProps.find((c) => c.name == this.targetAttribute);
+            if (attr == undefined) { return; }
+            const num = Math.round(evt.key);
+            [...this.element.selectedTrackIds].forEach((tid) => {
+              this.tracks[tid].keyShapes[this.element.timestamp].labels[this.targetAttribute] = attr.enum[num];
+            });
+            this.element.requestUpdate();
+            store.dispatch(setAnnotations({annotations: this.tracks}));
+          }
+        }
+      });
+    }
+
+    newData() {
+      const mediaInfo = getState('media').info;
+      if (!mediaInfo.children) {
+        return;
+      }
+      const paths = mediaInfo.children.map((c) => c.path);
+      this.element.input = paths;
+      const onLoad = () => {
+        // refresh annoations on media loaded
+        this.refresh();
+        this.element.removeEventListener('load', onLoad);
+      };
+      this.element.addEventListener('load', onLoad);
     }
 
     initDisplay() {
-      const tasks = getStoreState('application').tasks;
-      const taskName = getStoreState('application').taskName;
+      const tasks = getState('application').tasks;
+      const taskName = getState('application').taskName;
       const task = tasks.find((t) => t.name === taskName);
       if (this.element && task.spec.label_schema) {
         this.element.categories = task.spec.label_schema.category;
@@ -44,7 +97,7 @@ export class PluginTracking extends sequence(TemplatePlugin) {
      * by timestamp at first and do not need to be filtred by timestamp.
      */
     get annotations() {
-      return JSON.parse(JSON.stringify(getStoreState('annotations')));
+      return getAnnotations().annotations;
     }
 
     /**
@@ -54,7 +107,7 @@ export class PluginTracking extends sequence(TemplatePlugin) {
     onTimestampChange() {}
 
     onUpdate() {
-        store.dispatch(setAnnotations(this.tracks));
+      store.dispatch(setAnnotations({annotations: this.tracks}));
     }
   
     refresh() {
@@ -63,7 +116,7 @@ export class PluginTracking extends sequence(TemplatePlugin) {
         }
         if (Array.isArray(this.annotations)) {
             // cast default type array to object
-            store.dispatch(initAnnotations({}));
+            store.dispatch(initAnnotations({annotations: {}}));
         }
         this.tracks = this.annotations; 
     }

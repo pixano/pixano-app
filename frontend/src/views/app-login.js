@@ -5,7 +5,7 @@
 */
 
 import { html, css, LitElement } from 'lit-element';
-import { store, getStoreState } from '../store';
+import { store, getState } from '../store';
 import { loginRequest } from '../actions/user';
 import { navigate } from '../actions/application';
 import '@material/mwc-textfield';
@@ -35,7 +35,7 @@ class AppLogin extends LitElement {
     }
 
     goHome() {
-      const user = getStoreState('user');
+      const user = getState('user');
       const page = user.currentUser.role === 'admin' ? '/#dashboard-admin': '/#dashboard-user';
       window.history.pushState({}, '', page);
       store.dispatch(navigate(page));

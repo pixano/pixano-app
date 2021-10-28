@@ -5,8 +5,8 @@
 */
 
 import { html, css } from 'lit-element';
-import TemplatePage from '../models/template-page';
-import { store, getStoreState } from '../store';
+import TemplatePage from '../templates/template-page';
+import { store, getState } from '../store';
 import { updateTaskName } from '../actions/application';
 import { fetchRangeResults } from '../actions/application';
 import { logout } from '../actions/user';
@@ -47,7 +47,7 @@ class AppDashboardUser extends TemplatePage {
   }
 
   startAnnotating() {
-    const taskName = getStoreState('application').taskName;
+    const taskName = getState('application').taskName;
     const jobObjective = 'to_annotate';
     this.gotoPage(`/#label/${taskName}/${jobObjective}`);
   }
@@ -129,13 +129,13 @@ class AppDashboardUser extends TemplatePage {
   }
 
   get topSection() {
-    const taskName = getStoreState('application').taskName;
-    const tasks = getStoreState('application').tasks;
+    const taskName = getState('application').taskName;
+    const tasks = getState('application').tasks;
     return html`
     <div id="overview" class="section">
       <h1 class="display-4" style="margin: auto;">Select a task: </h1>
       <mwc-select label='Task' @selected=${(e) => {
-        if(tasks[e.detail.index].name !== taskName) {
+        if (tasks[e.detail.index] && tasks[e.detail.index].name !== taskName) {
           store.dispatch(updateTaskName(tasks[e.detail.index].name));
           this.getResults();
         }

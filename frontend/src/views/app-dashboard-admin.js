@@ -5,8 +5,8 @@
 */
 
 import { html, css } from 'lit-element';
-import TemplatePage from '../models/template-page';
-import { store, getStoreState } from '../store';
+import TemplatePage from '../templates/template-page';
+import { store, getState } from '../store';
 import {
   updateTaskName,
   updateFilters,
@@ -82,7 +82,7 @@ class AppDashboardAdmin extends TemplatePage {
   }
 
   onActivate() {
-    this.stateChanged(getStoreState());
+    this.stateChanged(getState());
     this.refreshGrid();
   }
 
@@ -110,7 +110,7 @@ class AppDashboardAdmin extends TemplatePage {
    * @param {String} value 
    */
   updateFilter(key, value) {
-    const oldFilters = getStoreState('application').filters
+    const oldFilters = getState('application').filters
     if (oldFilters[key] !== value){
       const newFilters = {...oldFilters, [key]: value};
       store.dispatch(updateFilters(newFilters));
@@ -157,7 +157,7 @@ class AppDashboardAdmin extends TemplatePage {
    * Start validating jobs.
    */
   startValidating() {
-    const taskName = getStoreState('application').taskName;
+    const taskName = getState('application').taskName;
     if (taskName) {
       this.gotoPage(`/#label/${taskName}/to_validate`);
     }
@@ -167,7 +167,7 @@ class AppDashboardAdmin extends TemplatePage {
    * Start annotating/correcting jobs.
    */
   startAnnotating() {
-    const taskName = getStoreState('application').taskName;
+    const taskName = getState('application').taskName;
     if (taskName) {
       this.gotoPage(`/#label/${taskName}/to_annotate`);
     }
@@ -178,7 +178,7 @@ class AppDashboardAdmin extends TemplatePage {
    * @param {string} id 
    */
   explore(id) {
-    const taskName = getStoreState('application').taskName;
+    const taskName = getState('application').taskName;
     this.gotoPage(`/#explore/${taskName}/${id}`);
   }
   
@@ -488,7 +488,7 @@ class AppDashboardAdmin extends TemplatePage {
   }
 
   get tableHeader() {
-    const filters = getStoreState('application').filters;
+    const filters = getState('application').filters;
     const statusList = [...this.statusMap.entries()];
     const assignedList = [...this.assignedMap.entries()];
     return html`
@@ -582,13 +582,13 @@ class AppDashboardAdmin extends TemplatePage {
   }
 
   get topSection() {
-    const taskName = getStoreState('application').taskName;
-    const tasks = getStoreState('application').tasks;
+    const taskName = getState('application').taskName;
+    const tasks = getState('application').tasks;
     return html`
     <div id="overview" class="section">
       <h1 class="display-4" style="margin: auto;">Select a task: </h1>
       <mwc-select label='Task' @selected=${(e) => {
-        if(tasks[e.detail.index].name !== taskName) {
+        if (tasks[e.detail.index] && tasks[e.detail.index].name !== taskName) {
           store.dispatch(updateTaskName(tasks[e.detail.index].name));
           this.refreshGrid();
         }
@@ -654,7 +654,7 @@ class AppDashboardAdmin extends TemplatePage {
   }
 
   get body() {
-    const numTasks = getStoreState('application').tasks.length;
+    const numTasks = getState('application').tasks.length;
     return numTasks ? html`
       <div class="body">
           ${this.topSection}

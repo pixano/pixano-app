@@ -25,12 +25,13 @@ async function get_datasets(req, res) {
     checkAdmin(req, async () => {
         try {
             const datasets = [];
-            const stream = utils.iterateOnDB(db, dbkeys.keyForDataset(), false, true)
-            stream.on('data', (value) => {
-                datasets.push(value);
-            }).on('end', () => {
-                return res.send([...datasets]);
-            });
+            const stream = utils.iterateOnDB(db, dbkeys.keyForDataset(), true, true);
+            for await(const {key, value} of stream) {
+                if (key.split(':').length == 2) {
+                  datasets.push(value)
+                }
+            }
+            return res.send(datasets);
         } catch (err) {
             res.status(400).json({
                 message: 'Error searching datasets'
@@ -110,6 +111,7 @@ async function delete_dataset(req, res) {
     checkAdmin(req, async () => {
         const key = dbkeys.keyForDataset(req.params.dataset_id)
         await db.del(key);
+        // TODO: delete also its data items
         return res.status(204).json({});
     });
 }
