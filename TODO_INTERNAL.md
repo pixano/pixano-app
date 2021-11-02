@@ -12,9 +12,9 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#interface] manque pop-up erreur
 - [ ] [#interface] aide affichée à la 1ère connexion
 - [ ] [#interface] ajouter un bouton pour guider la fin de la création de tache
-- [ ] [#doc] readme add 'cd ...' + add folder path in commands to make sure we run in the right folder
+- [x] [#doc] readme add 'cd ...' + add folder path in commands to make sure we run in the right folder
 - [ ] [#feature] fichiers à supprimer si pb (compléter commande cleanall)
-- [ ] [#doc] Manque README global qui explique comment est construit Pixano et ses dépôts, mettre des schémas pour montrer les utilisations (distribué, standalone facile, etc)
+- [o] [#doc] Manque README global qui explique comment est construit Pixano et ses dépôts, mettre des schémas pour montrer les utilisations (distribué, standalone facile, etc)
 - [ ] [#doc] Getting started blog post
 - [ ] [#doc] Ajouter des démos complètes sexy + ajouter un bouton ajouter une config pour tester ton projet facilelement
 - [ ] [#feature] Ajouter un exécutable

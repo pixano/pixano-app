@@ -8,6 +8,10 @@
     "node": ">=12.0.0",
     "npm": ">=6.0.0"
   },
+  "scripts": {
+    "deps": "npm i ; cd frontend && npm i"
+    "build": "cd frontend && npm run build"
+  },
   "bin": "./server/serve.js",
   "dependencies": {
     "@material/image-list": "^13.0.0",
