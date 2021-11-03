@@ -23,7 +23,7 @@ Pixano App is a web-based annotation tool. It relies on web components dedicated
 	- [Using Docker Image](#using-docker-image)
 	- [From source](#install-from-source-for-developpers)
 * [Usage](#2-usage)
-	- => mettre tout çà dans un fichier séparé avec des images de chaque étape ? => eq. à Getting started blog post ?
+	- => mettre tout çà dans un fichier séparé avec des images de chaque étape ? => eq. à Getting started blog post ? => User guide
 	- [Login page](#login-page)
 	- [Create a new task](#create-a-new-task)
 	- [Start annotating](#start-annotating)
@@ -163,6 +163,15 @@ You can fill the task configuration as follows, which will create as many annota
 *NB: Your `data-test` folder refers to the folder containing the images you want to annotate by a relative path to the `workspace` folder.*
 
 ![task-creation](./frontend/images/task-creation.png)
+
+#### Definition of a task
+A task is defined by :
+
+- `Task name`: the name you want to give to this task
+- `Data folder`: the folder containing the data to be annotated in this task (relative path to the `workspace` folder)
+- `Plugin`: the plugin/functionnality to be used for this task (choose it from the list). For example, if you want to annotate vehicules by rectangles, choose `rectangle`.
+- `Task name`: form...
+- `Task name`: model... in the case of a smart plugin, place here the path of the model to be used (the default model...)
 
 *Update 2020.12.04: Make sure your image extensions are either `png` or `jpg`.
 
