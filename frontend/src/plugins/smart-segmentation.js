@@ -10,6 +10,7 @@ import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
 import { PluginSegmentation } from './segmentation';
+import { getState } from '../store';
 
 /**
  * Plugin segmentation.
@@ -20,12 +21,8 @@ export class PluginSmartSegmentation extends PluginSegmentation {
 
   initDisplay() {
     super.initDisplay();
-    const tasks = this.info.tasks;
-    const taskName = this.info.taskName;
-    const task = tasks.find((t) => t.name === taskName);
-    if (!task) {
-      return;
-    }
+    const taskName = getState('application').taskName;
+    const task = getState('application').tasks.find((t) => t.name === taskName);
     if (task.spec.settings && task.spec.settings.model) {
       this.element.model = task.spec.settings.model;
     }
@@ -39,7 +36,6 @@ export class PluginSmartSegmentation extends PluginSegmentation {
                          title="Smart create"
                          @click="${() => this.mode = 'smart-create'}">
                          </mwc-icon-button>
-    </div>
     `
   }
 
@@ -49,7 +45,8 @@ export class PluginSmartSegmentation extends PluginSegmentation {
                             maskVisuMode=${this.maskVisuMode}
                             @update=${this.onUpdate}
                             @selection=${this.onSelection}
-                            @mode=${this.onModeChange}></pxn-smart-segmentation>`;
+                            @delete=${this.onDelete}
+                            @mode=${this.onModeChange}></pxn-smart-segmentation>`;//onCreate never really called for segmentation : the mask is updated
   }
 
 }

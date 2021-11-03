@@ -60,7 +60,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [ ] [#feature] passerelle Mturk / Amazon SageMaker
 
 ## plugin segmentation
-- [ ] [#bogue] attributs non conservés arès submit
-- [ ] [#bogue] add/substract désélectionne la zone
+- [ ] [#bogue] setMask non entièrement fonctionnel : rien en s'affiche et on ne peut rien sélectionner
+- [x] [#bogue] add/substract désélectionne la zone
 
 
