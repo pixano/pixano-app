@@ -25,7 +25,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   
   constructor(){
     super();
-    this.mode = 'edit';
+    this.mode = 'create';
     this.selectedIds = [];
   }
 
@@ -41,7 +41,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
       Object.keys(value).forEach((key) => {
         shape[key] = JSON.parse(JSON.stringify(value[key]));
       });
-      shape.color = this._colorFor(shape.category);
+      shape.color = this._colorFor(shape.categoryName);
       this.collect();
     });
   }
@@ -53,7 +53,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     // need to make immutable variable as not to change directly
     // the redux store
     this.element.shapes = JSON.parse(JSON.stringify(this.annotations.map((l) => {
-      return {...l, color: this._colorFor(l.category)}
+      return {...l, color: this._colorFor(l.categoryName)}
     })));
   }
 
@@ -93,7 +93,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     if (this.isSequence) {
       newObject.timestamp = this.targetFrameIdx;
     }
-    newObject.color = this._colorFor(newObject.category);
+    newObject.color = this._colorFor(newObject.categoryName);
     this.collect();
   }
 
@@ -138,7 +138,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   get toolDrawer() {
       return html`
           <mwc-icon-button ?selected=${this.mode === 'edit'}
-                            title="Edit"
+                            title="Select/Edit shape"
                             icon="navigation"
                             @click="${() => this.mode = 'edit'}">
           </mwc-icon-button>

@@ -112,6 +112,14 @@ export class AttributePicker extends LitElement {
     }
 
     static get properties () {
+        /**
+         * showDetail: Boolean, rendering mode for the selected category (showing all attributes or only the category) 
+         * shortcuts : Array of strings, contains the list of all applicable keyboard shortcuts
+         * schema: shema for this annotation (i.e. category and attributes available for each category in this annotation)
+         * value: {categoryName, options }, contains the value of the current category and its options (i.e. attributes available for this category)
+         * numDone: Number, only used for keypoints-box
+         * numTotal: Number, only used for keypoints-box
+         */
         return {
             showDetail: { type: Boolean },
             shortcuts: { type: Array },
@@ -123,7 +131,7 @@ export class AttributePicker extends LitElement {
     }
 
     get selectedCategory() {
-      return this.schema.category.find((c) => c.name === this.value.category);
+      return this.schema.category.find((c) => c.name === this.value.categoryName);
     }
 
     getDefaultAttributesForCategory(schema, categoryName) {
@@ -180,7 +188,7 @@ export class AttributePicker extends LitElement {
         this.mem = '';
         this.schema = default_schema;
         const options = this.getDefaultAttributesForCategory(default_schema, default_schema.default);
-        this.value = {category: default_schema.default, options };
+        this.value = {categoryName: default_schema.default, options };
         this.mem = '';
         this.onKeyDown = this.onKeyDown.bind(this);
         this.onKeyUp = this.onKeyUp.bind(this);
@@ -217,13 +225,13 @@ export class AttributePicker extends LitElement {
     }
 
     get defaultValue() {
-        const options = this.getDefaultAttributesForCategory(this.schema, this.value.category);
-        return {category: this.value.category, options};
+        const options = this.getDefaultAttributesForCategory(this.schema, this.value.categoryName);
+        return {categoryName: this.value.categoryName, options};
     }
 
     setCategory(newCategory) {
         const options = this.getDefaultAttributesForCategory(this.schema, newCategory);
-        this.value = {category: newCategory, options };
+        this.value = {categoryName: newCategory, options };
         this._notifyUpdate();
     }
 
@@ -235,7 +243,7 @@ export class AttributePicker extends LitElement {
     setAttributes(entity) {
       if (entity) {
           entity.options = entity.options || {};
-          const options = this.getDefaultAttributesForCategory(this.schema, entity.category);
+          const options = this.getDefaultAttributesForCategory(this.schema, entity.categoryName);
           Object.keys(options).forEach((key) => {
               if (entity.options.hasOwnProperty(key)) {
                   options[key] = JSON.parse(JSON.stringify(entity.options[key]));
@@ -244,7 +252,7 @@ export class AttributePicker extends LitElement {
               }
           });
           // update property choices
-          this.value = {category: entity.category, options};
+          this.value = {categoryName: entity.categoryName, options};
 
           // update property values
           const childDivs = this.shadowRoot.getElementById('updateEditor').getElementsByTagName('mwc-select');
@@ -272,7 +280,7 @@ export class AttributePicker extends LitElement {
     reloadSchema(schema) {
         this.schema = schema;
         const options = this.getDefaultAttributesForCategory(schema, schema.default);
-        this.value = {category: schema.default, options };
+        this.value = {categoryName: schema.default, options };
     }
 
     _notifyUpdate() {
@@ -361,10 +369,10 @@ export class AttributePicker extends LitElement {
             ${
                 this.schema.category.map((category, idx) => {
                     return html`
-                    <div class="category ${category.name === this.value.category ? 'selected': ''}" id=${category.name} @click=${() => this.setCategory(category.name)}>
+                    <div class="category ${category.name === this.value.categoryName ? 'selected': ''}" id=${category.name} @click=${() => this.setCategory(category.name)}>
                         <span class="step" .style="background: ${this._colorFor(category.name)}">${idx}</span><p>${category.name}</p>
                     </div>
-                    ${category.properties && category.name === this.value.category ? html`
+                    ${category.properties && category.name === this.value.categoryName ? html`
                       ${category.properties.map((prop) => this.htmlProp(prop))}
                     `: html``}
                     `
@@ -380,7 +388,7 @@ export class AttributePicker extends LitElement {
             ${
             this.schema.category.map((category, idx) => {
                 return html`
-                <div class="category ${category.name === this.value.category ? 'selected': ''}" id=${category.name} @click=${() => this.setCategory(category.name)}>
+                <div class="category ${category.name === this.value.categoryName ? 'selected': ''}" id=${category.name} @click=${() => this.setCategory(category.name)}>
                     <span class="step" .style="background: ${this._colorFor(category.name)}">${idx}</span><p>${category.name}</p>
                 </div>`
             })
@@ -400,16 +408,6 @@ export class AttributePicker extends LitElement {
             ${this.renderSimple}
         `;
     }
-    // render(){
-    //   return html`
-    //       ${this.shortcutsDialog}
-    //       <mwc-icon-button class="shortcut" icon="keyboard" @click=${this.openShortcuts}></mwc-icon-button>
-    //       ${this.renderDetail}
-    //       ${this.renderSimple}
-    //       <div id="todo2">keypoints faits ${this.numDone} / ${this.numTotal}</div>
-    //   `;
-    // }
-
 }
 
 customElements.define('attribute-picker', AttributePicker);

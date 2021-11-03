@@ -59,3 +59,8 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [ ] [#feature] possibilité de sélectionner plusieurs éléments pour leur donner des caractéristiques communes ?
 	- [ ] [#feature] passerelle Mturk / Amazon SageMaker
 
+## plugin segmentation
+- [ ] [#bogue] attributs non conservés arès submit
+- [ ] [#bogue] add/substract désélectionne la zone
+
+
