@@ -210,19 +210,16 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		store.dispatch(setAnnotations({annotations: frame}));
 	}
 
-  refresh() {
-    if (!this.element) {
-      return;
-    }
-    if (!this.annotations.mask) {
-      this.element.setEmpty();
-      return;
-    }
-    const mask = this.annotations.mask;
-    if (mask != this.element.getMask()) {
-      this.element.setMask(mask);
-    }
-  }
+	refresh() {//get back annotation into element
+		console.log("refresh")
+		if (!this.element) {
+			return;
+		}
+		// 1) get back the mask into element
+		let mask = this.annotations.find((l) => l.id === 0);
+		if (!mask) this.element.setEmpty();
+		else this.element.setMask(mask).then(console.log("set ok"));
+	}
   
   getEditionMode() {
     if (this.element) return this.element.editionMode;
