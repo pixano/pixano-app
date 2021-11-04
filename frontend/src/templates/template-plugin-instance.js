@@ -41,7 +41,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
       Object.keys(value).forEach((key) => {
         shape[key] = JSON.parse(JSON.stringify(value[key]));
       });
-      shape.color = this._colorFor(shape.categoryName);
+      shape.color = this._colorFor(shape.category);
       this.collect();
     });
   }
@@ -53,7 +53,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     // need to make immutable variable as not to change directly
     // the redux store
     this.element.shapes = JSON.parse(JSON.stringify(this.annotations.map((l) => {
-      return {...l, color: this._colorFor(l.categoryName)}
+      return {...l, color: this._colorFor(l.category)}
     })));
   }
 
@@ -93,7 +93,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
     if (this.isSequence) {
       newObject.timestamp = this.targetFrameIdx;
     }
-    newObject.color = this._colorFor(newObject.categoryName);
+    newObject.color = this._colorFor(newObject.category);
     this.collect();
   }
 

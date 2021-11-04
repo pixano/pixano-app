@@ -135,10 +135,12 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		let frame = this.annotations;
 		// 1) update the mask (always id 0)
 		let mask = frame.find((l) => l.id === 0);
-		let create = false;
-		if (!mask) create=true;
-		mask = {id: 0, mask: this.element.getMask()};//if the mask already exists => just overwrite the previous mask
-		if (create) frame.push(mask);//otherwise(first time), create it
+		if (!mask) {
+			mask = {id: 0, mask: this.element.getMask()};//if the mask already exists => just overwrite the previous mask
+			frame.push(mask);//otherwise(first time), create it
+		} else {
+			mask.mask = this.element.getMask();
+		}
 		// 2) update annotation info when needed
 		let label = frame.find((l) => l.id === JSON.stringify(updatedIds));// search the corresponding id
 		if (label) {//id exists in the database, update information
@@ -178,7 +180,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		this.element.fillSelectionWithClass(category.idx);
 		// get the new mask and store it
 		let mask = frame.find((l) => l.id === 0);
-		mask = {id: 0, mask: this.element.getMask()};//just overwrite the previous mask
+		mask.mask = this.element.getMask();//just overwrite the previous mask
 		// 2) update annotation info from attributes
 		const value = this.attributePicker.value;
 		let label = frame.find((l) => l.id === JSON.stringify(this.selectedIds));// search the corresponding id
@@ -203,7 +205,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		// 1) update the mask (always id 0)
 		// get the new mask and store it
 		let mask = frame.find((l) => l.id === 0);
-		mask = {id: 0, mask: this.element.getMask()};//just overwrite the previous mask
+		mask.mask = this.element.getMask();//just overwrite the previous mask
 		// 2) update annotation info (= delete corresponding id)
 		frame = frame.filter((l) => l.id !== JSON.stringify(ids))
 		// 3) store the new annotation structure
@@ -218,7 +220,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		// 1) get back the mask into element
 		let mask = this.annotations.find((l) => l.id === 0);
 		if (!mask) this.element.setEmpty();
-		else this.element.setMask(mask).then(console.log("set ok"));
+		else this.element.setMask(mask.mask);
 	}
   
   getEditionMode() {
