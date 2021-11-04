@@ -8,6 +8,7 @@ import { html, css } from 'lit-element';
 import { connect } from 'pwa-helpers/connect-mixin.js';
 import TemplatePage from '../templates/template-page';
 import { store, getState } from '../store';
+import { getValue } from '../helpers/utils';
 import { logout, signup,
   getUsers,
   deleteUser,
@@ -90,10 +91,15 @@ class AppUserManager extends connect(store)(TemplatePage) {
     });
   }
 
-  onSaveUser(user) {
-    store.dispatch(updateUser(user));
-    this.enabledUsername = '';
-  }
+	onPasswordChanged(e) {
+		this.passwordElement.value = getValue(e);
+	}
+
+	onSaveUser(user) {
+		user.password = this.passwordElement.value;
+		store.dispatch(updateUser(user));
+		this.enabledUsername = '';
+	}
 
   onCancel() {
     this.enabledUsername = '';
@@ -227,32 +233,33 @@ class AppUserManager extends connect(store)(TemplatePage) {
     `;
   }
 
-  listitem(user) {
-    return html`
-    <div class="list-item">
-      <p>${user.username}</p>
-        <p>
-          <mwc-textfield value=${user.password}
-                        ?disabled=${this.enabledUsername !== user.username}></mwc-textfield>
-        </p>
-        <div>
-          <mwc-select ?disabled=${this.enabledUsername !== user.username}
-                      @action=${(e) => user.role = this.dropdownValues['role'][e.detail.index]}>
-            ${this.dropdownValues['role'].map((v) => html`<mwc-list-item value="${v}"
-                                                                        ?selected=${v === user.role}>${v}</mwc-list-item>`)}
-          </mwc-select>
-        </div>
-        <div>
-          <mwc-select ?disabled=${this.enabledUsername !== user.username}
-                      @action=${(e) => user.preferences.theme = this.dropdownValues['preferences.theme'][e.detail.index]}>
-            ${this.dropdownValues['preferences.theme'].map((v) => html`<mwc-list-item value="${v}"
-                                                                        ?selected=${v === user.preferences.theme}>${v}</mwc-list-item>`)}
-          </mwc-select>
-        </div>
-        ${this.editionCell(user)}
-      </div>
-    `;
-  }
+	listitem(user) {
+		return html`
+		<div class="list-item">
+			<p>${user.username}</p>
+			<p>
+				<mwc-textfield value=${user.password}
+							?disabled=${this.enabledUsername !== user.username}
+							@input=${this.onPasswordChanged}></mwc-textfield>
+			</p>
+			<div>
+				<mwc-select ?disabled=${this.enabledUsername !== user.username}
+							@action=${(e) => user.role = this.dropdownValues['role'][e.detail.index]}>
+				${this.dropdownValues['role'].map((v) => html`<mwc-list-item value="${v}"
+																			?selected=${v === user.role}>${v}</mwc-list-item>`)}
+				</mwc-select>
+			</div>
+			<div>
+				<mwc-select ?disabled=${this.enabledUsername !== user.username}
+							@action=${(e) => user.preferences.theme = this.dropdownValues['preferences.theme'][e.detail.index]}>
+				${this.dropdownValues['preferences.theme'].map((v) => html`<mwc-list-item value="${v}"
+																			?selected=${v === user.preferences.theme}>${v}</mwc-list-item>`)}
+			</mwc-select>
+			</div>
+			${this.editionCell(user)}
+		</div>
+		`;
+	}
 
 
   get userSection() {
