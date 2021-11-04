@@ -9,6 +9,9 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 
 
 # AFAIRE :
+- [ ] [#feature] ajouter un système de versionning dans les fichiers import/export
+- [ ] [#feature] fichiers import/export : une fois le versionning en place, créer une v2 avec : category -> categoryName + ...
+- [ ] [#doc] tabulation uniformisée
 - [ ] [#interface] manque pop-up erreur
 - [ ] [#interface] aide affichée à la 1ère connexion
 - [ ] [#interface] ajouter un bouton pour guider la fin de la création de tache
@@ -60,7 +63,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [ ] [#feature] passerelle Mturk / Amazon SageMaker
 
 ## plugin segmentation
-- [ ] [#bogue] setMask non entièrement fonctionnel : rien en s'affiche et on ne peut rien sélectionner
+- [x] [#bogue] setMask non entièrement fonctionnel : rien en s'affiche et on ne peut rien sélectionner
 - [x] [#bogue] add/substract désélectionne la zone
 
 
