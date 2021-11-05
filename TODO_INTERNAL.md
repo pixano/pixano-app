@@ -11,6 +11,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 # AFAIRE :
 - [ ] [#feature] ajouter un système de versionning dans les fichiers import/export
 - [ ] [#feature] fichiers import/export : une fois le versionning en place, créer une v2 avec : category -> categoryName + ...
+- [ ] [#interface] afficher la liste des objets étiquetés et revoir les interactions pour ne pas remodifier le dernier objet créé
 - [ ] [#doc] tabulation uniformisée
 - [ ] [#interface] manque pop-up erreur
 - [ ] [#interface] aide affichée à la 1ère connexion
