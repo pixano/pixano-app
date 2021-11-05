@@ -69,7 +69,7 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
     for await (const f of files) {
       const id = generateKey();
       const url = workspaceToMount(hostWorkspacePath, f);
-      const value = { id, dataset_id: datasetId, type: dataType, path: url, children: '', thumbnail: await imageThumbnail(f, {responseType: 'base64'})};
+      const value = { id, dataset_id: datasetId, type: dataType, path: url, children: '', thumbnail: await imageThumbnail(f, {responseType: 'base64', height: 100})};
       await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value});
       bar1.increment();
     }
