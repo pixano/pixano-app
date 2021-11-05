@@ -27,13 +27,13 @@ Pixano App is a web-based annotation tool. It relies on web components dedicated
 	- [Login page](#login-page)
 	- [Create a new task](#create-a-new-task)
 	- [Start annotating](#start-annotating)
-* [Contributing](#3-contributing)
+* [Documentation](#3-documentation)
+	- [Import predictions](#import-predictions)
+	- [Import/Export annotation format](#importexport-annotation-format)
+* [Contributing](#4-contributing)
 	- [Getting started](#getting-started)
 	- [Pull request](#pull-request)
 	- [Build docker from sources](#build-docker-from-sources)
-* [Documentation](#4-documentation)
-	- [Import predictions](#import-predictions)
-	- [Import/Export annotation format](#importexport-annotation-format)
 
 
 
@@ -138,80 +138,28 @@ After running Pixano-App, you’ll see something similar to this:
 
 Open your browser and hit `localhost:3000`. You should see the login page of the application.
 
-### Login page
-
 ![pixano-elements](./frontend/images/login.png)
 
 First authentification is: `username: admin` `password: admin`.
 
-### Create a new task
+### Configure your first annotation project
 
-You can then create your annotation project in the `Tasks` tab or update your login in the `Users` tab.
+Before annotating, configure your project by following our [admin's guide](./admin-guide.md). You will be able to:
 
-If your `data-test` folder has the following structure:
-```
-data-test   
-│
-└───images
-    │   xxx.jpg
-    │   yyy.jpg
-    │
-    │   ...
-```
-You can fill the task configuration as follows, which will create as many annotation jobs as there are images in your `image` folder:
-
-*NB: Your `data-test` folder refers to the folder containing the images you want to annotate by a relative path to the `workspace` folder.*
-
-![task-creation](./frontend/images/task-creation.png)
-
-#### Definition of a task
-A task is defined by :
-
-- `Task name`: the name you want to give to this task
-- `Data folder`: the folder containing the data to be annotated in this task (relative path to the `workspace` folder)
-- `Plugin`: the plugin/functionnality to be used for this task (choose it from the list). For example, if you want to annotate vehicules by rectangles, choose `rectangle`.
-- `Task name`: form...
-- `Task name`: model... in the case of a smart plugin, place here the path of the model to be used (the default model...)
-
-*Update 2020.12.04: Make sure your image extensions are either `png` or `jpg`.
-
-*Update 2021.03.05: Videos are not directly handled: extract the video frames beforehand. For every plugin taking a sequence as input (e.g. `sequence-rectangle`, `sequence-polygon`, `tracking`, etc), each subfolder containing images will be considered as a sequence.
+- define your datasets
+- define your desired annotation tasks
+- define your users and their role (annotators, validators, administrators)
 
 ### Start annotating
 
-**TODO**
+Once a task is defined, you (or your annotators) will be able to annotate your dataset. See our [annotator's guide](./annotator-guide.md) for your first steps.  
+Our [plugins' guide](./plugins-guide.md) will help you in the use of your current task's specific plugin.
 
 
 
+## 3. Advanced usage
 
-## 3. Contributing
-
-### Getting started
-
-If you want to edit the application to your liking, fork this repository.
-
-- To get familiar with how the app is built from Web Components, read the [LitElement](https://lit-element.polymer-project.org/) documentation.
-- To get familiar with how the data is managed in the client, read the [redux](https://redux.js.org/introduction/getting-started) documentation.
-- To better understand the Pixano server API, read its [documentation](documentation/rest-api.md)
-
-### Pull request
-
-**TODO**
-
-### Build docker from sources
-
-To create a docker image of the application, build the application (step 1.b) and then run:
-```bash
-# You can change `pixano` by your choosen image name
-sudo docker build -t pixano/pixano-app:my-tag .
-# You can use the local Dockerfile if the build folder already exists
-sudo docker build -t pixano/pixano-app:my-tag -f Dockerfile-local .
-```
-
-
-
-
-## 4. Documentation
+prendre en entrée des annotation existantes ou 
 
 ### Import predictions
 
@@ -236,6 +184,32 @@ data-test
         └─── yyy.json
 ```
 The `task1.json` file contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image. To prepare those files check the [import documentation](documentation/import-annotations.md).
+
+
+
+## 4. Contributing
+
+### Getting started
+
+If you want to edit the application to your liking, fork this repository.
+
+- To get familiar with how the app is built from Web Components, read the [LitElement](https://lit-element.polymer-project.org/) documentation.
+- To get familiar with how the data is managed in the client, read the [redux](https://redux.js.org/introduction/getting-started) documentation.
+- To better understand the Pixano server API, read its [documentation](documentation/rest-api.md)
+
+### Pull request
+
+**TODO**
+
+### Build docker from sources
+
+To create a docker image of the application, build the application (step 1.b) and then run:
+```bash
+# You can change `pixano` by your choosen image name
+sudo docker build -t pixano/pixano-app:my-tag .
+# You can use the local Dockerfile if the build folder already exists
+sudo docker build -t pixano/pixano-app:my-tag -f Dockerfile-local .
+```
 
 
 
