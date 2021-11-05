@@ -9,7 +9,7 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
-    "deps": "npm i ; cd frontend && npm i"
+    "deps": "npm i ; cd frontend && npm i",
     "build": "cd frontend && npm run build"
   },
   "bin": "./server/serve.js",
