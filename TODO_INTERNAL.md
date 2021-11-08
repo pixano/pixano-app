@@ -13,9 +13,12 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 ## admin
 - [ ] [#feature] posibilité de gérer séparément les données images et les tâches => implémentation du bouton création
 - [ ] [#feature] implémentation de la navigation dans les fichiers lors de la création de tâches
-- [ ] [#doc] afficher le numéro de version de pixano-app => https://www.npmjs.com/package/git-describe
+- [ ] [#doc] afficher le numéro de version de pixano-app
+	- sol 1: https://www.npmjs.com/package/git-describe : récupérer côté serveur et envoyer au client
+	- sol 2: inclure dans les scripts npm la création d'un fichier de version (https://www.npmjs.com/package/get-git-version), et l'inclure côté client
 - [ ] [#feature] ajouter un système de versionning dans les fichiers import/export
 - [ ] [#feature] fichiers import/export : une fois le versionning en place, créer une v2 avec : category -> categoryName + ...
+- [ ] [#feature] séparer la gestion des tâches et des datasets
 
 ## annotation
 - [ ] [#doc] afficher le numéro de version de pixano-element et de pixano-app + afficher si element est local ou version npm
@@ -59,7 +62,10 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [ ] [#feature] annotateurs à compétence différenciée, par ex : les annotateurs de niveau 1 font les BB autour des voitures, les annotateurs de niveau 2 complètent les marques et modèles
 
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
-- [ ] [#feature] intégration Semfeat/Élise
+- [ ] [#feature] intégration Semfeat/Élise (sur une branche Élise)
+	- [ ] ajouter Élise dans la génération du docker
+	- [ ] créer les interactions
+- [ ] [#feature] nouveau module de classification
 
 - [ ] [#interface] à la création d'une nouvelle tâche, il faudrait pouvoir décider si on souhaite étiqueter en mode shuffle (par défaut) ou linéaire (en suivant le nom des fichiers)
 - [ ] [#interface] add an error message when creating task/dataset in a path which does not exist
