@@ -9,15 +9,24 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 
 
 # AFAIRE :
+
+## admin
+- [ ] [#feature] posibilité de gérer séparément les données images et les tâches => implémentation du bouton création
+- [ ] [#feature] implémentation de la navigation dans les fichiers lors de la création de tâches
+- [ ] [#doc] afficher le numéro de version de pixano-app => https://www.npmjs.com/package/git-describe
 - [ ] [#feature] ajouter un système de versionning dans les fichiers import/export
 - [ ] [#feature] fichiers import/export : une fois le versionning en place, créer une v2 avec : category -> categoryName + ...
-- [ ] [#doc] tabulation uniformisée
+
+## annotation
+- [ ] [#doc] afficher le numéro de version de pixano-element et de pixano-app + afficher si element est local ou version npm
+- [ ] [#interface] afficher la liste des objets étiquetés et revoir les interactions pour ne pas remodifier le dernier objet créé
+- [ ] [#doc] tabulations/espaces uniformisée dans tous les fichiers
 - [ ] [#interface] manque pop-up erreur
 - [ ] [#interface] aide affichée à la 1ère connexion
 - [ ] [#interface] ajouter un bouton pour guider la fin de la création de tache
-- [ ] [#doc] readme add 'cd ...' + add folder path in commands to make sure we run in the right folder
+- [x] [#doc] readme add 'cd ...' + add folder path in commands to make sure we run in the right folder
 - [ ] [#feature] fichiers à supprimer si pb (compléter commande cleanall)
-- [ ] [#doc] Manque README global qui explique comment est construit Pixano et ses dépôts, mettre des schémas pour montrer les utilisations (distribué, standalone facile, etc)
+- [o] [#doc] Manque README global qui explique comment est construit Pixano et ses dépôts, mettre des schémas pour montrer les utilisations (distribué, standalone facile, etc)
 - [ ] [#doc] Getting started blog post
 - [ ] [#doc] Ajouter des démos complètes sexy + ajouter un bouton ajouter une config pour tester ton projet facilelement
 - [ ] [#feature] Ajouter un exécutable
