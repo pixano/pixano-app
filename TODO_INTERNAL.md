@@ -64,7 +64,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
 - [o] [#feature] intégration Semfeat/Élise (sur une branche Élise)
 	- [x] ajouter Élise dans la génération du docker
-	- [ ] synchroniser la base de données image
+	- [x] synchroniser la base de données image
 	- Q: comment gérer plusieurs datasets différents ? possible directement avec Élise ? ou il faudra créer plusieurs instances ?
 	- [ ] créer les interactions
 - [ ] [#feature] nouveau module de classification

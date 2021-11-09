@@ -57,5 +57,13 @@ $ELISE_DIST/bin/run_search_server --param=$ELISE_BASE/eliseCfg/elise_search_FSF_
 $ELISE_DIST/bin/run_elise_server --param=$ELISE_BASE/eliseCfg/elise_server_config_sqlite.xml &
 ```
 
-## ...
+## index a dataset
+Simply define a task : all new dataset will be automaticaly indexed.
+
+## search an image
+```
+curl localhost:8081 -F action=search -F image=@/adress/of/the/search/image.jpg -F save=0
+```
+
+
 
