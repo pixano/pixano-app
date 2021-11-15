@@ -26,7 +26,8 @@ export const pluginsList = [
     'sequence-cuboid',
     'sequence-polygon',
     'sequence-keypoints',
-    'sequence-segmentation'
+    'sequence-segmentation',
+    'custom'
 ];
 
 /**
