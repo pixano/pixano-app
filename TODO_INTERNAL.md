@@ -73,6 +73,10 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#interface] add an error message when creating task/dataset in a path which does not exist
 
 
+- [ ] [#bogue] segmentation : si on change de classe en mode ajout, çà ne fonctionne pas => sortir du mode ajout/suppression dès qu'on chage de classe
+
+
+
 - points à valider :
 	- [ ] [#feature] possibilité de ne pas annoter tous les keypoints (non visibles) ?
 	- [ ] [#feature] commencer par mettre les images en visu et ne plus mettre nécessairement toutes les images en to_annotate par défaut => il faut pouvoir sélectionner une partie de la base de donnée facilement pour l'étiquetage
