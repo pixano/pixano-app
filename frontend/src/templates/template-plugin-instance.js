@@ -25,7 +25,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   
   constructor(){
     super();
-    this.mode = 'edit';
+    this.mode = 'create';
     this.selectedIds = [];
   }
 
@@ -138,7 +138,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
   get toolDrawer() {
       return html`
           <mwc-icon-button ?selected=${this.mode === 'edit'}
-                            title="Edit"
+                            title="Select/Edit shape"
                             icon="navigation"
                             @click="${() => this.mode = 'edit'}">
           </mwc-icon-button>
