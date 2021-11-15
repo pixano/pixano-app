@@ -15,8 +15,7 @@ COPY server server
 COPY .logo-ascii .logo-ascii
 
 # Build frontend and install backend dependencies
-RUN npm run installApp && npm run buildApp && npm install \
-    && rm -rf src frontend
+RUN npm i && cd frontend/ && npm i && npm run build && rm -rf src frontend && cd ..
 
 EXPOSE 3000
 
