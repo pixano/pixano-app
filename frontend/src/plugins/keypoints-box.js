@@ -108,7 +108,7 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
       freeBoxes.shift();
       this.attributePicker.numDone = this.attributePicker.numTotal - freeBoxes.length;
       store.dispatch(createAnnotation(newAnnotation));
-      this.element.shapes = freeBoxes.length ? [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].categoryName) }] : [];
+      this.element.shapes = freeBoxes.length ? [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].category) }] : [];
     } else {
       this.element.shapes = [];
     }
@@ -138,7 +138,7 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
                           .filter((r) => !ids.includes(r.id));
     if (freeBoxes.length) {
       
-      this.element.shapes = [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].categoryName) }];
+      this.element.shapes = [{...freeBoxes[0], color: this._colorFor(freeBoxes[0].category) }];
     }
   }
   

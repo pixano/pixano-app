@@ -467,7 +467,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   /**
    * Display table row
-   * Status | Data Id | Annotator | Validator | State | Time | Launch
+   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch
    */
   listitem(item) {
     const v = this.statusMap.get(item.status);
@@ -528,7 +528,10 @@ class AppDashboardAdmin extends TemplatePage {
         </mwc-select>
       </div>
       <div id="time-header">Time</div>
-      <div style="flex: 0.75"></div>
+      <div>
+        <mwc-textfield label="Preview" icon="filter_list"></mwc-textfield>
+      </div>
+      <div style="flex: 0.5"></div>
     </div>
     `;
   }

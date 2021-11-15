@@ -112,6 +112,14 @@ export class AttributePicker extends LitElement {
     }
 
     static get properties () {
+        /**
+         * showDetail: Boolean, rendering mode for the selected category (showing all attributes or only the category) 
+         * shortcuts : Array of strings, contains the list of all applicable keyboard shortcuts
+         * schema: shema for this annotation (i.e. category and attributes available for each category in this annotation)
+         * value: {category, options }, contains the value of the current category and its options (i.e. attributes available for this category)
+         * numDone: Number, only used for keypoints-box
+         * numTotal: Number, only used for keypoints-box
+         */
         return {
             showDetail: { type: Boolean },
             shortcuts: { type: Array },
@@ -400,16 +408,6 @@ export class AttributePicker extends LitElement {
             ${this.renderSimple}
         `;
     }
-    // render(){
-    //   return html`
-    //       ${this.shortcutsDialog}
-    //       <mwc-icon-button class="shortcut" icon="keyboard" @click=${this.openShortcuts}></mwc-icon-button>
-    //       ${this.renderDetail}
-    //       ${this.renderSimple}
-    //       <div id="todo2">keypoints faits ${this.numDone} / ${this.numTotal}</div>
-    //   `;
-    // }
-
 }
 
 customElements.define('attribute-picker', AttributePicker);
