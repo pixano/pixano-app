@@ -155,6 +155,13 @@ Before annotating, configure your project by following our [admin's guide](./adm
 Once a task is defined, you (or your annotators) will be able to annotate your dataset. See our [annotator's guide](./annotator-guide.md) for your first steps.  
 Our [plugins' guide](./plugins-guide.md) will help you in the use of your current task's specific plugin.
 
+### Export your annotations
+
+Get your annotations and use them for any external application easily :
+
+- as an admin, go to the tasks tab
+- press the "EXPORT TO FILES" button
+- you will find the exported annotations in the root of your workspace (find more information on annotation format [bellow](#importexport-annotation-format))
 
 
 ## 3. Advanced usage
