@@ -7,6 +7,7 @@
 import { html, css } from 'lit-element';
 import TemplatePage from '../templates/template-page';
 import { store, getState } from '../store';
+import { GET } from '../actions/requests';
 import {
   updateTaskName,
   updateFilters,
@@ -25,6 +26,7 @@ import '@material/mwc-select';
 import '@material/mwc-linear-progress';
 import '@material/mwc-icon-button';
 import '@material/mwc-checkbox';
+import '@material/mwc-slider';
 
 class AppDashboardAdmin extends TemplatePage {
   static get properties() {
@@ -54,6 +56,9 @@ class AppDashboardAdmin extends TemplatePage {
     this.doneCounter = 0;
     this.toValidateCounter = 0;
 
+	// ELISE
+	this.similarityLevel = 90;//similarity in %
+
     this.statusMap = new Map([['', ['', '', '']], 
                               ['to_annotate', ['to annotate', 'create', 'blue']], 
                               ['to_validate', ['to validate', 'youtube_searched_for', 'orange']],
@@ -70,6 +75,7 @@ class AppDashboardAdmin extends TemplatePage {
    */
   async getResults() {
     try {
+		console.log("getResults")
       const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
       this.resultsLength = data.counter;
       this.globalCounter = data.globalCounter;
@@ -95,6 +101,7 @@ class AppDashboardAdmin extends TemplatePage {
     this.tableCheckbox.checked = false;
     this.nbSelectedJobs = 0;
     this.table.layout();
+	console.log("refreshGrid");
     this.getResults().then((res) => {
       this.items = res;
     });
@@ -467,7 +474,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   /**
    * Display table row
-   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch
+   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch | Search Similar
    */
   listitem(item) {
     const v = this.statusMap.get(item.status);
@@ -484,12 +491,96 @@ class AppDashboardAdmin extends TemplatePage {
         <p>${this.assignedMap.get(item.in_progress.toString())}</p>
         <p>${format(item.cumulated_time)}</p>
 		<p><img src="data:image/jpg;base64,${item.thumbnail}" ></p>
-        <p><mwc-icon-button class="launch" icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
+        <p><mwc-icon-button icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
+        <p><mwc-icon-button icon="search_off" @click=${() => this.onSearchSimilar(item.task_name, item.data_id)}></mwc-icon-button></p>
       </div>
     </mwc-check-list-item>
     <li divider role="separator"></li>
     `;
   }
+
+  onSearchSimilar(task_name, data_id) {
+	console.log("this.onSearchSimilar=",data_id);
+	console.log("this.similarityLevel=",this.similarityLevel)
+	// ELISE : search for similar images
+	console.log("envoi=",`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`)
+	GET(`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`).then((resultIds) => {
+		// we get the resulting list
+		  // extract dataids from the resulting list
+		  console.log("res = ",resultIds);
+		  // update filters according to this list
+		  console.log("recherche=",resultIds.join(';'))
+		  this.updateFilter('data_id', resultIds.join(';'));
+	  });// send POST request
+
+	// apply to results filtering
+	// console.log("recherche=",data_id+';'+'ff98d09e932fc00c')
+	// this.updateFilter('data_id', data_id+';'+'ff98d09e932fc00c');
+	// // this.updateFilter('path', '3141078');
+
+
+// 	  updateFilter(key, value) {
+// 		const oldFilters = getState('application').filters
+// 		if (oldFilters[key] !== value){
+// 		  const newFilters = {...oldFilters, [key]: value};
+// 		  store.dispatch(updateFilters(newFilters));
+// 		  this.refreshGrid();
+// 		}    
+// 	  }
+//   refreshGrid() {
+//     this.table.items.forEach((e) => e.selected = false);
+//     this.tableCheckbox.checked = false;
+//     this.nbSelectedJobs = 0;
+//     this.table.layout();
+//     this.getResults().then((res) => {
+//       this.items = res;
+//     });
+//   }
+//   async getResults() {
+//     try {
+//       const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
+//       this.resultsLength = data.counter;
+//       this.globalCounter = data.globalCounter;
+//       this.doneCounter = data.doneCounter;
+//       this.toValidateCounter = data.toValidateCounter;
+//       return data.results;
+//     } catch (err) {
+//       return [];
+//     } 
+//   }
+
+
+// 	const url = 'https://api.themoviedb.org/3/search/movie?api_key=' + API_TOKEN + '&language=fr&query=' + text + "&page=" + page
+// 	return fetch(url)
+// 		.then((response) => response.json())
+// 		.catch((error) => console.log(error))
+
+// NON !!!!
+// il faut envoyer une requète au serveur PIXANO qui LUI va lancer cette demande
+
+// => pour la mise à jour, prendre exemple sur : updateFilter(key, value) {
+//  const oldFilters = getState('application').filters
+//  if (oldFilters[key] !== value){
+//    const newFilters = {...oldFilters, [key]: value};
+//    store.dispatch(updateFilters(newFilters));
+//    this.refreshGrid();
+//  }    
+// }
+
+// 	let urlElise = 'http://localhost:8081'
+// 	let formData = new FormData();// create the form to send to Elise
+// 	formData.append('action', 'search');
+// 	formData.append('image', fs.readFileSync(path), path);
+// 	formData.append('save', '0');
+// 	fetch(urlElise, { method: 'post', body: formData })
+// 		.then(res => {
+// 		if (res.statusText=='OK') return res.json();
+// 		else console.log("KO :\n",res);
+// 	  })
+// 	  .then(res => {
+// 		console.log(res);
+// 	  });// send POST request
+}
 
   get tableHeader() {
     const filters = getState('application').filters;
@@ -531,10 +622,23 @@ class AppDashboardAdmin extends TemplatePage {
       <div>
         <mwc-textfield label="Preview" icon="filter_list"></mwc-textfield>
       </div>
-      <div style="flex: 0.5"></div>
+      <div style="flexDirection: 'column'">
+	    Similarity Level
+        <div style="display: flex; align-items: center; flexDirection: 'row'">
+          0
+          <mwc-slider value=${this.similarityLevel} discrete step="1" min="0" max="100" @change=${(evt) => this.onSliderInput(evt)}></mwc-slider>
+          100%
+        </div>
+      </div>
     </div>
     `;
   }
+  onSliderInput(evt) {
+	  console.log("this.similarityLevel=",this.similarityLevel)
+	this.similarityLevel=evt.detail.value;
+	console.log("this.similarityLevel 2=",this.similarityLevel)
+}
+  
 
   /**
    * Table pagination.
