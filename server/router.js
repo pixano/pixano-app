@@ -35,6 +35,7 @@ const { get_tasks,
         put_task,
         delete_task,
         import_tasks,
+		import_tasks_from_kafka,
         export_tasks } = require('./routes/tasks');
 const { snapshot_project } = require('./routes/project');
 const { get_results,
@@ -83,6 +84,7 @@ router.delete('/specs/:spec_id', middleware.checkToken, delete_spec);
 router.get('/tasks', middleware.checkToken, get_tasks);
 router.post('/tasks', middleware.checkToken, post_tasks);
 router.post('/tasks/import', middleware.checkToken, import_tasks);
+router.post('/tasks/import_from_kafka', middleware.checkToken, import_tasks_from_kafka);
 router.post('/tasks/export', middleware.checkToken, export_tasks);
 router.put('/tasks/:task_name', middleware.checkToken, put_task);
 router.get('/tasks/:task_name', middleware.checkToken, get_task);

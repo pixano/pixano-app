@@ -351,6 +351,15 @@ export const importTasks = (path) => (dispatch) => {
 }
 
 /**
+ * Import a list of image ids from Kafka. and ??
+ * @param {String} path origin path
+ */
+ export const importTasksFromKafka = (path) => (dispatch) => {
+    return POST('/api/v1/tasks/import_from_kafka', {path}, dispatch);
+}
+
+
+/**
  * Update a dataset.
  * @param {Object} config 
  */

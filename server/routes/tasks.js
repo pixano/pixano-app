@@ -14,6 +14,31 @@ const populator = require('../helpers/data-populator');
 const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
+const { Kafka } = require('kafkajs')
+
+// KAFKA plugin
+const kafka = new Kafka({
+	clientId: 'my-app',
+	brokers: ['kafka1:9092', 'kafka2:9092']
+});
+// const kafkaProducer = kafka.producer();
+const kafkaConsumer = kafka.consumer({ groupId: 'test-group' });
+/**
+ * @api Get list of ids to be loaded, from KAFKA
+ */
+const getIdsInputListFromKafka = async () => {
+	await kafkaConsumer.connect()
+	await kafkaConsumer.subscribe({ topic: 'test-topic', fromBeginning: true })
+	await kafkaConsumer.run({
+		eachMessage: async ({ topic, partition, message }) => {
+			console.log({
+				partition,
+				offset: message.offset,
+				value: message.value.toString(),
+			})
+		},
+	})
+}
 
 /**
  * @api {get} /tasks Get list of tasks details
@@ -71,6 +96,38 @@ async function post_tasks(req, res) {
     });
 }
 
+/**
+ * @api {post} /tasks/import_from_kafka Import annotation task from kafka
+ * @apiName PostImportTasks
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiParam {string} [path] Relative path to tasks folder
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Import error
+ */
+async function import_tasks_from_kafka(req, res) {
+	checkAdmin(req, async () => {
+		if (!req.body.path) {
+			return res.status(400).json({
+				error: 'wrong_path',
+				message: 'Invalid path.'
+			});
+		}
+		console.log('##### Importing from KAFKA');
+
+		// ... TODO
+		getIdsInputListFromKafka().catch(console.error);
+		// ... TODO
+
+		console.log('Import done.');
+        res.sendStatus(200);
+	});
+}
 
 /**
  * @api {post} /tasks/import Import annotation task from json files
@@ -559,6 +616,7 @@ module.exports = {
     put_task,
     delete_task,
     import_tasks,
+	import_tasks_from_kafka,
     export_tasks,
     getAllTasksDetails
 }

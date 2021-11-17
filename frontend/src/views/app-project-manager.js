@@ -27,6 +27,7 @@ import {
   snapshotProject,
   exportTasks,
   importTasks,
+  importTasksFromKafka,
   deleteTask,
   postTask,
   putTask,
@@ -100,6 +101,24 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     browserElem.mode = 'import';
     browserElem.open = true;
   }
+
+	/**
+	 * Fired when importing from kafka
+	 */
+	onImportFromKafka() {
+		store.dispatch(importTasksFromKafka("kafka")).then(() => {
+			// création d'une tâche en dur classification avec rectangles pour l'instant
+			console.log("importTasksFromKafka ok");
+			
+			
+			store.dispatch(getTasks()).then(() => {
+				this.onActivate();
+			})
+		}).catch(error => {
+			this.errorPopup(error.message);
+			store.dispatch(getTasks());
+		});
+	}
 
   /**
    * Fired when exporting a project
@@ -317,6 +336,10 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                         type="button"
                         title="Import annotations from json files"
                         @click="${this.onImport}">Import from files</mwc-button>
+			<mwc-button outlined
+                        type="button"
+                        title="Import annotations from Kafka"
+                        @click="${this.onImportFromKafka}">Import from Kafka</mwc-button>
         </div>
       </div>
     `;
