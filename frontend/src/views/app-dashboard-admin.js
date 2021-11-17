@@ -37,7 +37,8 @@ class AppDashboardAdmin extends TemplatePage {
       page: { type: Number },
       resultsLength: { type: Number },
       pageSize: { type: Number },
-      items: { type: Array }
+      items: { type: Array },
+	  similarityLevel: { type: Number }
     };
   }
 
@@ -57,7 +58,7 @@ class AppDashboardAdmin extends TemplatePage {
     this.toValidateCounter = 0;
 
 	// ELISE
-	this.similarityLevel = 90;//similarity in %
+	this.similarityLevel = 0;//similarity in %
 
     this.statusMap = new Map([['', ['', '', '']], 
                               ['to_annotate', ['to annotate', 'create', 'blue']], 
@@ -75,7 +76,6 @@ class AppDashboardAdmin extends TemplatePage {
    */
   async getResults() {
     try {
-		console.log("getResults")
       const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
       this.resultsLength = data.counter;
       this.globalCounter = data.globalCounter;
@@ -96,13 +96,12 @@ class AppDashboardAdmin extends TemplatePage {
    * Refresh the grid from the database
    * state.
    */
-  refreshGrid() {
+  async refreshGrid() {
     this.table.items.forEach((e) => e.selected = false);
     this.tableCheckbox.checked = false;
     this.nbSelectedJobs = 0;
     this.table.layout();
-	console.log("refreshGrid");
-    this.getResults().then((res) => {
+    await this.getResults().then((res) => {
       this.items = res;
     });
   }
@@ -116,13 +115,13 @@ class AppDashboardAdmin extends TemplatePage {
    * @param {String} key 
    * @param {String} value 
    */
-  updateFilter(key, value) {
+  async updateFilter(key, value) {
     const oldFilters = getState('application').filters
     if (oldFilters[key] !== value){
       const newFilters = {...oldFilters, [key]: value};
       store.dispatch(updateFilters(newFilters));
-      this.refreshGrid();
-    }    
+      await this.refreshGrid();
+    }
   }
 
   /**
@@ -499,88 +498,23 @@ class AppDashboardAdmin extends TemplatePage {
     `;
   }
 
-  onSearchSimilar(task_name, data_id) {
-	console.log("this.onSearchSimilar=",data_id);
-	console.log("this.similarityLevel=",this.similarityLevel)
-	// ELISE : search for similar images
-	console.log("envoi=",`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`)
-	GET(`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`).then((resultIds) => {
+	async onSearchSimilar(task_name, data_id) {
+		// ELISE : search for similar images
+		const resultIds = await GET(`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`);
 		// we get the resulting list
-		  // extract dataids from the resulting list
-		  console.log("res = ",resultIds);
-		  // update filters according to this list
-		  console.log("recherche=",resultIds.join(';'))
-		  this.updateFilter('data_id', resultIds.join(';'));
-	  });// send POST request
-
-	// apply to results filtering
-	// console.log("recherche=",data_id+';'+'ff98d09e932fc00c')
-	// this.updateFilter('data_id', data_id+';'+'ff98d09e932fc00c');
-	// // this.updateFilter('path', '3141078');
-
-
-// 	  updateFilter(key, value) {
-// 		const oldFilters = getState('application').filters
-// 		if (oldFilters[key] !== value){
-// 		  const newFilters = {...oldFilters, [key]: value};
-// 		  store.dispatch(updateFilters(newFilters));
-// 		  this.refreshGrid();
-// 		}    
-// 	  }
-//   refreshGrid() {
-//     this.table.items.forEach((e) => e.selected = false);
-//     this.tableCheckbox.checked = false;
-//     this.nbSelectedJobs = 0;
-//     this.table.layout();
-//     this.getResults().then((res) => {
-//       this.items = res;
-//     });
-//   }
-//   async getResults() {
-//     try {
-//       const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
-//       this.resultsLength = data.counter;
-//       this.globalCounter = data.globalCounter;
-//       this.doneCounter = data.doneCounter;
-//       this.toValidateCounter = data.toValidateCounter;
-//       return data.results;
-//     } catch (err) {
-//       return [];
-//     } 
-//   }
-
-
-// 	const url = 'https://api.themoviedb.org/3/search/movie?api_key=' + API_TOKEN + '&language=fr&query=' + text + "&page=" + page
-// 	return fetch(url)
-// 		.then((response) => response.json())
-// 		.catch((error) => console.log(error))
-
-// NON !!!!
-// il faut envoyer une requète au serveur PIXANO qui LUI va lancer cette demande
-
-// => pour la mise à jour, prendre exemple sur : updateFilter(key, value) {
-//  const oldFilters = getState('application').filters
-//  if (oldFilters[key] !== value){
-//    const newFilters = {...oldFilters, [key]: value};
-//    store.dispatch(updateFilters(newFilters));
-//    this.refreshGrid();
-//  }    
-// }
-
-// 	let urlElise = 'http://localhost:8081'
-// 	let formData = new FormData();// create the form to send to Elise
-// 	formData.append('action', 'search');
-// 	formData.append('image', fs.readFileSync(path), path);
-// 	formData.append('save', '0');
-// 	fetch(urlElise, { method: 'post', body: formData })
-// 		.then(res => {
-// 		if (res.statusText=='OK') return res.json();
-// 		else console.log("KO :\n",res);
-// 	  })
-// 	  .then(res => {
-// 		console.log(res);
-// 	  });// send POST request
-}
+		// first check
+		if (resultIds.length===0) {// impossible in the case of similarity => inconsistant database
+			console.warn("inconsistant database");// ... TODO : show a message to the user
+			return;// nothing else to do
+		}
+		// update filters according to this list
+		await this.updateFilter('data_id', resultIds.join(';'));
+		// last check
+		if (this.items.length===0) {// error 431 Request Header Fields Too Large (=resultIds.length too big)
+			console.warn("too much matching images");// ... TODO : use something else then GET to handle this problem and show the real answer OR show a message to the user
+			this.updateFilter('data_id', '');// reinit filters for data_id
+		}
+	}
 
   get tableHeader() {
     const filters = getState('application').filters;
@@ -622,23 +556,19 @@ class AppDashboardAdmin extends TemplatePage {
       <div>
         <mwc-textfield label="Preview" icon="filter_list"></mwc-textfield>
       </div>
+      <div id="time-header">View</div>
       <div style="flexDirection: 'column'">
 	    Similarity Level
         <div style="display: flex; align-items: center; flexDirection: 'row'">
           0
-          <mwc-slider value=${this.similarityLevel} discrete step="1" min="0" max="100" @change=${(evt) => this.onSliderInput(evt)}></mwc-slider>
+          <mwc-slider value=${this.similarityLevel} min="0" max="100" @input=${(evt) => this.similarityLevel=evt.detail.value}></mwc-slider>
           100%
         </div>
+		${this.similarityLevel.toFixed(2)}%
       </div>
     </div>
     `;
   }
-  onSliderInput(evt) {
-	  console.log("this.similarityLevel=",this.similarityLevel)
-	this.similarityLevel=evt.detail.value;
-	console.log("this.similarityLevel 2=",this.similarityLevel)
-}
-  
 
   /**
    * Table pagination.

@@ -65,5 +65,10 @@ Simply define a task : all new dataset will be automaticaly indexed.
 curl localhost:8081 -F action=search -F image=@/adress/of/the/search/image.jpg -F save=0
 ```
 
+## remove/clean database (local build)
+```
+rm -rf ELISE/elise/repository.db /data/Elise_sqlite/ ELISE/elise_ext/data/idx/*
+```
+
 
 
