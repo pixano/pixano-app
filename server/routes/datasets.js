@@ -201,6 +201,7 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
  * @param {String} workspace 
  */
 async function getOrcreateDataset(dataset, workspace) {
+	dataset.path = path.normalize(dataset.path+'/');//normalize path in order to not duplicate datasets because of a typo error
     const existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
     if (!existingDataset) {
       const newDataset = {

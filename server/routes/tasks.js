@@ -26,18 +26,36 @@ const kafkaConsumer = kafka.consumer({ groupId: 'test-group' });
 /**
  * @api Get list of ids to be loaded, from KAFKA
  */
-const getIdsInputListFromKafka = async () => {
-	await kafkaConsumer.connect()
-	await kafkaConsumer.subscribe({ topic: 'test-topic', fromBeginning: true })
-	await kafkaConsumer.run({
-		eachMessage: async ({ topic, partition, message }) => {
-			console.log({
-				partition,
-				offset: message.offset,
-				value: message.value.toString(),
-			})
-		},
-	})
+const getIdsInputListFromKafka = async () => {// ... TODO : correct ports and ids
+	// Topic kafka : selection
+	// Exemple de message envoyé :
+	// {
+	//   "origine": "DEBIAI",
+	//   "project_name": "Conf-ia renault welding 4.1 Josquin",
+	//   "selection_name": "FP",
+	//   "date": 1636472282.113034,
+	//   "sample_ids": [
+	//      "labeled/c27-2/190513-1613_2752766_ - C27/",
+	//      "labeled/c27-2/190522-1642_2776102_ - C27/",
+	//      "labeled/c27-2/140319-0540_2658484_ - C27_2/",
+	//      "labeled/c27-2/190428-2241_2728102_ - C27/",
+	//      ...
+	//    ]
+	// }
+
+	// ... TODO : get the real message and extract the usefull information
+	// await kafkaConsumer.connect()
+	// await kafkaConsumer.subscribe({ topic: 'selection', fromBeginning: true })
+	// await kafkaConsumer.run({
+	// 	eachMessage: async ({ topic, partition, message }) => {
+	// 		console.log({
+	// 			partition,
+	// 			offset: message.offset,
+	// 			value: message.value.toString(),
+	// 		})
+	// 	},
+	// });
+	return ["labeled/c27-2/190513-1613_2752766_ - C27/", "labeled/c27-2/190522-1642_2776102_ - C27/", "labeled/c27-2/140319-0540_2658484_ - C27_2 (/", "labeled/c27-2/190428-2241_2728102_ - C27/", "labeled/c27-2/190503-1351_2738143_ - C27/", "labeled/c27-2/190527-1208_2780352_ - C27/", "labeled/c27-2/190415-0207_2706182_ - C27/", "labeled/c27-2/190404-1110_2701688_ - C27/", "labeled/c27-2/190514-0536_2763697_ - C27/", "labeled/c27-2/190513-2223_2752649_ - C27/", "labeled/c27-2/190415-0109_2706199_ - C27/", "labeled/c27-2/190514-1410_2763530_ - C27/"];
 }
 
 /**
@@ -98,34 +116,56 @@ async function post_tasks(req, res) {
 
 /**
  * @api {post} /tasks/import_from_kafka Import annotation task from kafka
- * @apiName PostImportTasks
+ * @apiName PostTasks
  * @apiGroup Tasks
  * @apiPermission admin
  * 
  * @apiParam {string} [path] Relative path to tasks folder
  * 
  * @apiSuccessExample Success-Response:
- *     HTTP/1.1 200 OK
+ * 		HTTP/1.1 201 OK
+ * 		taskDetail = {name: taskName, dataset, spec};
  * 
  * @apiErrorExample Error-Response:
- *     HTTP/1.1 400 Import error
+ *     HTTP/1.1 400 Error in kafka import
+ *     HTTP/1.1 400 Taskname already existing
+ *     HTTP/1.1 401 Unauthorized
  */
 async function import_tasks_from_kafka(req, res) {
-	checkAdmin(req, async () => {
-		if (!req.body.path) {
-			return res.status(400).json({
-				error: 'wrong_path',
-				message: 'Invalid path.'
-			});
-		}
+	checkAdmin(req, async () => {// only admin can modify tasks and datasets
 		console.log('##### Importing from KAFKA');
+		var listIds = await getIdsInputListFromKafka().catch((err) => {
+			console.error();
+			res.status(400).json({ error: err, message: 'Error in kafka import' });
+			return;
+		});
+		if (!listIds) return;// if kafka failed, nothing else to do
+		console.log("liste=",listIds);
+		console.log('##### Create a new task');
+		const task = req.body;
+		const spec = await getOrcreateSpec(task.spec);
+		try {
+			await db.get(dbkeys.keyForTask(task.name));
+			return res.status(400).json({message: 'Taskname already existing'});
+		} catch(e) {}//catch === everything is ok (Taskname not in use)
 
+		console.log('# 1) Create a new dataset');
+		console.log('# 1.1) getPathFromIds');
 		// ... TODO
-		getIdsInputListFromKafka().catch(console.error);
+		console.log('# 1.2) getImagesFromPath');
 		// ... TODO
-
-		console.log('Import done.');
-        res.sendStatus(200);
+		task.dataset.path = 'video';// ... TODO
+		const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
+		console.log('# 2) Push the new task + dataset');
+		// Task does not exist create it
+		const newTask = {name: task.name, dataset_id: dataset.id, spec_id: spec.id}
+		await db.put(dbkeys.keyForTask(newTask.name), newTask);
+		// Generate first job list
+		await generateJobResultAndLabelsLists(newTask);
+		// Send back the created task
+		const taskDetail = await getTaskDetails(newTask.name);
+		console.log('Task created', taskDetail.name)
+		res.status(201).json(taskDetail);
 	});
 }
 
@@ -142,6 +182,7 @@ async function import_tasks_from_kafka(req, res) {
  * 
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 400 Import error
+ *     HTTP/1.1 401 Unauthorized
  */
 async function import_tasks(req, res) {
     checkAdmin(req, async () => {
@@ -368,7 +409,7 @@ async function export_tasks(req, res) {
 }
 
 /**
- * @api {put} /tasks/:task_name Update task details
+ * @api {put} /tasks/:task_name Update task details (for now : only task details can be changed, the name, dataset and annotation type have to remain the same)
  * @apiName PutTask
  * @apiGroup Tasks
  * @apiPermission admin
