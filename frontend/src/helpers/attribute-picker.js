@@ -364,7 +364,7 @@ export class AttributePicker extends LitElement {
 
     get renderDetail() {
         return html`
-        <div id="updateEditor" style="width: 100%;" ?hidden=${this.showDetail}>
+        <div id="updateEditor" style="width: 100%;" ?hidden=${!this.showDetail}>
             <h3><label>Selected label</label></h3>
             ${
                 this.schema.category.map((category, idx) => {
@@ -383,7 +383,7 @@ export class AttributePicker extends LitElement {
 
     get renderSimple() {
         return html`
-        <div ?hidden=${!this.showDetail}>
+        <div ?hidden=${this.showDetail}>
             <h3><label>Label for creation</label></h3>
             ${
             this.schema.category.map((category, idx) => {
