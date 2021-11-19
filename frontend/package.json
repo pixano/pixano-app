@@ -6,7 +6,8 @@
     "copyindex": "shx cp src/index.html ../build",
     "copyimage": "shx cp -r images ../build/",
     "copywc": "shx cp node_modules/@webcomponents/webcomponentsjs/webcomponents-* ../build/",
-    "build": "shx rm -rf ../build && shx mkdir ../build && npm run copyindex && npm run copyimage && npm run copywc && webpack --config webpack.config.js",
+    "build": "shx rm -rf ../build && shx mkdir ../build && npm run copyindex && npm run copyimage && npm run copywc && webpack --config webpack.config.prod.js",
+    "dev": "shx rm -rf ../build && shx mkdir ../build && npm run copyindex && npm run copyimage && npm run copywc && webpack --config webpack.config.dev.js --watch",
     "clean": "shx rm -rf node_modules",
     "installLocalElements": "shx rm -rf node_modules/@pixano ; shx rm -rf package-lock.json ; npm i ${npm_config_path}/packages/core ; npm i ${npm_config_path}/packages/ai ; npm i ${npm_config_path}/packages/graphics-2d; npm i ${npm_config_path}/packages/graphics-3d"
   },
