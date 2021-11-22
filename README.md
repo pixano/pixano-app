@@ -17,6 +17,9 @@ Pixano App is a web-based annotation tool. It relies on web components dedicated
 	- en standalone
 	- en distribué
 	- => donner plkus de détail dans les usage ?
+=> SHÉMA
++ faire unb gif à partir de https://www.youtube.com/watch?v=z5T2HhnugJo
+
 
 ## Table of Contents
 * [Installation](#1-installation)
@@ -207,6 +210,8 @@ If you want to edit the application to your liking, fork this repository.
 ### Pull request
 
 **TODO**
+
++ renovoyer vers elements pour les contributions avancées
 
 ### Build docker from sources
 
