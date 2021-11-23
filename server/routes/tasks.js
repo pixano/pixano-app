@@ -1,4 +1,5 @@
-const fs = require('fs');
+const { promises: fs } = require("fs");
+const http = require('http');
 const path = require('path');
 const cliProgress = require('cli-progress');
 const { db,
@@ -152,9 +153,32 @@ async function import_tasks_from_kafka(req, res) {
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) getPathFromIds');
 		// ... TODO
+		task.dataset.urlList = [
+			'http://localhost:1234/video/01.png',
+			'http://localhost:1234/video/02.png',
+			'http://localhost:1234/video/03.png',
+			'http://localhost:1234/video/04.png',
+			'http://localhost:1234/video/05.png',
+			'http://localhost:1234/video/06.png',
+			'http://localhost:1234/video/07.png',
+			'http://localhost:1234/video/08.png',
+			'http://localhost:1234/video/09.png',
+			'http://localhost:1234/video/10.png'
+		];
+		// task.dataset.urlList = [
+		// 	'/data/PIXANOws/video/01.png',
+		// 	'/data/PIXANOws/video/02.png',
+		// 	'/data/PIXANOws/video/03.png',
+		// 	'/data/PIXANOws/video/04.png',
+		// 	'/data/PIXANOws/video/05.png',
+		// 	'/data/PIXANOws/video/06.png',
+		// 	'/data/PIXANOws/video/07.png',
+		// 	'/data/PIXANOws/video/08.png',
+		// 	'/data/PIXANOws/video/09.png',
+		// 	'/data/PIXANOws/video/10.png'
+		// ];
 		console.log('# 1.2) getImagesFromPath');
 		// ... TODO
-		task.dataset.path = 'video';// ... TODO
 		const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
 		console.log('# 2) Push the new task + dataset');
 		// Task does not exist create it

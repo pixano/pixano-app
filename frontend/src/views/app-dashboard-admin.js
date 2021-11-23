@@ -83,7 +83,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   onActivate() {
     this.stateChanged(getState());
-    this.refreshGrid();
+    if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
   }
 
   /**

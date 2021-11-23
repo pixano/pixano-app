@@ -114,7 +114,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 				plugin_name,
 				label_schema: defaultLabelValues(plugin_name),
 				settings: defaultSettings(plugin_name),
-				data_type: getDataType(plugin_name)
+				data_type: 'remote_image'
 			},
 			dataset: { path: 'importedFromKafka'}
 		};

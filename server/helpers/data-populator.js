@@ -24,6 +24,10 @@ const toRelative = (url) => {
 
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
+async function remote_image(db, mediaRelativePath, hostWorkspacePath, datasetId, urlList = '') {
+	return populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image', urlList);
+}
+
 async function image(db, mediaRelativePath, hostWorkspacePath, datasetId) {
   return populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image');
 }
@@ -49,17 +53,60 @@ async function sequence_pcl_image(db, mediaRelativePath, hostWorkspacePath, data
 }
 
 /**
+ * Populate elementary data entries (image, pcl) : case of remote data
+ * @param {Level} db 
+ * @param {string} mediaRelativePath 
+ * @param {string} hostWorkspacePath 
+ * @param {string} datasetId 
+ */
+async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
+	var total = 0;
+	var folders = {};
+	if (urlList) {//if we get a list of urls instead of a full directory
+		total = urlList.length;
+		folders = { urlList };
+	} else {
+		console.error("remote directory exploration not implemented");// ... TODO
+		return;
+	}
+	const bm = new batchManager.BatchManager(db);
+	const bar1 = new cliProgress.SingleBar({
+		format: 'Dataset creation | {bar} | {percentage}% || {value}/{total} files'
+	});
+	bar1.start(total, 0);
+	for await (const files of Object.values(folders)) {
+		for await (const f of files) {
+			const id = generateKey();
+			const url = f;
+			let value = { id, dataset_id: datasetId, type: dataType, path: url, children: '' }
+			if (dataType == 'image') value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 });
+			await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value });
+			bar1.increment();
+		}
+	}
+	await bm.flush();
+	bar1.stop();
+}
+
+/**
  * Populate elementary data entries (image, pcl)
  * @param {Level} db 
  * @param {string} mediaRelativePath 
  * @param {string} hostWorkspacePath 
  * @param {string} datasetId 
  */
-async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId,
-                                     ext = ['jpg', 'png'],
-                                     dataType = 'image') {
+async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
+	var total = 0;
+	var folders = {};
+	if (urlList) {//if we get a list of urls instead of a full directory
+		total = urlList.length;
+		folders = {urlList};
+	} else {
   const hostFolder = path.resolve(hostWorkspacePath, mediaRelativePath);
-  const {folders, total} = await parseFolder(hostFolder, ext);
+  const parsed = await parseFolder(hostFolder, ext);
+  folders = parsed.folders;
+  total = parsed.total;
+	}
   const bm = new batchManager.BatchManager(db);
   const bar1 = new cliProgress.SingleBar({
     format: 'Dataset creation | {bar} | {percentage}% || {value}/{total} files'
@@ -259,6 +306,7 @@ const walk = (dir, ext, done) => {
 };
 
 module.exports = {
+  remote_image,
   image,
   pcl,
   pcl_image,
