@@ -43,11 +43,11 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#feature] séparer la gestion des tâches et des datasets => implémentation du bouton création
 - [ ] [#feature] possibilité de prendre en compte une modification de la base de données images => bouton "refresh database" ?
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
-- [o] [#feature] intégration Semfeat/Élise (sur une branche Élise)
+- [x] [#feature] intégration Semfeat/Élise (sur une branche Élise)
 	- [x] ajouter Élise dans la génération du docker
-	- [ ] synchroniser la base de données image
+	- [x] synchroniser la base de données image
 	- Q: comment gérer plusieurs datasets différents ? possible directement avec Élise ? ou il faudra créer plusieurs instances ?
-	- [ ] créer les interactions
+	- [x] créer les interactions
 - [ ] [#feature] nouveau module de classification
 ### visualisation / sélection des données
 - [ ] [#feature] commencer par mettre les images en visu et ne plus mettre nécessairement toutes les images en to_annotate par défaut => il faut pouvoir sélectionner une partie de la base de donnée facilement pour l'étiquetage
@@ -57,7 +57,8 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [x] [#feature] création des imagettes et intégration dans la liste de fichiers
 	- [ ] [#feature] généralisation des imagettes à toutes les formes de fichiers en entrée
 - [ ] [#feature] affichage sous forme d'un mur d'imagette + étiquetage rapide directement sur le mur
-	- possibilité de n'afficher dans ce mur qu'une sous-sélection grâce aux filtres dans la liste
+	- [ ] [#feature] possibilité de n'afficher dans ce mur qu'une sous-sélection grâce aux filtres dans la liste
+- [ ] [#feature] visualisation des annotations existantes/de résultats importés dans ces imagettes => recalculer les thumbnails après chaque submit ?
 - [ ] [#bogue] après une sélection via un filtre, on reste sur la même page d'affichage, mais s'il n'y a plus autant d'images à afficher => il faudrait revenir à 0
 - [ ] [#bogue] quand on clique sur l'affichage d'image après avoir filtré une partie du contenu, il ne fait rien (image vide ou image précédente s'il y en avait une
 
