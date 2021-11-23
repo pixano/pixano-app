@@ -10,7 +10,8 @@
   },
   "scripts": {
     "deps": "npm i ; cd frontend && npm i",
-    "build": "cd frontend && npm run build"
+    "build": "cd frontend && npm run build",
+    "elise_clone": "mkdir -p ELISE && cd ELISE && git clone ssh://git@is154588.intra.cea.fr:10122/hleborgne/elise.git && git clone ssh://git@is154588.intra.cea.fr:10122/hleborgne/fastsearch.git && git clone ssh://git@is154588.intra.cea.fr:10122/hleborgne/juliet.git"
   },
   "bin": "./server/serve.js",
   "dependencies": {

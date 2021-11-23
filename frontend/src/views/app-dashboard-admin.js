@@ -7,6 +7,7 @@
 import { html, css } from 'lit-element';
 import TemplatePage from '../templates/template-page';
 import { store, getState } from '../store';
+import { GET } from '../actions/requests';
 import {
   updateTaskName,
   updateFilters,
@@ -25,6 +26,7 @@ import '@material/mwc-select';
 import '@material/mwc-linear-progress';
 import '@material/mwc-icon-button';
 import '@material/mwc-checkbox';
+import '@material/mwc-slider';
 
 class AppDashboardAdmin extends TemplatePage {
   static get properties() {
@@ -35,7 +37,8 @@ class AppDashboardAdmin extends TemplatePage {
       page: { type: Number },
       resultsLength: { type: Number },
       pageSize: { type: Number },
-      items: { type: Array }
+      items: { type: Array },
+	  similarityLevel: { type: Number }
     };
   }
 
@@ -53,6 +56,9 @@ class AppDashboardAdmin extends TemplatePage {
     this.globalCounter = 0;
     this.doneCounter = 0;
     this.toValidateCounter = 0;
+
+	// ELISE
+	this.similarityLevel = 0;//similarity in %
 
     this.statusMap = new Map([['', ['', '', '']], 
                               ['to_annotate', ['to annotate', 'create', 'blue']], 
@@ -90,12 +96,12 @@ class AppDashboardAdmin extends TemplatePage {
    * Refresh the grid from the database
    * state.
    */
-  refreshGrid() {
+  async refreshGrid() {
     this.table.items.forEach((e) => e.selected = false);
     this.tableCheckbox.checked = false;
     this.nbSelectedJobs = 0;
     this.table.layout();
-    this.getResults().then((res) => {
+    await this.getResults().then((res) => {
       this.items = res;
     });
   }
@@ -109,13 +115,13 @@ class AppDashboardAdmin extends TemplatePage {
    * @param {String} key 
    * @param {String} value 
    */
-  updateFilter(key, value) {
+  async updateFilter(key, value) {
     const oldFilters = getState('application').filters
     if (oldFilters[key] !== value){
       const newFilters = {...oldFilters, [key]: value};
       store.dispatch(updateFilters(newFilters));
-      this.refreshGrid();
-    }    
+      await this.refreshGrid();
+    }
   }
 
   /**
@@ -467,7 +473,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   /**
    * Display table row
-   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch
+   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch | Search Similar
    */
   listitem(item) {
     const v = this.statusMap.get(item.status);
@@ -484,12 +490,31 @@ class AppDashboardAdmin extends TemplatePage {
         <p>${this.assignedMap.get(item.in_progress.toString())}</p>
         <p>${format(item.cumulated_time)}</p>
 		<p><img src="data:image/jpg;base64,${item.thumbnail}" ></p>
-        <p><mwc-icon-button class="launch" icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
+        <p><mwc-icon-button icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
+        <p><mwc-icon-button icon="search_off" @click=${() => this.onSearchSimilar(item.task_name, item.data_id)}></mwc-icon-button></p>
       </div>
     </mwc-check-list-item>
     <li divider role="separator"></li>
     `;
   }
+
+	async onSearchSimilar(task_name, data_id) {
+		// ELISE : search for similar images
+		const resultIds = await GET(`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`);
+		// we get the resulting list
+		// first check
+		if (resultIds.length===0) {// impossible in the case of similarity => inconsistant database
+			console.warn("inconsistant database");// ... TODO : show a message to the user
+			return;// nothing else to do
+		}
+		// update filters according to this list
+		await this.updateFilter('data_id', resultIds.join(';'));
+		// last check
+		if (this.items.length===0) {// error 431 Request Header Fields Too Large (=resultIds.length too big)
+			console.warn("too much matching images");// ... TODO : use something else then GET to handle this problem and show the real answer OR show a message to the user
+			this.updateFilter('data_id', '');// reinit filters for data_id
+		}
+	}
 
   get tableHeader() {
     const filters = getState('application').filters;
@@ -531,7 +556,16 @@ class AppDashboardAdmin extends TemplatePage {
       <div>
         <mwc-textfield label="Preview" icon="filter_list"></mwc-textfield>
       </div>
-      <div style="flex: 0.5"></div>
+      <div id="time-header">View</div>
+      <div style="flexDirection: 'column'">
+	    Similarity Level
+        <div style="display: flex; align-items: center; flexDirection: 'row'">
+          0
+          <mwc-slider value=${this.similarityLevel} min="0" max="100" @input=${(evt) => this.similarityLevel=evt.detail.value}></mwc-slider>
+          100%
+        </div>
+		${this.similarityLevel.toFixed(2)}%
+      </div>
     </div>
     `;
   }
