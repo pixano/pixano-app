@@ -45,13 +45,27 @@ async function elise_search_similar_images(req, res) {
 	// 2) call Elise
 	// get image path from id
 	const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
-	const relUrl = path.normalize(dataData.path.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
-	const exportPath = path.join(workspace, relUrl);
+	var relUrl = '';
+	var exportPath = '';
+	var buffer = '';
+	if (dataData.path.includes('http:')) {
+		relUrl = dataData.path;
+		exportPath = dataData.path;
+		const response = await fetch(relUrl);
+		const blob = await response.blob();
+		const arrayBuffer = await blob.arrayBuffer();
+		buffer = Buffer.from(arrayBuffer);
+
+	} else {
+		relUrl = path.normalize(dataData.path.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
+		exportPath = path.join(workspace, relUrl);
+	}
 	// define the message
 	let urlElise = 'http://localhost:8081'
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'search');
-	formData.append('image', fs.readFileSync(exportPath), relUrl);
+	if (dataData.path.includes('http:')) formData.append('image', buffer, relUrl);
+	else formData.append('image', fs.readFileSync(exportPath), relUrl);
 	formData.append('save', '0');
 	// send and wait for answer
 	await fetch(urlElise, { method: 'post', body: formData })

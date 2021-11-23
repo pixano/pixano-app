@@ -81,8 +81,31 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 		for await (const f of files) {
 			const id = generateKey();
 			const url = f;
-			let value = { id, dataset_id: datasetId, type: dataType, path: url, children: '' }
-			if (dataType == 'image') value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 });
+			let value = { id, dataset_id: datasetId, type: dataType, path: url, children: '' };
+			if (dataType=='image') {
+				// compute a thumbnail for this image
+				value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 });
+				// ELISE : index this image
+				let urlElise = 'http://localhost:8081'
+				let formData = new FormData();// create the form to send to Elise
+				formData.append('action', 'index');
+				const response = await fetch(url);
+				const blob = await response.blob();
+				const arrayBuffer = await blob.arrayBuffer();
+				const buffer = Buffer.from(arrayBuffer);
+				formData.append('image', buffer, url);
+				formData.append('externalid', id);
+				formData.append('title', url);
+				formData.append('externalurl', "elise.cea.fr"+url);
+				await fetch(urlElise, { method: 'post', body: formData })
+					.then(res => {
+					if (res.statusText=='OK') return res.json();
+					else console.log("KO :\n",res);
+				  })
+				  .then(res => {
+					console.log(res);
+				  });// send POST request
+			}
 			await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value });
 			bar1.increment();
 		}
