@@ -72,10 +72,10 @@ export class TemplatePlugin extends LitElement  {
     const path = media.info.path;
     this.element.input = path;
     
-    // this.element.addEventListener('load', () => {
-    //   // refresh annoations on media loaded
-    //   this.refresh();
-    // });
+    this.element.addEventListener('load', () => {
+      // refresh annoations on media loaded
+      this.refresh();
+    });
   }
 
   // TODO: bundle attributes into an element
