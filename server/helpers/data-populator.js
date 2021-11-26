@@ -97,14 +97,14 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 				formData.append('externalid', id);
 				formData.append('title', url);
 				formData.append('externalurl', "elise.cea.fr"+url);
-				await fetch(urlElise, { method: 'post', body: formData })
+				await fetch(urlElise, { method: 'post', body: formData })// send POST request
 					.then(res => {
 					if (res.statusText=='OK') return res.json();
 					else console.log("KO :\n",res);
 				  })
 				  .then(res => {
 					console.log(res);
-				  });// send POST request
+				  }).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
 			}
 			await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value });
 			bar1.increment();
@@ -154,14 +154,14 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
           formData.append('externalid', id);
           formData.append('title', url);
           formData.append('externalurl', "elise.cea.fr"+url);
-          await fetch(urlElise, { method: 'post', body: formData })
+          await fetch(urlElise, { method: 'post', body: formData })// send POST request
           	.then(res => {
               if (res.statusText=='OK') return res.json();
               else console.log("KO :\n",res);
             })
             .then(res => {
               console.log(res);
-            });// send POST request
+            }).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
       }
       await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value});
       bar1.increment();

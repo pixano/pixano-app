@@ -1,5 +1,4 @@
-const { promises: fs } = require("fs");
-const http = require('http');
+const fs = require("fs");
 const path = require('path');
 const cliProgress = require('cli-progress');
 const { db,
@@ -178,7 +177,6 @@ async function import_tasks_from_kafka(req, res) {
 		// 	'/data/PIXANOws/video/10.png'
 		// ];
 		console.log('# 1.2) getImagesFromPath');
-		// ... TODO
 		const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
 		console.log('# 2) Push the new task + dataset');
 		// Task does not exist create it

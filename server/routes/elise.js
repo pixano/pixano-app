@@ -68,7 +68,7 @@ async function elise_search_similar_images(req, res) {
 	else formData.append('image', fs.readFileSync(exportPath), relUrl);
 	formData.append('save', '0');
 	// send and wait for answer
-	await fetch(urlElise, { method: 'post', body: formData })
+	await fetch(urlElise, { method: 'post', body: formData })// send POST request
 		.then(res => {
 			if (res.statusText == 'OK') return res.json();
 			else console.log("KO :\n", res);
@@ -92,7 +92,7 @@ async function elise_search_similar_images(req, res) {
 					resultIds.push(idscore.externalid);
 				}
 			}
-		});// send POST request
+		}).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
 	return res.send(resultIds);
 }
 
