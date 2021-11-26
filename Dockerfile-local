@@ -1,10 +1,10 @@
 # Build Docker image 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # Install Node.js
 RUN apt-get update && apt-get install -y --reinstall ca-certificates curl build-essential
 RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
-RUN apt install -y nodejs && apt install -y python-requests
+RUN apt-get install -y nodejs
 
 # Copy bundled frontend
 COPY build build

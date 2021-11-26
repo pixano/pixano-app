@@ -1,9 +1,9 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # Install Node.js
-RUN apt update && apt install -y --reinstall ca-certificates curl build-essential
+RUN apt-get update && apt-get install -y --reinstall ca-certificates curl build-essential
 RUN curl --silent --location https://deb.nodesource.com/setup_12.x | bash -
-RUN apt install -y nodejs && apt install -y python-requests
+RUN apt-get install -y nodejs
 RUN npm install -g npm@6.10.0
 
 # Copy files for the frontend
