@@ -135,6 +135,8 @@ export const fetchRangeResults = (page, pageSize) => (dispatch, getState) => {
         }
         return GET(url, dispatch).then((data) => {
             return Promise.resolve(data);
+        }).catch((error) => {
+            return Promise.reject(error);
         });
     } else {
         return Promise.reject('Program error');
