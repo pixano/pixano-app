@@ -23,19 +23,21 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     super();
     this.atlas = new Image();
     this.lastMousePosition = { x: 0, y: 0 };
+    this.imageIndex = -1;
+    this.keypointIndex = 0; // [0-2]
   }
 
   // 3 clicks / image
-  get imageIndex() {
-    return ~~((getAnnotations().annotations || []).length / 3);
+  setNextImageIndex() {
+    this.imageIndex = ~~((getAnnotations().annotations || []).length / 3);
   }
 
-  get keypointIndex() {
-    return (getAnnotations().annotations || []).length % 3;
+  setNextkeypointIndex() {
+    this.keypointIndex = (getAnnotations().annotations || []).length % 3;
   }
 
   get label() {
-    return this.attributePicker.schema.category[this.keypointIndex];
+    return this.attributePicker.schema.category[this.keypointIndex] || {name: ""};
   }
 
   get firstLabelModifier() {
@@ -90,8 +92,10 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.atlas.addEventListener("load", async () => {
       this.sizeCanvas();
       this.attributePicker.setCategory(this.label.name);
+      this.setNextImageIndex();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
+        console.log('subscribe')
         this.draw();
         this.attributePicker.setCategory(this.label.name);
       });
@@ -148,7 +152,20 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     document.addEventListener("keyup", cleanupFn, { once: true });
   }
 
-  newData() {}
+  newData() {
+    const atlasPath = getState().media.info.path;
+    this.atlas.src = atlasPath;
+    this.atlas.addEventListener("load", async () => {
+      this.sizeCanvas();
+      this.attributePicker.setCategory(this.label.name);
+      this.setNextImageIndex();
+      this.draw();
+      this.unsubscriber = store.subscribe(() => {
+        this.draw();
+        this.attributePicker.setCategory(this.label.name);
+      });
+    });
+  }
 
   drawImage() {
     const ctx = this.canvas.getContext("2d");
@@ -192,20 +209,22 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   drawKeypoints() {
     const ctx = this.canvas.getContext("2d");
-    for (let i = 0; i < this.keypointIndex; i++) {
+    for (let i = 0; i < 3; i++) {
       const point = getAnnotations().annotations[this.imageIndex * 3 + i];
-      ctx.beginPath();
-      const radius = 6;
-      ctx.arc(
-        point.x * this.canvas.width,
-        point.y * this.canvas.height,
-        radius,
-        0,
-        2 * Math.PI,
-        false
-      );
-      ctx.fillStyle = "red";
-      ctx.fill();
+      if (point) {
+        ctx.beginPath();
+        const radius = 6;
+        ctx.arc(
+          point.x * this.canvas.width,
+          point.y * this.canvas.height,
+          radius,
+          0,
+          2 * Math.PI,
+          false
+        );
+        ctx.fillStyle = "red";
+        ctx.fill();
+      }
     }
   }
 
@@ -232,16 +251,49 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     // normalize x, y coords
     const x = e.offsetX / this.canvas.width;
     const y = e.offsetY / this.canvas.height;
-    dispatchAnnotations((annotations) => [
-      ...annotations,
-      { x, y, modifier: this.firstLabelModifier },
-    ]);
+    const kptIdx = this.keypointIndex;
+    const imgIdx = this.imageIndex;
+    // update counters
+    this.keypointIndex += 1;
+    if (this.keypointIndex == 3) {
+      this.keypointIndex = 0;
+      this.setNextImageIndex();
+    }
+    dispatchAnnotations((annotations) => {
+      if (annotations.length > imgIdx *3 + kptIdx) {
+        annotations[imgIdx *3 + kptIdx] = { x, y, modifier: this.firstLabelModifier };
+      } else {
+        annotations = [
+          ...annotations,
+          { x, y, modifier: this.firstLabelModifier },
+        ]
+      }
+      return annotations;
+    });
     this.draw();
   }
 
   onMouseMove(e) {
     this.lastMousePosition = { x: e.offsetX, y: e.offsetY };
     this.draw();
+  }
+
+  get toolDrawer() {
+    return html`
+        ${super.toolDrawer}
+        <mwc-icon-button icon="arrow_upward" @click=${() => {
+          if (this.imageIndex < (~~((getAnnotations().annotations || []).length / 3))) {
+            this.imageIndex += 1;
+            this.keypointIndex = 0;
+            this.draw();
+          }
+        }}></mwc-icon-button>
+        <mwc-icon-button icon="arrow_downward" @click=${() => {
+          this.imageIndex -= 1;
+          this.keypointIndex = 0;
+          this.draw();
+        }}></mwc-icon-button>
+    `
   }
 
   get editor() {
