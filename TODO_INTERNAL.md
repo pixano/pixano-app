@@ -38,7 +38,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [ ] [#feature] possibilité d'utiliser des annotations multiples et concurrente et valider par consensus plutôt que d'avoir un validateur
 	- [ ] [#feature] séparation complète des tâches d'admin qui ne devrait ni annoter, ni valider
 	- [ ] [#feature] annotateurs à compétence différenciée, par ex : les annotateurs de niveau 1 font les BB autour des voitures, les annotateurs de niveau 2 complètent les marques et modèles
-- [ ] [#bogue] le REJECT ne fonctionne pas (firefox sur rectangle sans annotation dans l'image)
+- [x] [#bogue] le REJECT ne fonctionne pas (firefox sur rectangle sans annotation dans l'image)
 ### gestion des jeux de données
 - [ ] [#feature] séparer la gestion des tâches et des datasets => implémentation du bouton création
 - [ ] [#feature] possibilité de prendre en compte une modification de la base de données images => bouton "refresh database" ?
@@ -48,7 +48,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [x] synchroniser la base de données image
 	- Q: comment gérer plusieurs datasets différents ? possible directement avec Élise ? ou il faudra créer plusieurs instances ?
 	- [x] créer les interactions
-- [ ] [#feature] nouveau module de classification
+- [x] [#feature] nouveau module de classification
 ### visualisation / sélection des données
 - [ ] [#feature] commencer par mettre les images en visu et ne plus mettre nécessairement toutes les images en to_annotate par défaut => il faut pouvoir sélectionner une partie de la base de donnée facilement pour l'étiquetage
 - [ ] [#feature] passerelle Mturk / Amazon SageMaker
@@ -63,6 +63,10 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#bogue] quand on clique sur l'affichage d'image après avoir filtré une partie du contenu, il ne fait rien (image vide ou image précédente s'il y en avait une
 
 ## annotation
+- [x] [#feature] ajouter un champs commentaire : le validateur peut commenter, l'annotateur peut voir les commentaires, les commentaires sont transmissibles via json. => cf. branche eurovanille
+- [ ] [#feature] rajout d'informations dans les jsons : date de dernière annotation, utilisateur à l'origine de la dernière annotation
+- [ ] [#feature] possibilité de transmettre l'état des annotations (validé/rejeté) via json
+	- [ ] [#feature] possibilité de conserver un historique de ces validations/rejets (objectif: identifier les tâches ou cas compliqués ou mal définis)
 - [ ] [#doc] afficher le numéro de version de pixano-element et de pixano-app + afficher si element est local ou version npm
 - [ ] [#interface] afficher la liste des objets étiquetés et revoir les interactions pour ne pas remodifier le dernier objet créé
 - [ ] [#doc] tabulations/espaces uniformisée dans tous les fichiers
@@ -70,10 +74,10 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#interface] aide affichée à la 1ère connexion
 - [x] [#feature] ajout d'un textfield comme choix, en plus des checkbox et dropdown
 - [ ] [#feature] possibilité pour l’annotateur de passer à l’image suivante sans la valider (abandon)
-- [-] [#bogue #firefox] les propriétés sous forme de checkbox ne fonctionnent pas (uniquement sous firefox) :
+- [x] [#bogue #firefox] les propriétés sous forme de checkbox ne fonctionnent pas (uniquement sous firefox) :
 	- ils reprennent la valeur par défaut si on passe à une annotation de classe différente puis qu'on y revient
 	- si on modifie la valeur sur une boite, c'est propagé à toutes les autres boites de même classe sur lesquelles on clique
-- [-] [#bogue #firefox] quand on édite les annotations, puis qu'on crée de nouveau sur la même image, les propriétés restent celles de la dernière annotation modifiée (et on la modifie donc) (uniquement sous firefox)
+- [x] [#bogue #firefox] quand on édite les annotations, puis qu'on crée de nouveau sur la même image, les propriétés restent celles de la dernière annotation modifiée (et on la modifie donc) (uniquement sous firefox)
 - [ ] [#feature] possibilité de sélectionner plusieurs éléments pour leur donner des caractéristiques communes ?
 ### plugin keypoints
 - [ ] [#feature] possibilité de ne pas annoter tous les keypoints (non visibles) ?

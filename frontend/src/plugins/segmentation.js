@@ -213,7 +213,6 @@ export class PluginSegmentation extends TemplatePluginInstance {
 	}
 
 	refresh() {//get back annotation into element
-		console.log("refresh")
 		if (!this.element) {
 			return;
 		}
