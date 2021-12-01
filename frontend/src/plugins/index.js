@@ -190,6 +190,10 @@ export const defaultSettings = (pluginName) => {
         model:
           "https://raw.githubusercontent.com/pixano/pixano.github.io/master/models/box_model/model.json",
       };
+    case "keypoints-atlas":
+      return {
+        imagesPerAtlas: 50
+      }
     default: {
       return {};
     }

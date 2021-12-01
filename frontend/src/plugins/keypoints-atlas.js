@@ -37,7 +37,9 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   }
 
   get label() {
-    return this.attributePicker.schema.category[this.keypointIndex] || {name: ""};
+    return (
+      this.attributePicker.schema.category[this.keypointIndex] || { name: "" }
+    );
   }
 
   get firstLabelModifier() {
@@ -53,16 +55,16 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   firstUpdated() {
     this.shadowRoot.querySelector(".editor").style = `
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: stretch;
-    `;
+       display: flex;
+       flex-direction: row;
+       justify-content: center;
+       align-items: stretch;
+     `;
     const tasks = this.info.tasks;
     const taskName = this.info.taskName;
     const task = tasks.find((t) => t.name === taskName);
     if (!task) return;
-    const { imagesPerAtlas = 0 } = task.spec.settings;
+    const { imagesPerAtlas = 50 } = task.spec.settings;
     this.imagesPerAtlas = imagesPerAtlas;
     this.canvas = this.shadowRoot.querySelector("#frame");
     this.sizeCanvas();
@@ -95,7 +97,6 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       this.setNextImageIndex();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
-        console.log('subscribe')
         this.draw();
         this.attributePicker.setCategory(this.label.name);
       });
@@ -253,23 +254,26 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     const y = e.offsetY / this.canvas.height;
     const kptIdx = this.keypointIndex;
     const imgIdx = this.imageIndex;
+    dispatchAnnotations((annotations) => {
+      return annotations.length > imgIdx * 3 + kptIdx
+        ? annotations.map((annotation, index) =>
+            index === imgIdx * 3 + kptIdx
+              ? {
+                  x,
+                  y,
+                  modifier: this.firstLabelModifier,
+                }
+              : annotation
+          )
+        : [...annotations, { x, y, modifier: this.firstLabelModifier }];
+    });
     // update counters
     this.keypointIndex += 1;
-    if (this.keypointIndex == 3) {
+    if (this.keypointIndex === 3) {
       this.keypointIndex = 0;
-      this.setNextImageIndex();
+      this.imageIndex += 1;
     }
-    dispatchAnnotations((annotations) => {
-      if (annotations.length > imgIdx *3 + kptIdx) {
-        annotations[imgIdx *3 + kptIdx] = { x, y, modifier: this.firstLabelModifier };
-      } else {
-        annotations = [
-          ...annotations,
-          { x, y, modifier: this.firstLabelModifier },
-        ]
-      }
-      return annotations;
-    });
+    this.attributePicker.setCategory(this.label.name);
     this.draw();
   }
 
@@ -280,20 +284,33 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   get toolDrawer() {
     return html`
-        ${super.toolDrawer}
-        <mwc-icon-button icon="arrow_upward" @click=${() => {
-          if (this.imageIndex < (~~((getAnnotations().annotations || []).length / 3))) {
-            this.imageIndex += 1;
+      ${super.toolDrawer}
+      <mwc-icon-button
+        icon="arrow_upward"
+        @click=${() => {
+          if (this.imageIndex > 0) {
+            this.imageIndex -= 1;
             this.keypointIndex = 0;
+            this.attributePicker.setCategory(this.label.name);
             this.draw();
           }
-        }}></mwc-icon-button>
-        <mwc-icon-button icon="arrow_downward" @click=${() => {
-          this.imageIndex -= 1;
-          this.keypointIndex = 0;
-          this.draw();
-        }}></mwc-icon-button>
-    `
+        }}
+      ></mwc-icon-button>
+      <mwc-icon-button
+        icon="arrow_downward"
+        @click=${() => {
+          if (
+            this.imageIndex <
+            ~~((getAnnotations().annotations || []).length / 3)
+          ) {
+            this.imageIndex += 1;
+            this.keypointIndex = 0;
+            this.attributePicker.setCategory(this.label.name);
+            this.draw();
+          }
+        }}
+      ></mwc-icon-button>
+    `;
   }
 
   get editor() {
