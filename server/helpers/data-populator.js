@@ -31,8 +31,8 @@ async function remote_image(db, mediaRelativePath, hostWorkspacePath, datasetId,
 	return populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image', urlList);
 }
 
-async function image(db, mediaRelativePath, hostWorkspacePath, datasetId) {
-  return populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image');
+async function image(db, mediaRelativePath, hostWorkspacePath, datasetId, urlList = '') {
+  return populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image', urlList);
 }
 
 async function pcl(db, mediaRelativePath, hostWorkspacePath, datasetId) {

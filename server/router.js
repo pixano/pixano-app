@@ -45,7 +45,7 @@ const { get_results,
         put_results } = require('./routes/results');
 const { print,
         dump } = require('./config/db');
-const { elise_search_similar_images } = require('./routes/elise');	
+const { elise_search_similar_images } = require('./routes/elise_plugin');	
 
 /**
  * Router handling the HTTP requests

@@ -14,49 +14,8 @@ const populator = require('../helpers/data-populator');
 const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
-const { Kafka } = require('kafkajs')
-
-// KAFKA plugin
-const kafka = new Kafka({
-	clientId: 'my-app',
-	brokers: ['kafka1:9092', 'kafka2:9092']
-});
-// const kafkaProducer = kafka.producer();
-const kafkaConsumer = kafka.consumer({ groupId: 'test-group' });
-/**
- * @api Get list of ids to be loaded, from KAFKA
- */
-const getIdsInputListFromKafka = async () => {// ... TODO : correct ports and ids
-	// Topic kafka : selection
-	// Exemple de message envoyé :
-	// {
-	//   "origine": "DEBIAI",
-	//   "project_name": "Conf-ia renault welding 4.1 Josquin",
-	//   "selection_name": "FP",
-	//   "date": 1636472282.113034,
-	//   "sample_ids": [
-	//      "labeled/c27-2/190513-1613_2752766_ - C27/",
-	//      "labeled/c27-2/190522-1642_2776102_ - C27/",
-	//      "labeled/c27-2/140319-0540_2658484_ - C27_2/",
-	//      "labeled/c27-2/190428-2241_2728102_ - C27/",
-	//      ...
-	//    ]
-	// }
-
-	// ... TODO : get the real message and extract the usefull information
-	// await kafkaConsumer.connect()
-	// await kafkaConsumer.subscribe({ topic: 'selection', fromBeginning: true })
-	// await kafkaConsumer.run({
-	// 	eachMessage: async ({ topic, partition, message }) => {
-	// 		console.log({
-	// 			partition,
-	// 			offset: message.offset,
-	// 			value: message.value.toString(),
-	// 		})
-	// 	},
-	// });
-	return ["labeled/c27-2/190513-1613_2752766_ - C27/", "labeled/c27-2/190522-1642_2776102_ - C27/", "labeled/c27-2/140319-0540_2658484_ - C27_2 (/", "labeled/c27-2/190428-2241_2728102_ - C27/", "labeled/c27-2/190503-1351_2738143_ - C27/", "labeled/c27-2/190527-1208_2780352_ - C27/", "labeled/c27-2/190415-0207_2706182_ - C27/", "labeled/c27-2/190404-1110_2701688_ - C27/", "labeled/c27-2/190514-0536_2763697_ - C27/", "labeled/c27-2/190513-2223_2752649_ - C27/", "labeled/c27-2/190415-0109_2706199_ - C27/", "labeled/c27-2/190514-1410_2763530_ - C27/"];
-}
+const { getIdsInputListFromKafka } = require('./kafka_plugin');
+const { downloadFilesFromMinio } = require('./minio_plugin');
 
 /**
  * @api {get} /tasks Get list of tasks details
@@ -127,16 +86,17 @@ async function post_tasks(req, res) {
  * 		taskDetail = {name: taskName, dataset, spec};
  * 
  * @apiErrorExample Error-Response:
- *     HTTP/1.1 400 Error in kafka import
+ *     HTTP/1.1 404 Error in Kafka import
+ *     HTTP/1.1 404 Error in Minio import
  *     HTTP/1.1 400 Taskname already existing
  *     HTTP/1.1 401 Unauthorized
  */
 async function import_tasks_from_kafka(req, res) {
 	checkAdmin(req, async () => {// only admin can modify tasks and datasets
 		console.log('##### Importing from KAFKA');
-		var listIds = await getIdsInputListFromKafka().catch((err) => {
+		var listIds = await getIdsInputListFromKafka().catch((e) => {
 			console.error();
-			res.status(400).json({ error: err, message: 'Error in kafka import' });
+			res.status(421).json({ message: 'Error in Kafka import\n'+e });
 			return;
 		});
 		if (!listIds) return;// if kafka failed, nothing else to do
@@ -151,19 +111,26 @@ async function import_tasks_from_kafka(req, res) {
 
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) getPathFromIds');
-		// ... TODO
-		task.dataset.urlList = [
-			'http://localhost:1234/video/01.png',
-			'http://localhost:1234/video/02.png',
-			'http://localhost:1234/video/03.png',
-			'http://localhost:1234/video/04.png',
-			'http://localhost:1234/video/05.png',
-			'http://localhost:1234/video/06.png',
-			'http://localhost:1234/video/07.png',
-			'http://localhost:1234/video/08.png',
-			'http://localhost:1234/video/09.png',
-			'http://localhost:1234/video/10.png'
-		];
+		task.dataset.urlList = await downloadFilesFromMinio(listIds).catch((e) => {
+			console.error();
+			res.status(421).json({ message: 'Error in Minio import\n'+e });
+			return;
+		});
+		if (!task.dataset.urlList) return;// if minio failed, nothing else to do
+		// // test whith a list of served urls
+		// task.dataset.urlList = [
+		// 	'http://localhost:1234/video/01.png',
+		// 	'http://localhost:1234/video/02.png',
+		// 	'http://localhost:1234/video/03.png',
+		// 	'http://localhost:1234/video/04.png',
+		// 	'http://localhost:1234/video/05.png',
+		// 	'http://localhost:1234/video/06.png',
+		// 	'http://localhost:1234/video/07.png',
+		// 	'http://localhost:1234/video/08.png',
+		// 	'http://localhost:1234/video/09.png',
+		// 	'http://localhost:1234/video/10.png'
+		// ];
+		// // test whith a list of local files
 		// task.dataset.urlList = [
 		// 	'/data/PIXANOws/video/01.png',
 		// 	'/data/PIXANOws/video/02.png',

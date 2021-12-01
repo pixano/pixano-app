@@ -105,9 +105,9 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	/**
 	 * Fired when importing from kafka
 	 */
-	onImportFromKafka() {
+	onImportFromKafka() {// ... TODO : check if if can use 'remote_image' with minio or if we copy files => then use 'image'
 		// create a new task squeleton to be populated
-		const plugin_name = 'rectangle';// ... TODO : when available, change to 'classification'
+		const plugin_name = 'classification';
 		const task = {
 			name : 'importedFromKafka',
 			spec: {

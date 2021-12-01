@@ -30,6 +30,7 @@
     "jsonwebtoken": "^8.5.1",
     "kafkajs": "^1.15.0",
     "level": "^6.0.1",
+    "minio": "^7.0.23",
     "moment": "^2.24.0",
     "normalize-path": "^3.0.0",
     "object-sizeof": "^1.5.3",
