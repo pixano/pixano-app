@@ -10,7 +10,7 @@ How To Install and Use Elise
 # clone elise
 npm run elise_clone
 # build docker image with elise
-sudo docker build -t pixano/pixano-app:pixano-elise-v0 -f Dockerfile-local .
+sudo docker build -t pixano/pixano-app:confiance -f Dockerfile-local .
 ```
 
 ### build directly in PIXANO (for developpers)
@@ -46,7 +46,7 @@ mkdir -p $ELISE_EXTERNALS/data/idx/
 ## launch the service
 ### via a Docker image
 ```
-sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 -p 8081:8081 pixano/pixano-app:pixano-elise-v0
+sudo docker run -it --rm -v "$PWD":/data -v /home/bburger/CEA/PIXANO2021/code/exconf.json:/exconf.json -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance
 ```
 ### via the local build  (for developpers)
 ```

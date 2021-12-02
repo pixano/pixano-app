@@ -6,18 +6,6 @@ RUN curl --silent --location https://deb.nodesource.com/setup_12.x | bash -
 RUN apt-get install -y nodejs
 RUN npm install -g npm@6.10.0
 
-# Copy files for the frontend
-COPY frontend frontend
-
-# Copy files for the backend
-COPY package.json package.json
-COPY server server
-COPY .logo-ascii .logo-ascii
-
-# Build frontend and install backend dependencies
-RUN npm i && cd frontend/ && npm i && npm run build && cd .. && rm -rf frontend && cd ..
-
-EXPOSE 3000
 
 ###### Élise (this image can only be created into the CEA network) (version WITH_MYSQL=NO)
 
@@ -48,8 +36,22 @@ RUN mkdir -p $ELISE_EXTERNALS/data/idx/
 EXPOSE 8081
 ###### fin Élise
 
+
+# Copy bundled frontend
+COPY build build
+
+# Copy files for the backend
+COPY package.json package.json
+COPY server server
+COPY .logo-ascii .logo-ascii
+
+# Install backend dependencies
+RUN npm install
+EXPOSE 3000
+
+
 # ENTRYPOINT ["node", "server/server.js"]
 # RUN echo 'cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh
 RUN echo 'bash -c "$ELISE_DIST/bin/run_search_server --param=$ELISE_BASE/eliseCfg/elise_search_FSF_config.xml -tSEARCHER_FSF &" && bash -c "$ELISE_DIST/bin/run_elise_server --param=$ELISE_BASE/eliseCfg/elise_server_config_sqlite.xml &" && cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh
-ENTRYPOINT ["sh", "entrypoint.sh" ]
+ENTRYPOINT ["sh", "entrypoint.sh"]
 CMD []

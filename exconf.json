@@ -1,0 +1,17 @@
+{
+	"kafka": {
+		"fake": false,
+		"clientId": "PIXANO",
+		"brokers": ["kafka.ec5-dev.svc.cluster.local:9092"],
+		"groupId": "confiance-group",
+		"topicName": "selection"
+	},
+	"minio": {
+		"endPoint": "minio",
+		"port": 9000,
+		"useSSL": false,
+		"accessKey": "developer",
+		"secretKey": "password",
+		"bucket_name": "pixanoimagesselection"
+	}
+}
