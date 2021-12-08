@@ -37,16 +37,17 @@ EXPOSE 8081
 ###### fin Élise
 
 
-# Copy bundled frontend
-COPY build build
+# Copy files for the frontend
+COPY frontend frontend
 
 # Copy files for the backend
 COPY package.json package.json
 COPY server server
 COPY .logo-ascii .logo-ascii
 
-# Install backend dependencies
-RUN npm install
+# Build frontend and install backend dependencies
+RUN npm deps && npm run build && rm -rf frontend
+
 EXPOSE 3000
 
 
