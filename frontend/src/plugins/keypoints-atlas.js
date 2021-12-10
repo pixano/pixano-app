@@ -18,6 +18,8 @@ const dispatchAnnotations = (arg) => {
   } else store.dispatch(setAnnotations({ annotations: arg }));
 };
 
+window.getAnnotations = () => getAnnotations().annotations;
+
 export class PluginKeypointsAtlas extends TemplatePluginInstance {
   constructor() {
     super();
@@ -77,7 +79,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       "shortcuts",
       JSON.stringify([
         ["SHIFT", "Toggle label modifier"],
-        ["TAB", "Skip image"],
+        ["SPACE", "Skip image"],
         ["z", "Undo"],
         ["r", "Redo"],
       ])
@@ -126,9 +128,13 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
             `mwc-formfield > mwc-checkbox`
           );
           checkbox.setAttribute("checked", "");
-          return () => checkbox.removeAttribute("checked");
+          this.draw();
+          return () => {
+            checkbox.removeAttribute("checked");
+            this.draw();
+          };
         }
-        case "Tab": {
+        case " ": {
           dispatchAnnotations((annotations) => {
             annotations[this.imageIndex * 3 + 0] =
               annotations[this.imageIndex * 3 + 1] =
@@ -136,14 +142,33 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
                 { x: null, y: null, modifier: null };
             return annotations;
           });
+          if (this.imageIndex === this.imagesPerAtlas - 1) {
+            // end
+            this.keypointIndex = 0;
+          } else {
+            this.keypointIndex = 0;
+            this.imageIndex += 1;
+            this.attributePicker.setCategory(this.label.name);
+          }
+          this.draw();
           return () => void 0;
         }
         case "z": {
           store.dispatch(undo());
+          if (this.keypointIndex === 0) {
+            this.keypointIndex = 2;
+            this.imageIndex--;
+          } else this.keypointIndex--;
+          this.draw();
           return () => void 0;
         }
         case "r": {
           store.dispatch(redo());
+          if (this.keypointIndex === 2) {
+            this.keypointIndex = 0;
+            this.imageIndex++;
+          } else this.keypointIndex++;
+          this.draw();
           return () => void 0;
         }
         default:
@@ -192,7 +217,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       2 * Math.PI,
       false
     );
-    ctx.fillStyle = "red";
+    ctx.fillStyle = this.label.color || "red";
     ctx.fill();
     ctx.fillRect(0 - 1, this.lastMousePosition.y - 1, this.canvas.width, 2);
     ctx.fillRect(this.lastMousePosition.x - 1, 0 - 1, 2, this.canvas.height);
@@ -209,10 +234,13 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   }
 
   drawKeypoints() {
+    const colorsArray = this.attributePicker.schema.category.map(
+      ({ color }) => color
+    );
     const ctx = this.canvas.getContext("2d");
     for (let i = 0; i < 3; i++) {
       const point = getAnnotations().annotations[this.imageIndex * 3 + i];
-      if (point) {
+      if (point && typeof point.x === "number" && typeof point.y === "number") {
         ctx.beginPath();
         const radius = 6;
         ctx.arc(
@@ -223,7 +251,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
           2 * Math.PI,
           false
         );
-        ctx.fillStyle = "red";
+        ctx.fillStyle = colorsArray[i] || "red";
         ctx.fill();
       }
     }
@@ -245,35 +273,44 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.drawImage();
     this.drawCounter();
     this.drawKeypoints();
-    this.drawTarget();
+    if (this.keypointIndex !== -1) this.drawTarget();
   }
 
   onClick(e) {
-    // normalize x, y coords
-    const x = e.offsetX / this.canvas.width;
-    const y = e.offsetY / this.canvas.height;
-    const kptIdx = this.keypointIndex;
-    const imgIdx = this.imageIndex;
-    dispatchAnnotations((annotations) => {
-      return annotations.length > imgIdx * 3 + kptIdx
-        ? annotations.map((annotation, index) =>
-            index === imgIdx * 3 + kptIdx
-              ? {
-                  x,
-                  y,
-                  modifier: this.firstLabelModifier,
-                }
-              : annotation
-          )
-        : [...annotations, { x, y, modifier: this.firstLabelModifier }];
-    });
-    // update counters
-    this.keypointIndex += 1;
-    if (this.keypointIndex === 3) {
-      this.keypointIndex = 0;
-      this.imageIndex += 1;
+    const isDone =
+      this.imageIndex === this.imagesPerAtlas - 1 && this.keypointIndex === -1;
+    if (!isDone) {
+      // normalize x, y coords
+      const x = e.offsetX / this.canvas.width;
+      const y = e.offsetY / this.canvas.height;
+      const kptIdx = this.keypointIndex;
+      const imgIdx = this.imageIndex;
+      dispatchAnnotations((annotations) => {
+        return annotations.length > imgIdx * 3 + kptIdx
+          ? annotations.map((annotation, index) =>
+              index === imgIdx * 3 + kptIdx
+                ? {
+                    x,
+                    y,
+                    modifier: this.firstLabelModifier,
+                  }
+                : annotation
+            )
+          : [...annotations, { x, y, modifier: this.firstLabelModifier }];
+      });
+      if (this.keypointIndex === 2) {
+        if (this.imageIndex === this.imagesPerAtlas - 1) {
+          // done
+          this.keypointIndex = -1;
+        } else {
+          this.keypointIndex = 0;
+          this.imageIndex += 1;
+        }
+      } else {
+        this.keypointIndex++;
+      }
+      this.attributePicker.setCategory(this.label.name);
     }
-    this.attributePicker.setCategory(this.label.name);
     this.draw();
   }
 

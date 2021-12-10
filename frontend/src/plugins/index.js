@@ -107,6 +107,44 @@ export const defaultLabelValues = (pluginName) => {
         default: "person",
       };
     }
+    case "keypoints-atlas":
+      return {
+        category: [
+          {
+            name: "head",
+            color: "#eca0a0",
+            properties: [
+              {
+                name: "hidden",
+                type: "checkbox",
+                default: false,
+              },
+            ],
+          },
+          {
+            name: "wither",
+            color: "#eca0a0",
+            properties: [
+              {
+                name: "hidden",
+                type: "checkbox",
+                default: false,
+              },
+            ],
+          },
+          {
+            name: "tail",
+            color: "red",
+            properties: [
+              {
+                name: "hidden",
+                type: "checkbox",
+                default: false,
+              },
+            ],
+          },
+        ],
+      };
 
     case "rectangle":
     case "sequence-rectangle":
@@ -192,8 +230,8 @@ export const defaultSettings = (pluginName) => {
       };
     case "keypoints-atlas":
       return {
-        imagesPerAtlas: 50
-      }
+        imagesPerAtlas: 50,
+      };
     default: {
       return {};
     }
