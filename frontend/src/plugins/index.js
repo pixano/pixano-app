@@ -20,6 +20,7 @@ export const pluginsList = [
   "tracking",
   "keypoints",
   "keypoints-atlas",
+  "labels-atlas",
   "smart-rectangle",
   "smart-segmentation",
   "smart-tracking",
@@ -145,6 +146,19 @@ export const defaultLabelValues = (pluginName) => {
           },
         ],
       };
+    case "labels-atlas":
+      return {
+        category: [
+          {
+            name: "standing",
+            color: "#eca0a0",
+          },
+          {
+            name: "lying",
+            color: "#eca0a0",
+          },
+        ],
+      };
 
     case "rectangle":
     case "sequence-rectangle":
@@ -231,6 +245,14 @@ export const defaultSettings = (pluginName) => {
     case "keypoints-atlas":
       return {
         imagesPerAtlas: 50,
+      };
+    case "labels-atlas":
+      return {
+        imagesPerAtlas: 50,
+        shortcuts: [
+          { key: "s", label: "standing" },
+          { key: "l", label: "lying" },
+        ],
       };
     default: {
       return {};
