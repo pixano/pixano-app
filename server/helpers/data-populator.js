@@ -84,7 +84,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 			let value = { id, dataset_id: datasetId, type: dataType, path: url, children: '' };
 			if (dataType=='image') {
 				// compute a thumbnail for this image
-				value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 });
+				value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 }).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
 				// ELISE : index this image
 				let urlElise = 'http://localhost:8081'
 				let formData = new FormData();// create the form to send to Elise
@@ -145,7 +145,7 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
       let value = { id, dataset_id: datasetId, type: dataType, path: url, children: ''};
       if (dataType=='image') {
           // compute a thumbnail for this image
-          value.thumbnail = await imageThumbnail(f, {responseType: 'base64', height: 100});
+          value.thumbnail = await imageThumbnail(f, {responseType: 'base64', height: 100}).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
           // ELISE : index this image
           let urlElise = 'http://localhost:8081'
           let formData = new FormData();// create the form to send to Elise

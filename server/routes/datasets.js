@@ -209,7 +209,7 @@ async function getOrcreateDataset(dataset, workspace) {
         id: utils.generateKey()
       }
       await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
-	if (dataset.urlList) await populator[dataset.data_type](db, newDataset.path, 'no workspace', newDataset.id, newDataset.urlList)
+	if (dataset.urlList) await populator[dataset.data_type](db, newDataset.path, workspace, newDataset.id, newDataset.urlList)
 	else await populator[dataset.data_type](db, newDataset.path, workspace, newDataset.id)
       return newDataset;
     } else {

@@ -105,7 +105,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	/**
 	 * Fired when importing from kafka
 	 */
-	onImportFromKafka() {// ... TODO : check if if can use 'remote_image' with minio or if we copy files => then use 'image'
+	onImportFromKafka() {// ... TODO : get back from 'image' to 'remote_image' when minio will work without local copy
 		// create a new task squeleton to be populated
 		const plugin_name = 'classification';
 		const task = {
@@ -114,7 +114,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 				plugin_name,
 				label_schema: defaultLabelValues(plugin_name),
 				settings: defaultSettings(plugin_name),
-				data_type: 'remote_image'
+				data_type: 'image'
 			},
 			dataset: { path: 'importedFromKafka'}
 		};

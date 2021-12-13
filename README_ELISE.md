@@ -67,7 +67,7 @@ curl localhost:8081 -F action=search -F image=@/adress/of/the/search/image.jpg -
 
 ## remove/clean database (local build)
 ```
-rm -rf ELISE/elise/repository.db /data/Elise_sqlite/ ELISE/elise_ext/data/idx/*
+rm -rf ELISE/elise/repository.db ELISE/Elise_sqlite/ ELISE/elise_ext/data/idx/*
 ```
 
 

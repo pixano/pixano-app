@@ -96,7 +96,7 @@ async function import_tasks_from_kafka(req, res) {
 		console.log('##### Importing from KAFKA');
 		var listIds = await getIdsInputListFromKafka().catch((e) => {
 			console.error();
-			res.status(421).json({ message: 'Error in Kafka import\n'+e });
+			res.status(404).json({ message: 'Error in Kafka import\n'+e });
 			return;
 		});
 		if (!listIds) return;// if kafka failed, nothing else to do
@@ -111,9 +111,9 @@ async function import_tasks_from_kafka(req, res) {
 
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) getPathFromIds');
-		task.dataset.urlList = await downloadFilesFromMinio(listIds).catch((e) => {
+		task.dataset.urlList = await downloadFilesFromMinio(listIds,workspace).catch((e) => {
 			console.error();
-			res.status(421).json({ message: 'Error in Minio import\n'+e });
+			res.status(404).json({ message: 'Error in Minio import\n'+e });
 			return;
 		});
 		if (!task.dataset.urlList) return;// if minio failed, nothing else to do
