@@ -74,6 +74,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   }
 
   onActivate() {
+    window.p = this;
     super.onActivate();
     this.attributePicker.setAttribute(
       "shortcuts",
@@ -159,6 +160,8 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
             if (this.keypointIndex === 0) {
               this.keypointIndex = 2;
               this.imageIndex--;
+            } else if (this.keypointIndex === -1) {
+              this.keypointIndex = 2;
             } else this.keypointIndex--;
             this.draw();
           }
