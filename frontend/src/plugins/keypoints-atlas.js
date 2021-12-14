@@ -18,8 +18,6 @@ const dispatchAnnotations = (arg) => {
   } else store.dispatch(setAnnotations({ annotations: arg }));
 };
 
-window.getAnnotations = () => getAnnotations().annotations;
-
 export class PluginKeypointsAtlas extends TemplatePluginInstance {
   constructor() {
     super();
@@ -27,6 +25,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.lastMousePosition = { x: 0, y: 0 };
     this.imageIndex = -1;
     this.keypointIndex = 0; // [0-2]
+    this.prevState = [];
   }
 
   // 3 clicks / image
@@ -74,7 +73,6 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   }
 
   onActivate() {
-    window.p = this;
     super.onActivate();
     this.attributePicker.setAttribute(
       "shortcuts",
@@ -86,6 +84,26 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       ])
     );
     document.addEventListener("keydown", this.onKeyDown.bind(this));
+    const headerMenu = document
+      .querySelector("my-app")
+      .shadowRoot.querySelector("app-label")
+      .shadowRoot.querySelector(".header-menu");
+    headerMenu.querySelector('mwc-icon-button[title="undo"]').remove();
+    headerMenu.querySelector('mwc-icon-button[title="redo"]').remove();
+
+    this.undoButton = document.createElement("mwc-icon-button");
+    this.undoButton.setAttribute("title", "undo");
+    this.undoButton.setAttribute("icon", "undo");
+    this.redoButton = document.createElement("mwc-icon-button");
+    this.redoButton.setAttribute("title", "redo");
+    this.redoButton.setAttribute("icon", "redo");
+
+    headerMenu.insertBefore(this.redoButton, headerMenu.children[3]);
+    headerMenu.insertBefore(this.undoButton, headerMenu.children[3]);
+
+    this.undoButton.addEventListener("click", this.undo.bind(this));
+    this.redoButton.addEventListener("click", this.redo.bind(this));
+
     this.attributePicker.showDetails = true;
     this.attributePicker.shadowRoot
       .querySelectorAll(".category")
@@ -100,8 +118,8 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       this.setNextImageIndex();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
-        this.draw();
         this.attributePicker.setCategory(this.label.name);
+        this.draw();
       });
     });
   }
@@ -109,6 +127,8 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   disconnectedCallback() {
     this.unsubscriber();
     document.removeEventListener("keydown", this.onKeyDown);
+    this.undoButton.removeEventListener("click", this.undo);
+    this.redoButton.removeEventListener("click", this.redo);
   }
 
   sizeCanvas() {
@@ -119,6 +139,32 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.canvas.width = canvasBox.width;
     this.canvas.height = canvasBox.height;
     this.zoom = this.canvas.width / this.atlas.width;
+  }
+
+  undo() {
+    if (this.imageIndex > 0 || this.keypointIndex > 0) {
+      store.dispatch(undo());
+      if (this.keypointIndex === 0) {
+        this.keypointIndex = 2;
+        this.imageIndex--;
+      } else if (this.keypointIndex === -1) {
+        this.keypointIndex = 2;
+      } else this.keypointIndex--;
+      this.draw();
+    }
+  }
+
+  redo() {
+    const prevState = getAnnotations().annotations;
+    store.dispatch(redo());
+    const nextState = getAnnotations().annotations;
+    if (nextState.length !== prevState.length) {
+      if (this.keypointIndex === 2) {
+        this.keypointIndex = 0;
+        this.imageIndex++;
+      } else this.keypointIndex++;
+      this.draw();
+    }
   }
 
   onKeyDown(e) {
@@ -155,29 +201,11 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
           return () => void 0;
         }
         case "z": {
-          if (this.imageIndex > 0 || this.keypointIndex > 0) {
-            store.dispatch(undo());
-            if (this.keypointIndex === 0) {
-              this.keypointIndex = 2;
-              this.imageIndex--;
-            } else if (this.keypointIndex === -1) {
-              this.keypointIndex = 2;
-            } else this.keypointIndex--;
-            this.draw();
-          }
+          this.undo();
           return () => void 0;
         }
         case "r": {
-          const prevState = getAnnotations().annotations;
-          store.dispatch(redo());
-          const nextState = getAnnotations().annotations;
-          if (nextState.length !== prevState.length) {
-            if (this.keypointIndex === 2) {
-              this.keypointIndex = 0;
-              this.imageIndex++;
-            } else this.keypointIndex++;
-            this.draw();
-          }
+          this.redo();
           return () => void 0;
         }
         default:
