@@ -254,7 +254,20 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       2 * Math.PI,
       false
     );
-    ctx.fillStyle = this.label.color || "red";
+    if (this.firstLabelModifier) {
+      if (this.label.color.startsWith("#")) {
+        ctx.fillStyle = `${this.label.color}80` || "red";
+      }
+      if (this.label.color.startsWith("rbg")) {
+        ctx.fillStyle = `rgba(${this.label.color
+          .split(",")
+          .slice(0, 3)
+          .map((s) => s.replace(/[^0-9]/g, ""))
+          .join(",")}, 0.5)`;
+      }
+    } else {
+      ctx.fillStyle = this.label.color || "red";
+    }
     ctx.fill();
     ctx.fillRect(0 - 1, this.lastMousePosition.y - 1, this.canvas.width, 2);
     ctx.fillRect(this.lastMousePosition.x - 1, 0 - 1, 2, this.canvas.height);
@@ -293,7 +306,21 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
             2 * Math.PI,
             false
           );
-          ctx.fillStyle = colorsArray[i] || "red";
+          const color = colorsArray[i] || "red";
+          if (point.modifier !== null) {
+            if (color.startsWith("#")) {
+              ctx.fillStyle = `${color}80` || "red";
+            }
+            if (color.startsWith("rbg")) {
+              ctx.fillStyle = `rgba(${color
+                .split(",")
+                .slice(0, 3)
+                .map((s) => s.replace(/[^0-9]/g, ""))
+                .join(",")}, 0.5)`;
+            }
+          } else {
+            ctx.fillStyle = color;
+          }
           ctx.fill();
         }
       }
