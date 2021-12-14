@@ -165,12 +165,16 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
           return () => void 0;
         }
         case "r": {
+          const prevState = getAnnotations().annotations;
           store.dispatch(redo());
-          if (this.keypointIndex === 2) {
-            this.keypointIndex = 0;
-            this.imageIndex++;
-          } else this.keypointIndex++;
-          this.draw();
+          const nextState = getAnnotations().annotations;
+          if (nextState.length !== prevState.length) {
+            if (this.keypointIndex === 2) {
+              this.keypointIndex = 0;
+              this.imageIndex++;
+            } else this.keypointIndex++;
+            this.draw();
+          }
           return () => void 0;
         }
         default:
@@ -236,25 +240,31 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   }
 
   drawKeypoints() {
-    const colorsArray = this.attributePicker.schema.category.map(
-      ({ color }) => color
-    );
-    const ctx = this.canvas.getContext("2d");
-    for (let i = 0; i < 3; i++) {
-      const point = getAnnotations().annotations[this.imageIndex * 3 + i];
-      if (point && typeof point.x === "number" && typeof point.y === "number") {
-        ctx.beginPath();
-        const radius = 6;
-        ctx.arc(
-          point.x * this.canvas.width,
-          point.y * this.canvas.height,
-          radius,
-          0,
-          2 * Math.PI,
-          false
-        );
-        ctx.fillStyle = colorsArray[i] || "red";
-        ctx.fill();
+    if (this.imageIndex > -1) {
+      const colorsArray = this.attributePicker.schema.category.map(
+        ({ color }) => color
+      );
+      const ctx = this.canvas.getContext("2d");
+      for (let i = 0; i < 3; i++) {
+        const point = getAnnotations().annotations[this.imageIndex * 3 + i];
+        if (
+          point &&
+          typeof point.x === "number" &&
+          typeof point.y === "number"
+        ) {
+          ctx.beginPath();
+          const radius = 6;
+          ctx.arc(
+            point.x * this.canvas.width,
+            point.y * this.canvas.height,
+            radius,
+            0,
+            2 * Math.PI,
+            false
+          );
+          ctx.fillStyle = colorsArray[i] || "red";
+          ctx.fill();
+        }
       }
     }
   }
