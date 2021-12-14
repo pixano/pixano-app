@@ -154,12 +154,14 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
           return () => void 0;
         }
         case "z": {
-          store.dispatch(undo());
-          if (this.keypointIndex === 0) {
-            this.keypointIndex = 2;
-            this.imageIndex--;
-          } else this.keypointIndex--;
-          this.draw();
+          if (this.imageIndex > 0 || this.keypointIndex > 0) {
+            store.dispatch(undo());
+            if (this.keypointIndex === 0) {
+              this.keypointIndex = 2;
+              this.imageIndex--;
+            } else this.keypointIndex--;
+            this.draw();
+          }
           return () => void 0;
         }
         case "r": {
