@@ -74,6 +74,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   onActivate() {
     super.onActivate();
+    window.addEventListener("resize", this.sizeCanvas.bind(this));
     this.attributePicker.setAttribute(
       "shortcuts",
       JSON.stringify([
@@ -126,9 +127,10 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   disconnectedCallback() {
     this.unsubscriber();
-    document.removeEventListener("keydown", this.onKeyDown);
-    this.undoButton.removeEventListener("click", this.undo);
-    this.redoButton.removeEventListener("click", this.redo);
+    window.removeEventListener("resize", this.sizeCanvas.bind(this));
+    document.removeEventListener("keydown", this.onKeyDown.bind(this));
+    this.undoButton.removeEventListener("click", this.undo.bind(this));
+    this.redoButton.removeEventListener("click", this.redo.bind(this));
   }
 
   sizeCanvas() {
@@ -139,6 +141,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.canvas.width = canvasBox.width;
     this.canvas.height = canvasBox.height;
     this.zoom = this.canvas.width / this.atlas.width;
+    this.draw();
   }
 
   undo() {
