@@ -1,6 +1,6 @@
 {
   "name": "pixano-app",
-  "version": "0.4.7",
+  "version": "0.4.9",
   "description": "This is a Pixano app.",
   "keywords": [],
   "license": "CECILL-C",
@@ -9,8 +9,9 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
-    "deps": "npm i ; cd frontend && npm i",
-    "build": "cd frontend && npm run build"
+    "deps": "rm -f package-lock.json && npm i && cd frontend && rm -f package-lock.json && npm i",
+    "build": "cd frontend && npm run build",
+    "installLocalElements": "cd frontend && npm run installLocalElements"
   },
   "bin": "./server/serve.js",
   "dependencies": {
@@ -33,8 +34,8 @@
     "object-sizeof": "^1.5.3",
     "path": "^0.12.7",
     "save": "^2.4.0",
+    "semver": "^7.3.5",
     "short-uuid": "^3.1.1",
-    "tmp": "^0.1.0",
-    "semver": "^7.3.5"
+    "tmp": "^0.1.0"
   }
 }

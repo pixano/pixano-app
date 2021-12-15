@@ -55,9 +55,8 @@ master  <------push------  github <--merge-- master <--merge--> p2
 
 ---------------------
 
-
-# A) Open-source publication procedure
-## 1. Prerequisite (only the first time)
+# Open-source publication procedure
+## Prerequisite (only the first time)
 #### have a github account and fork
 - create a [github](https://github.com) $MYACCOUNT account 
 - create a fork of the [original repository](https://github.com/pixano/pixano-app)
@@ -66,22 +65,34 @@ master  <------push------  github <--merge-- master <--merge--> p2
 	git fetch upstream
 	git checkout -b github upstream/master
 
-## 2. On github: Update your fork
-- on your fork github (on github.com), click on "Fetch upstream", then "Fetch and merge"
 
-## 3. Locally: Prepate the publication
-	# make sure the repositories are up-to-date
+## Publication
+### 0) prepare gitlab version
+	VERSION=0.6.0
 	git fetch
-	git fetch upstream
-	git checkout github
-	# integrate our modifications to the github branch
-	# a few usage examples with cherry-pick :
-	# import of the commit number d5e075f2 :
-	git cherry-pick d5e075f2
-	# import of all commits from b4cb0b18 to d5e075f2 both included:
-	git cherry-pick b4cb0b18^..d5e075f2
-	# import of all commits from cfbb3866 (not included) to 74e276acb:
-	git cherry-pick cfbb3866..74e276acb : 
+	git checkout master
+	git pull origin master
+	# update the publication version
+	gedit package.json frontend/package.json
+	## change version to $VERSION
+	## in frontend : if necessary, change version of elements
+	git add package.json frontend/package.json
+	git commit -m "release $VERSION"
+### 1) Prepate the publication
+1. On github : Update your fork
+	- on your fork github (on github.com), click on "Fetch upstream", then "Fetch and merge"
+2. Locally:
+
+		# make sure the repositories are up-to-date
+		git fetch upstream
+		git checkout github
+		
+		# integrate our modifications to the github branch
+		# merge all commits without commit which lets you inspect (and modify) the result before committing
+		# ensure that you `git rm --cached` every internal file/section
+		git merge --no-commit master
+		# when everything is ok, commit the changes
+		git commit -m "release $VERSION"
 
 During the merge / before commiting, **do not include / delete files and internal/proprietary codes** :  
 
@@ -90,32 +101,31 @@ During the merge / before commiting, **do not include / delete files and interna
 - do not include the files with tag "proprietary"
 - do not include with code blocks surrounded by tag "proprietary"
 
-### 4. Verify and validate code
-#### clean and recompilation "from scratch"
+
+### 2) Verify and validate code
+#### clean and recompile "from scratch"
 	# clean
-	rm -rf node_modules
+	rm -rf node_modules frontend/node_modules
 	rm package-lock.json frontend/package-lock.json
 	# compilation
 	npm i
-	npm run installApp
-	npm run buildApp
+	cd frontend ; npm i ; npm run build ; cd -
 #### verify "by hand"
 	node server/server.js data-test/
+	## you can create tasks for images using the folder "images/"
+	## you can create tasks for sequences using the folder "video/"
 
-## 5. Publish
+### 3) Publish
 #### 1. push
-	VERSION=0.4.17
-	#update the publication version in the package.json
-	git add package.json
-	git commit -m "release $VERSION"
 	git tag -m "v$VERSION" "v$VERSION"
 	# push modifications on the fork
 	git push upstream github:master --follow-tags
-<!-- LACK IN THE PROCEDURE : tag report on the master -->
-<!-- git checkout master -->
-<!-- git tag -m "v$VERSION" "v$VERSION" -->
-<!-- git push origin master -->
-<!-- ISSUE : we cannot have 2 tags of the same name in a given repository even if the other branch is upstream -->
+	
+	# tag report on master
+	git checkout master
+	#OR git checkout f5f56daf if the reference commit is not the last one
+	git tag -m "vi$VERSION" "vi$VERSION"
+	git push origin master --follow-tags
 #### 2. pull-request
 The rest is on [github](https://github.com) :
 
@@ -142,7 +152,8 @@ Transform the tag in github release (makes the last tag more visible and detaile
 
 #### 4. push on docker hub
 	# login (if not already logged)
-	docker login --username pixano --password *****
+	sudo docker login --username pixano
+	## enter password
 	# build docker image
 	sudo docker build -t  pixano/pixano-app:$VERSION .
 	sudo docker tag pixano/pixano-app:$VERSION pixano/pixano-app:latest
