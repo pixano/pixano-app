@@ -79,9 +79,11 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       "shortcuts",
       JSON.stringify([
         ["SHIFT", "Toggle label modifier"],
-        ["SPACE", "Skip image"],
+        ["w", "Skip image"],
         ["z", "Undo"],
         ["r", "Redo"],
+        ["Arrow Up", "Go to previous image"],
+        ["Arrow Down", "Go to next image"],
       ])
     );
     document.addEventListener("keydown", this.onKeyDown.bind(this));
@@ -184,7 +186,19 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
             this.draw();
           };
         }
-        case " ": {
+        case "ArrowUp": {
+          this.goToPreviousImage();
+          return () => {
+            this.draw();
+          };
+        }
+        case "ArrowDown": {
+          this.goToNextImage();
+          return () => {
+            this.draw();
+          };
+        }
+        case "q": {
           dispatchAnnotations((annotations) => {
             annotations[this.imageIndex * 3 + 0] =
               annotations[this.imageIndex * 3 + 1] =
@@ -392,33 +406,34 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.draw();
   }
 
+  goToPreviousImage() {
+    if (this.imageIndex > 0) {
+      this.imageIndex -= 1;
+      this.keypointIndex = 0;
+      this.attributePicker.setCategory(this.label.name);
+      this.draw();
+    }
+  }
+
+  goToNextImage() {
+    if (this.imageIndex < ~~(getAnnotations().annotations || []).length / 3) {
+      this.imageIndex += 1;
+      this.keypointIndex = 0;
+      this.attributePicker.setCategory(this.label.name);
+      this.draw();
+    }
+  }
+
   get toolDrawer() {
     return html`
       ${super.toolDrawer}
       <mwc-icon-button
         icon="arrow_upward"
-        @click=${() => {
-          if (this.imageIndex > 0) {
-            this.imageIndex -= 1;
-            this.keypointIndex = 0;
-            this.attributePicker.setCategory(this.label.name);
-            this.draw();
-          }
-        }}
+        @click=${this.goToPreviousImage}
       ></mwc-icon-button>
       <mwc-icon-button
         icon="arrow_downward"
-        @click=${() => {
-          if (
-            this.imageIndex <
-            ~~((getAnnotations().annotations || []).length / 3)
-          ) {
-            this.imageIndex += 1;
-            this.keypointIndex = 0;
-            this.attributePicker.setCategory(this.label.name);
-            this.draw();
-          }
-        }}
+        @click=${this.goToNextImage}
       ></mwc-icon-button>
     `;
   }
