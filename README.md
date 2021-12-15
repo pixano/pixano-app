@@ -103,7 +103,7 @@ If you want to use custom `pixano-element` modules from local path instead of th
 
 ```bash
 # Install application dependencies and local pixano-elements
-cd frontend/ && npm run installLocalElements --path=../../pixano-elements && cd -
+npm run installLocalElements --path=../../pixano-elements
 ```
 *NB: Make sure you have the git repository of pixano-elements next to the pixano-app folder and that you have followed the pixano-elements build instructions before running the above commands.*
 

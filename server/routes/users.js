@@ -254,7 +254,6 @@ async function put_user(req, res) {
     const user = await db.get(dbkeys.keyForUser(username));
     return user.password === password;
   } catch (err) {
-    console.log(username, 'does not exist.');
     return false;
   }
 }
