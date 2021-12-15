@@ -51,6 +51,14 @@ RUN npm deps && npm run build && rm -rf frontend
 EXPOSE 3000
 
 
+# clean the image
+RUN rm -rf ELISE/elise/repository.db ELISE/Elise_sqlite/ ELISE/elise_ext/data/idx/*
+
+# default files and folders (usefull when no volume can be mounted with this image)
+RUN mkdir -p /data
+COPY exconf.json /exconf.json
+
+
 # ENTRYPOINT ["node", "server/server.js"]
 # RUN echo 'cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh
 RUN echo 'bash -c "$ELISE_DIST/bin/run_search_server --param=$ELISE_BASE/eliseCfg/elise_search_FSF_config.xml -tSEARCHER_FSF &" && bash -c "$ELISE_DIST/bin/run_elise_server --param=$ELISE_BASE/eliseCfg/elise_server_config_sqlite.xml &" && cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh
