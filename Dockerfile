@@ -15,9 +15,13 @@ COPY server server
 COPY .logo-ascii .logo-ascii
 
 # Build frontend and install backend dependencies
-RUN npm i && cd frontend/ && npm i && npm run build && cd .. && rm -rf frontend && cd ..
+RUN npm deps && npm run build && rm -rf frontend
 
 EXPOSE 3000
+
+# default files and folders (usefull when no volume can be mounted with this image)
+RUN mkdir -p /data
+
 
 # ENTRYPOINT ["node", "server/server.js"]
 RUN echo 'cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh

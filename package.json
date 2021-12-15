@@ -9,8 +9,9 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
-    "deps": "npm i ; cd frontend && npm i",
-    "build": "cd frontend && npm run build"
+    "deps": "rm -f package-lock.json && npm i && cd frontend && rm -f package-lock.json && npm i",
+    "build": "cd frontend && npm run build",
+    "installLocalElements": "cd frontend && npm run installLocalElements"
   },
   "bin": "./server/serve.js",
   "dependencies": {
