@@ -51,7 +51,12 @@ const downloadFilesFromMinio = async (listIds,workspace) => {
 			if ('name' in obj) {
 				console.log("name in obj");
 				var corresponding = false;
-				listIds.forEach(id => { if (id.includes(obj.name)) corresponding=true; });
+				listIds.forEach(id => {//id does not directly correspond to an image path
+					if (id.endsWith('/')) id = id.substring(0,id.length-1);
+					const words = id.split('/');
+					id = words[words.length - 1];
+					if (objname.includes(id)) corresponding=true;
+				});
 				if (corresponding) {
 					console.log("corresponding");
 					//Download image in current directory//... TODO : use web links when available
@@ -59,8 +64,6 @@ const downloadFilesFromMinio = async (listIds,workspace) => {
 						if (e) throw(e);
 						console.log('append:',pixano_local_save_image_directory + obj.name);
 						listOfURLs.push(pixano_local_save_image_directory + obj.name);
-//						console.log("listOfURLs=",listOfURLs);
-//						console.log("listOfURLs size=",listOfURLs.length);
 						doneData++;
 					});
 				} else doneData++;
@@ -70,7 +73,8 @@ const downloadFilesFromMinio = async (listIds,workspace) => {
 	
 	console.log("waitFor",doneData,data.length);
 	await waitFor(() => { console.log("test",doneData,data.length); if (data.length>0) return(doneData === data.length); });
-	console.log("DDlistOfURLs=",listOfURLs);
+	console.log("listOfURLs=",listOfURLs);
+	console.info("Minio: got "+listOfURLs.length+" images over "+listIds.length+" in the input list");
 	if (listOfURLs.length===0) throw "Minio: no corresponding data found in bucket "+CONFIG.minio.bucket_name;
 
 	return listOfURLs;
