@@ -93,11 +93,8 @@ You can fill the task configuration as follows, which will create as many annota
 #### Application dependencies
 
 ```bash
-# Install backend dependencies
-npm i
-# Install frontend dependencies 
-cd frontend/
-npm i
+# Install backend and frontend dependencies
+npm run deps
 ```
 
 ##### Using a local pixano-element
