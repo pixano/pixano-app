@@ -112,7 +112,7 @@ export const defaultLabelValues = (pluginName) => {
         category: [
           {
             name: "head",
-            color: "#eca0a0",
+            color: "#ff0000",
             properties: [
               {
                 name: "hidden",
@@ -123,7 +123,7 @@ export const defaultLabelValues = (pluginName) => {
           },
           {
             name: "wither",
-            color: "#eca0a0",
+            color: "#00ff00",
             properties: [
               {
                 name: "hidden",
@@ -134,7 +134,7 @@ export const defaultLabelValues = (pluginName) => {
           },
           {
             name: "tail",
-            color: "red",
+            color: "#0000ff",
             properties: [
               {
                 name: "hidden",

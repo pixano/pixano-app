@@ -309,17 +309,17 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
             2 * Math.PI,
             false
           );
-          const color = colorsArray[i] || "red";
+          const color = colorsArray[i] || "#000000";
           if (point.modifier !== null) {
             if (color.startsWith("#")) {
-              ctx.fillStyle = `${color}80` || "red";
+              ctx.fillStyle = `${color}40` || "#000000";
             }
             if (color.startsWith("rbg")) {
               ctx.fillStyle = `rgba(${color
                 .split(",")
                 .slice(0, 3)
                 .map((s) => s.replace(/[^0-9]/g, ""))
-                .join(",")}, 0.5)`;
+                .join(",")}, 0.25)`;
             }
           } else {
             ctx.fillStyle = color;
