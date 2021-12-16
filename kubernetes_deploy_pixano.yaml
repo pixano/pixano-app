@@ -1,0 +1,61 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: "pixano"
+  labels:
+    app: "pixano"
+spec:
+  selector:
+    matchLabels:
+      app: "pixano"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: "pixano"
+    spec:
+      containers:
+      - name: "pixano"
+        image: "pixano/pixano-dev:confiance-v1"
+        imagePullPolicy: Always
+        ports:
+        - name: web
+          containerPort: 3000
+          protocol: TCP
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: "pixano"
+  labels:
+    app: "pixano"
+    expose: "true"
+spec:
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: "pixano"
+  type: ClusterIP
+  sessionAffinity: None
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+  generation: 1
+  labels:
+    ingress: tls
+    project: ec5-dev
+  name: pixano
+spec:
+  rules:
+  - host: pixano-ec5.confiance.irtsystemx.org
+    http:
+      paths:
+      - backend:
+          serviceName: pixano
+          servicePort: 3000

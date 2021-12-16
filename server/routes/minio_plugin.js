@@ -55,7 +55,7 @@ const downloadFilesFromMinio = async (listIds,workspace) => {
 					if (id.endsWith('/')) id = id.substring(0,id.length-1);
 					const words = id.split('/');
 					id = words[words.length - 1];
-					if (objname.includes(id)) corresponding=true;
+					if (obj.name.includes(id)) corresponding=true;
 				});
 				if (corresponding) {
 					console.log("corresponding");
