@@ -116,7 +116,6 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.atlas.addEventListener("load", async () => {
       this.sizeCanvas();
       this.attributePicker.setCategory(this.label.name);
-      this.setNextImageIndex();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
         this.attributePicker.setCategory(this.label.name);
@@ -128,11 +127,17 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   onActivate() {
     super.onActivate();
+    const validationMode = window.location.href.includes("to_validate");
+    if (!validationMode) this.setNextImageIndex();
+    else this.imageIndex = 0;
+
+    this.keypointIndex = 0;
+    this.attributePicker.setCategory(this.label.name);
+    this.draw();
   }
 
   disconnectedCallback() {
     this.unsubscriber();
-    console.log("disconnected");
     window.removeEventListener("resize", this.sizeCanvas.bind(this));
     document.removeEventListener("keydown", this.onKeyDown.bind(this));
     this.undoButton.removeEventListener("click", this.undo.bind(this));
@@ -242,7 +247,6 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.atlas.addEventListener("load", async () => {
       this.sizeCanvas();
       this.attributePicker.setCategory(this.label.name);
-      this.setNextImageIndex();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
         this.draw();
