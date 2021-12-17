@@ -72,11 +72,6 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.imagesPerAtlas = imagesPerAtlas;
     this.canvas = this.shadowRoot.querySelector("#frame");
     this.sizeCanvas();
-    this.dispatchEvent(new Event("ready"));
-  }
-
-  onActivate() {
-    super.onActivate();
     window.addEventListener("resize", this.sizeCanvas.bind(this));
     this.attributePicker.setAttribute(
       "shortcuts",
@@ -128,10 +123,16 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
         this.draw();
       });
     });
+    this.dispatchEvent(new Event("ready"));
+  }
+
+  onActivate() {
+    super.onActivate();
   }
 
   disconnectedCallback() {
     this.unsubscriber();
+    console.log("disconnected");
     window.removeEventListener("resize", this.sizeCanvas.bind(this));
     document.removeEventListener("keydown", this.onKeyDown.bind(this));
     this.undoButton.removeEventListener("click", this.undo.bind(this));
