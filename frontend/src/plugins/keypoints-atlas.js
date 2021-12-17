@@ -30,7 +30,10 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   // 3 clicks / image
   setNextImageIndex() {
-    this.imageIndex = ~~((getAnnotations().annotations || []).length / 3);
+    this.imageIndex = Math.min(
+      this.imagesPerAtlas - 1,
+      Math.max(0, ~~((getAnnotations().annotations || []).length / 3))
+    );
   }
 
   setNextkeypointIndex() {
