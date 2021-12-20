@@ -246,6 +246,8 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.atlas.src = atlasPath;
     this.atlas.addEventListener("load", async () => {
       this.sizeCanvas();
+      this.imageIndex = 0;
+      this.keypointIndex = 0;
       this.attributePicker.setCategory(this.label.name);
       this.draw();
       this.unsubscriber = store.subscribe(() => {
