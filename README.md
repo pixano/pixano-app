@@ -1,44 +1,31 @@
 # <img src="frontend/images/pixano_logo.png" alt="Pixano" height="100"/>
 
-Pixano App
-===============
 [![License](https://img.shields.io/badge/license-CeCILL--C-blue.svg)](LICENSE) [![Live Demo](https://img.shields.io/badge/demo-online-green.svg)](http://pixano.cea.fr/smart-annotation/) [![License](https://img.shields.io/docker/pulls/pixano/pixano-app.svg)](Docker)
 
 ## What is PIXANO ?
-Pixano App is a web-based annotation tool. It relies on web components dedicated to annotation [pixano-elements](https://github.com/pixano/pixano-elements). This document explains how to run it.
+[Pixano](https://pixano.cea.fr/) is a web-based smart-annotation tool for computer vision applications. The modules are driven by artificial intelligence, which assists the human user with annotation tasks and accelerate the annotation process. Try some of our features [online](https://pixano.github.io/demo/demo.html)!
 
-**TODO :**
-- description générale de pixano, lien vers le site et les démos
-- description de la structure générale :
-	- backend / server
-	- frontend
-	- elements
-- les différentes manières de l'utiliser :
-	- en standalone
-	- en distribué
-	- => donner plkus de détail dans les usage ?
-=> SHÉMA
-+ faire unb gif à partir de https://www.youtube.com/watch?v=z5T2HhnugJo
+[![pixano.gif](documentation/pixano.gif)](https://www.youtube.com/watch?v=z5T2HhnugJo)
 
+Pixano App
+===============
 
 ## Table of Contents
 * [Installation](#1-installation)
 	- [Using Docker Image](#using-docker-image)
-	- [From source](#install-from-source-for-developpers)
+	- [From source (for developers)](#install-from-source-for-developers)
 * [Usage](#2-usage)
-	- => mettre tout çà dans un fichier séparé avec des images de chaque étape ? => eq. à Getting started blog post ? => User guide
-	- [Login page](#login-page)
-	- [Create a new task](#create-a-new-task)
+	- [Configure your first annotation project](#configure-your-first-annotation-project)
 	- [Start annotating](#start-annotating)
-* [Documentation](#3-documentation)
+	- [Export your annotations](#export-your-annotations)
+	- [Standalone vs distributed usage](#standalone-vs-distributed-usage)
+* [Advanced usage](#3-advanced-usage)
 	- [Import predictions](#import-predictions)
 	- [Import/Export annotation format](#importexport-annotation-format)
-* [Contributing](#4-contributing)
-	- [Getting started](#getting-started)
-	- [Pull request](#pull-request)
 	- [Build docker from sources](#build-docker-from-sources)
-
-
+* [Contributing](#4-contributing)
+	- [Pixano architecture: Pixano-app and Pixano-elements](#pixano-architecture-pixano-app-and-pixano-elements)
+	- [Some documentation to get started](#some-documentation-to-get-started)
 
 
 ## 1. Installation
@@ -72,7 +59,7 @@ pixano ./data-test --port 3001
 ```
 
 
-### Install from source [for developpers]
+### Install from source (for developers)
 
 #### Install global dependencies
 
@@ -122,8 +109,6 @@ In the command prompt, type in `node server/server.js /path/to/your/workspace` f
 *NB: Make sure when typing this command that the workspace (`/path/to/your/workspace`) contains all of the data you want to use.*
 
 
-
-
 ## 2. Usage
 
 After running Pixano-App, you’ll see something similar to this:
@@ -139,11 +124,11 @@ After running Pixano-App, you’ll see something similar to this:
    └────────────────────────────────────────────────────────────────────────┘
 ```
 
-Open your browser and hit `localhost:3000`. You should see the login page of the application.
+Open your browser and hit _http://localhost:3000_. You should see the login page of the application.
 
-![pixano-elements](./frontend/images/login.png)
+![pixano-elements](./documentation/images/page-login.png)
 
-First authentification is: `username: admin` `password: admin`.
+First authentication is: `username: admin` `password: admin`.
 
 ### Configure your first annotation project
 
@@ -160,23 +145,28 @@ Our [plugins' guide](./plugins-guide.md) will help you in the use of your curren
 
 ### Export your annotations
 
-Get your annotations and use them for any external application easily :
+Get your annotations and use them for any external application easily:
 
 - as an admin, go to the tasks tab
 - press the "EXPORT TO FILES" button
 - you will find the exported annotations in the root of your workspace (find more information on annotation format [bellow](#importexport-annotation-format))
 
+### Standalone vs distributed usage
+
+Pixano-app can be used standalone on a single machine. In this case, the "admin" can also directly annotate and validate his datasets. See our [admin's guide](./admin-guide.md) for more details.
+
+Pixano-app is also developed to enable a distributed work:
+
+- install Pixano-app on a server and open its ip and port to your annotators inside your network
+- define your datasets, tasks and users (See [admin's guide](./admin-guide.md)). The tasks will be automatically distributed between the annotators.
+- each annotator can start working immediately from his computer without installing anything by connecting to _http://xxx.xxx.x.xx:3000_
+
 
 ## 3. Advanced usage
 
-prendre en entrée des annotation existantes ou 
-
 ### Import predictions
 
-**TODO**
-explications sur l'utilité
-=> Import predictions as existing annotations
-=> follow [Import/Export annotation format](#importexport-annotation-format)
+If you want to analyze predictions from your last detector or use these predictions as a pre-annotation, you can import these predictions as existing annotations by using our [annotation format](#importexport-annotation-format).
 
 ### Import/Export annotation format
 
@@ -193,25 +183,7 @@ data-test
         │    xxx.json
         └─── yyy.json
 ```
-The `task1.json` file contains global task settings (task type, task categories, image folder, etc) and its correspoding `task1` folder contains an annotation file for each image. To prepare those files check the [import documentation](documentation/import-annotations.md).
-
-
-
-## 4. Contributing
-
-### Getting started
-
-If you want to edit the application to your liking, fork this repository.
-
-- To get familiar with how the app is built from Web Components, read the [LitElement](https://lit-element.polymer-project.org/) documentation.
-- To get familiar with how the data is managed in the client, read the [redux](https://redux.js.org/introduction/getting-started) documentation.
-- To better understand the Pixano server API, read its [documentation](documentation/rest-api.md)
-
-### Pull request
-
-**TODO**
-
-+ renovoyer vers elements pour les contributions avancées
+The `task1.json` file contains global task settings (task type, task categories, image folder, etc) and its corresponding `task1` folder contains an annotation file for each image. To prepare those files check the [import documentation](documentation/import-annotations.md).
 
 ### Build docker from sources
 
@@ -223,5 +195,33 @@ sudo docker build -t pixano/pixano-app:my-tag .
 sudo docker build -t pixano/pixano-app:my-tag -f Dockerfile-local .
 ```
 
+
+## 4. Contributing
+
+If you tested Pixano and identified some issues or think some useful features are missing, please open an [issue](https://github.com/pixano/pixano-app/issues).
+
+If you want to edit the application to your liking, fork this repository!
+
+If you want to contribute more actively to the project, feel free to write your patches or new features and make a pull request!
+
+### Pixano architecture: Pixano-app and Pixano-elements
+
+![pixano.gif](documentation/Pixano-app_elements_det.png)
+
+**Pixano-app** is a monorepo built on top of web components dedicated to annotation (developed in a separate repo: [pixano-elements](https://github.com/pixano/pixano-elements)):
+
+- the backend manages the data (datasets to be annotated), the tasks (tasks to be performed by annotators) and the users (annotators, validators, admin)
+- the frontend implements the web views and calls the elements through plugins
+- backend and frontend communicate via a REST api
+
+[**Pixano-elements**](https://github.com/pixano/pixano-elements) provides a wide set of smart and re-usable web components to build highly customizable image and video annotation tools: 2D and 3D bounding boxes, polygons, segmentation masks, customizable labels, label temporal propagation, etc. **Pixano-app** relies on these web components.
+
+### Some documentation to get started
+- General documentation:
+	- To get familiar with how the app is built from Web Components, read the [LitElement](https://lit-element.polymer-project.org/) documentation.
+	- To get familiar with how the data is managed in the client, read the [redux](https://redux.js.org/introduction/getting-started) documentation.
+- Pixano's developers documentation
+	- To better understand the Pixano server API, read its [documentation](documentation/rest-api.md)
+	- To get familiar with Pixano's elements, take a look at its [dedicated repository](https://github.com/pixano/pixano-elements) and [modules documentation](https://pixano.github.io/docs/)
 
 

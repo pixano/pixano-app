@@ -63,6 +63,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#bogue] quand on clique sur l'affichage d'image après avoir filtré une partie du contenu, il ne fait rien (image vide ou image précédente s'il y en avait une
 
 ## annotation
+- [ ] [#bogue] supprimer les plugins inutilisés ? : tracking-point, keypoints-box, sequence-point-rectangle
 - [x] [#feature] ajouter un champs commentaire : le validateur peut commenter, l'annotateur peut voir les commentaires, les commentaires sont transmissibles via json. => cf. branche eurovanille
 - [ ] [#feature] rajout d'informations dans les jsons : date de dernière annotation, utilisateur à l'origine de la dernière annotation
 - [ ] [#feature] possibilité de transmettre l'état des annotations (validé/rejeté) via json
