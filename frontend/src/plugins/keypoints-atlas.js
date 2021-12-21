@@ -185,13 +185,10 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     const cleanupFn = (() => {
       switch (e.key) {
         case "Shift": {
-          const checkbox = this.attributePicker.shadowRoot.querySelector(
-            `mwc-formfield > mwc-checkbox`
-          );
-          checkbox.setAttribute("checked", "");
+          this.holdingShift = true;
           this.draw();
           return () => {
-            checkbox.removeAttribute("checked");
+            this.holdingShift = false;
             this.draw();
           };
         }
@@ -367,10 +364,20 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   }
 
   draw() {
-    this.drawImage();
-    this.drawCounter();
-    this.drawKeypoints();
-    if (this.keypointIndex !== -1) this.drawTarget();
+    setImmediate(() => {
+      const checkbox = this.attributePicker.shadowRoot.querySelector(
+        `mwc-formfield > mwc-checkbox`
+      );
+      if (checkbox) {
+        if (this.holdingShift) checkbox.setAttribute("checked", "");
+        else checkbox.removeAttribute("checked");
+      }
+
+      this.drawImage();
+      this.drawCounter();
+      this.drawKeypoints();
+      if (this.keypointIndex !== -1) this.drawTarget();
+    });
   }
 
   onClick(e) {
@@ -426,7 +433,10 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
   }
 
   goToNextImage() {
-    if (this.imageIndex < ~~(getAnnotations().annotations || []).length / 3) {
+    if (
+      this.imageIndex <
+      ~~(getAnnotations().annotations || []).length / 3 - 1
+    ) {
       this.imageIndex += 1;
       this.keypointIndex = 0;
       this.attributePicker.setCategory(this.label.name);
