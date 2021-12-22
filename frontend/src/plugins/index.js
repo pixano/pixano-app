@@ -66,8 +66,8 @@ export const defaultLabelValues = (pluginName) => {
         case 'segmentation':
             return {
 				category: [
-					{ name: 'class1', color: "blue", idx: 1, instance: true },
-					{ name: 'class2', color: "#eca0a0", idx: 2, instance: false },
+					{ name: 'class1', color: "blue", idx: 1, instance: true, properties: [] },
+					{ name: 'class2', color: "#eca0a0", idx: 2, instance: false, properties: [] },
 					{
 						name: 'class3', color: "green", idx: 3, instance: true, properties: [
 							{ name: 'checkbox example', type: 'checkbox', default: false },
@@ -83,8 +83,8 @@ export const defaultLabelValues = (pluginName) => {
         case 'tracking':
             return {
 					category: [
-						{ name: 'class1', color: "blue" },
-						{ name: 'class2', color: "#eca0a0" },
+						{ name: 'class1', color: "blue", properties: [] },
+						{ name: 'class2', color: "#eca0a0", properties: [] },
 						{
 							name: 'class3', color: "green", properties: [
 								{ name: 'checkbox example', type: 'checkbox', default: false, persistent: true },
@@ -116,8 +116,8 @@ export const defaultLabelValues = (pluginName) => {
         default:
             return {
 					category: [
-						{ name: 'class1', color: "blue" },
-						{ name: 'class2', color: "#eca0a0" },
+						{ name: 'class1', color: "blue", properties: [] },
+						{ name: 'class2', color: "#eca0a0", properties: [] },
 						{
 							name: 'class3', color: "green", properties: [
 								{ name: 'checkbox example', type: 'checkbox', default: false },

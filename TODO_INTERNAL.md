@@ -43,6 +43,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [ ] [#feature] séparer la gestion des tâches et des datasets => implémentation du bouton création
 - [ ] [#feature] possibilité de prendre en compte une modification de la base de données images => bouton "refresh database" ?
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
+- [ ] [#feature] possibilité de gérer des "sélections" au lieu d'annoter systématiquement l'ensemble d'une base de données (supprime le point précédent ?)
 - [x] [#feature] intégration Semfeat/Élise (sur une branche Élise)
 	- [x] ajouter Élise dans la génération du docker
 	- [x] synchroniser la base de données image
