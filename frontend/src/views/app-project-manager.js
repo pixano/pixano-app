@@ -24,6 +24,7 @@ import '@trystan2k/fleshy-jsoneditor/fleshy-jsoneditor.js';
 import { defaultLabelValues, pluginsList, getDataType, defaultSettings } from '../plugins/index';
 
 import {
+  updateTaskName,
   snapshotProject,
   exportTasks,
   importTasks,
@@ -162,31 +163,23 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     })
   }
 
-  /**
-   * Fired when task tab changes.
-   * @param {*} e 
-   */
-  onTabChanged(e) {
-    const idx = e.detail.index;
-    this.taskIdx = idx;
-  }
+	/**
+	 * Fired when task tab changes.
+	 * @param {*} e 
+	 */
+	onTabChanged(e) {
+		if (this.taskIdx !== e.detail.index) {
+			if (this.creatingTask) this.onCancelTask();// if tab change after a "new task" without hitting "create Task"
+			this.taskIdx = e.detail.index;
+			store.dispatch(updateTaskName(this.tasks[this.taskIdx].name));
+		}
+	}
 
   /**
    * Create the new configured task.
    */
   onCreateTask() {
-    let task = {...this.tasks[this.taskIdx]};
-    const reg = new RegExp('[^=a-zA-Z0-9-_]+',);
-    const isWrongContained = reg.test(task.name);
-    if (!task.name || isWrongContained) {
-      window.alert("Enter a correct task name");
-      return;
-    }
-    task.spec.label_schema = this.taskSettings.json;
-    task.spec.settings = this.pluginSettings.json;
-    store.dispatch(postTask(task)).then(() => {
-      this.creatingTask = false;
-    });    
+	this.SaveOrCreateTask()
   }
 
   /**
@@ -196,23 +189,37 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     this.tasks.pop();
     this.tasks = [...this.tasks];
     this.taskIdx = this.tasks.length - 1;
+	this.creatingTask = false;
   }
 
   /**
-   * Save currently displayed task.
+   * Save currently displayed task. (for now : only task details can be changed, the name, dataset and annotation type have to remain the same)
    */
   onSaveTask() {
-    let task = {...this.tasks[this.taskIdx]};
-    if (!task.name) {
-      window.alert("Enter a task name");
-      return;
-    }
-    task.spec.label_schema = this.taskSettings.json;
-    task.spec.settings = this.pluginSettings.json;
-    store.dispatch(putTask(task)).then(() => {
-      this.creatingTask = false;
-    });
+	this.SaveOrCreateTask();
   }
+
+	/**
+	 * Save a modified task or create the new configured task.
+	 */
+	SaveOrCreateTask() {
+		let task = { ...this.tasks[this.taskIdx] };
+		const reg = new RegExp('[^=a-zA-Z0-9-_]+',);
+		const isWrongContained = reg.test(task.name);
+		if (!task.name || isWrongContained) {
+			this.errorPopup("Enter a correct task name");
+			return;
+		}
+		task.spec.label_schema = this.taskSettings.json;
+		task.spec.settings = this.pluginSettings.json;
+		const fn = this.creatingTask ? postTask : putTask;
+		store.dispatch(fn(task)).then(() => {
+			this.creatingTask = false;
+		}).catch((error) => {
+			this.errorPopup(error.message);
+			this.onCancelTask();
+		});
+	}
 
   static get styles() {
     return [super.styles, css`

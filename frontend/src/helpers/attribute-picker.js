@@ -11,16 +11,8 @@ import '@material/mwc-checkbox';
 import '@material/mwc-formfield';
 import '@material/mwc-select';
 import '@material/mwc-list/mwc-list-item';
+import { getValue } from '../helpers/utils';
 
-const default_schema = {
-  category: [
-    {name: 'car', color: "#eca0a0"},
-    {name: 'moon', color: "#eca0a0", properties: [
-      {name: 'size', type: 'dropdown', enum: ['little', 'big'], default: 'little'}
-    ]}
-  ],
-  default: 'car'
-};
 
 // TODO: move to pixano-elements
 export class AttributePicker extends LitElement {
@@ -139,7 +131,7 @@ export class AttributePicker extends LitElement {
       if (!category && schema.category.length) {
         category = schema.category[0];
       }
-      if (category.properties) {
+      if (category && category.properties) {
         const d = {};
         category.properties.forEach((p) => {
           d[p.name] = p.default;
@@ -186,10 +178,10 @@ export class AttributePicker extends LitElement {
         ];
         this.showDetail = false;
         this.mem = '';
-        this.schema = default_schema;
-        const options = this.getDefaultAttributesForCategory(default_schema, default_schema.default);
-        this.value = {category: default_schema.default, options };
-        this.mem = '';
+        this.schema = {};
+		this.schema.category = [];
+        const options = {};
+        this.value = {category: '', options };
         this.onKeyDown = this.onKeyDown.bind(this);
         this.onKeyUp = this.onKeyUp.bind(this);
     }
@@ -320,7 +312,6 @@ export class AttributePicker extends LitElement {
     htmlProp(prop) {
         if (prop.type === 'dropdown') {
             // list of attribute choices
-            
             return html`
             <mwc-select label="${prop.name}" @selected=${ (e) => {
                 const idx = e.detail.index;
@@ -335,30 +326,33 @@ export class AttributePicker extends LitElement {
             </mwc-select>
             `
         } else if (prop.type === 'checkbox') {
-          const checked = this.value.options[prop.name];
+			const checked = JSON.parse(JSON.parse(JSON.stringify(this.value.options[prop.name]).toLowerCase()));// if the initial value was a string like "false" or "False", we want it to be interpreted as a boolean
             return html`
             <mwc-formfield label="${prop.name}">
               <mwc-checkbox ?checked=${checked} @change=${
                 (evt) => {
-                  if (checked != evt.path[0].checked) {
+					const path = evt.composedPath();
+					const input = path[0];
+                  if (checked != input.checked) {
                     this.value.options[prop.name] = !checked;
-                    this.value = {...this.value};
+					this.value = {...this.value};
                     this._notifyUpdate();
                   }
                 }
               }></mwc-checkbox>
             </mwc-formfield>
             `
-        } else if (prop.type === 'textfield') {
-			const checked = this.value.options[prop.name];
-			  return html`
-			  <mwc-formfield label="${prop.name}">
-				<mwc-textfield @change=${
-				  (evt) => { console.log("change textfield"); }
+		} else if (prop.type === 'textfield') {
+			const textval = this.value.options[prop.name];
+			return html`
+				<mwc-textfield label="${prop.name}" value=${textval} @change=${(evt) => {
+						this.value.options[prop.name] = getValue(evt);
+						this.value = {...this.value};
+						this._notifyUpdate();
+					}
 				}></mwc-textfield>
-			  </mwc-formfield>
-			  `
-		  }
+			`
+		}
         return html``;
     }
 
