@@ -1,6 +1,6 @@
 {
   "name": "pixano-app-frontend",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "This is a Pixano app.",
   "scripts": {
     "copyindex": "shx cp src/index.html ../build",
@@ -49,10 +49,10 @@
     "@material/mwc-tab-bar": "0.19.1",
     "@material/mwc-textarea": "0.19.1",
     "@material/mwc-textfield": "0.19.1",
-    "@pixano/ai": "0.6.0",
-    "@pixano/core": "0.6.0",
-    "@pixano/graphics-2d": "0.6.0",
-    "@pixano/graphics-3d": "0.6.0",
+    "@pixano/ai": "0.6.1",
+    "@pixano/core": "0.6.1",
+    "@pixano/graphics-2d": "0.6.1",
+    "@pixano/graphics-3d": "0.6.1",
     "@trystan2k/fleshy-jsoneditor": "3.0.0",
     "@webcomponents/webcomponentsjs": "^2.4.0",
     "babel-loader": "^8.2.3",
