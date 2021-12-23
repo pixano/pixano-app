@@ -83,19 +83,19 @@ class AppDashboardAdmin extends TemplatePage {
 
   onActivate() {
     this.stateChanged(getState());
-    this.refreshGrid();
+    if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
   }
 
   /**
    * Refresh the grid from the database
    * state.
    */
-  refreshGrid() {
+  async refreshGrid() {
     this.table.items.forEach((e) => e.selected = false);
     this.tableCheckbox.checked = false;
     this.nbSelectedJobs = 0;
     this.table.layout();
-    this.getResults().then((res) => {
+    await this.getResults().then((res) => {
       this.items = res;
     });
   }
@@ -109,13 +109,13 @@ class AppDashboardAdmin extends TemplatePage {
    * @param {String} key 
    * @param {String} value 
    */
-  updateFilter(key, value) {
+  async updateFilter(key, value) {
     const oldFilters = getState('application').filters
     if (oldFilters[key] !== value){
       const newFilters = {...oldFilters, [key]: value};
       store.dispatch(updateFilters(newFilters));
-      this.refreshGrid();
-    }    
+      await this.refreshGrid();
+    }
   }
 
   /**

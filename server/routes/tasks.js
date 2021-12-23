@@ -85,6 +85,7 @@ async function post_tasks(req, res) {
  * 
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 400 Import error
+ *     HTTP/1.1 401 Unauthorized
  */
 async function import_tasks(req, res) {
     checkAdmin(req, async () => {
@@ -311,7 +312,7 @@ async function export_tasks(req, res) {
 }
 
 /**
- * @api {put} /tasks/:task_name Update task details
+ * @api {put} /tasks/:task_name Update task details (for now : only task details can be changed, the name, dataset and annotation type have to remain the same)
  * @apiName PutTask
  * @apiGroup Tasks
  * @apiPermission admin
