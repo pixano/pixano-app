@@ -27,8 +27,7 @@ export class PopUp extends LitElement {
 
     updated(changedProperties) {
         if (changedProperties.has('message') && this.message) {
-            console.log('this.message changed', this.message)
-            this.messageElement.innerHTML = this.message.replace(/\n/g, '<br>');
+            this.messageElement.innerHTML = this.message.toString().replace(/\n/g, '<br>');
         }
     }
 

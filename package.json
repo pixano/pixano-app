@@ -1,12 +1,17 @@
 {
   "name": "pixano-app",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "This is a Pixano app.",
   "keywords": [],
   "license": "CECILL-C",
   "engines": {
     "node": ">=12.0.0",
     "npm": ">=6.0.0"
+  },
+  "scripts": {
+    "deps": "rm -f package-lock.json && npm i && cd frontend && rm -f package-lock.json && npm i",
+    "build": "cd frontend && npm run build",
+    "installLocalElements": "cd frontend && npm run installLocalElements"
   },
   "bin": "./server/serve.js",
   "dependencies": {
