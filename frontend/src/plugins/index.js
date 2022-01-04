@@ -7,12 +7,14 @@
  * @license CECILL-C
 */
 
-// import {PluginRectangle} from '../plugins/rectangle';
+import '../helpers/attribute-picker';
+
 
 /**
  * List of all plugin names
  */
 export const pluginsList = [
+	'classification',
     'rectangle',
     'polygon',
     'cuboid',
@@ -62,58 +64,71 @@ export const defaultLabelValues = (pluginName) => {
     switch(pluginName) {
         case 'sequence-segmentation':
         case 'smart-segmentation':
-        case 'segmentation': {
+        case 'segmentation':
             return {
-                category: [
-                    {name: 'car', color: "green", idx: 1, instance: true},
-                    {name: 'person', color: "#eca0a0", idx: 2, instance: true},
-                    {name: 'road', color: "blue", idx: 3, instance: false}
-                ],
-                default: 'person'
-            }
-        }
-        case 'smart-rectangle': {
-            return {
-                category: [
-                    {name: 'car', color: "green"},
-                    {name: 'person', color: "#eca0a0"},
-                ],
-                default: 'person'
-            }
-        }
-        case 'smart-tracking':
-        case 'tracking': {
-            return {
-                category: [
-                    {name: 'car', color: "green", properties: []},
-                    {name: 'person', color: "#eca0a0", properties: [
-                        {name: 'posture', type: 'dropdown', enum: ['standing', 'bending', 'sitting', 'lying'], 
-                        persistent: false, default: 'standing'}
-                    ]},
-                ],
-                default: 'person'
-            };
-        }
+				category: [
+					{ name: 'class1', color: "blue", idx: 1, instance: true, properties: [] },
+					{ name: 'class2', color: "#eca0a0", idx: 2, instance: false, properties: [] },
+					{
+						name: 'class3', color: "green", idx: 3, instance: true, properties: [
+							{ name: 'checkbox example', type: 'checkbox', default: false },
+							{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
+							{ name: 'textfield example', type: 'textfield', default: 'some text' }
+						]
+					}
+				],
+				default: 'class1'
+			};
 
-        case 'rectangle':
-        case 'sequence-rectangle':
-        default: {
+        case 'smart-tracking':
+        case 'tracking':
             return {
-                category: [
-                    {
-                        name: 'car', color: "green", properties: [
-                            {name: 'isBlue', type: 'checkbox', default: false}
-                        ]
-                    },
-                    {
-                        name: 'person', color: "#eca0a0", properties: [
-                            {name: 'size', type: 'dropdown', enum: ['little', 'big'], default: 'little'}
-                        ]
-                    }
-                ],
-                default: 'person'
-            }
-        }
+					category: [
+						{ name: 'class1', color: "blue", properties: [] },
+						{ name: 'class2', color: "#eca0a0", properties: [] },
+						{
+							name: 'class3', color: "green", properties: [
+								{ name: 'checkbox example', type: 'checkbox', default: false, persistent: true },
+								{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something', persistent: false },
+								{ name: 'textfield example', type: 'textfield', default: 'some text' }
+							]
+						}
+					],
+					default: 'class1'
+				};
+
+		case 'classification':
+			return {
+				category: [
+					{
+						name: 'classification', color: "black", properties: [
+							{ name: 'checkbox example', type: 'checkbox', default: false },
+							{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
+							{ name: 'textfield example', type: 'textfield', default: 'some text' }
+						]
+					}
+				],
+				default: 'classification'
+			};
+
+		case 'sequence-rectangle':
+		case 'smart-rectangle':
+        case 'rectangle':
+        default:
+            return {
+					category: [
+						{ name: 'class1', color: "blue", properties: [] },
+						{ name: 'class2', color: "#eca0a0", properties: [] },
+						{
+							name: 'class3', color: "green", properties: [
+								{ name: 'checkbox example', type: 'checkbox', default: false },
+								{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
+								{ name: 'textfield example', type: 'textfield', default: 'some text' }
+							]
+						}
+					],
+					default: 'class1'
+				};
     }
 }
 
