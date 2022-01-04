@@ -26,6 +26,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
     this.imageIndex = -1;
     this.keypointIndex = 0; // [0-2]
     this.prevState = [];
+    this.brightness = 1;
   }
 
   // 3 clicks / image
@@ -77,9 +78,11 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
       "shortcuts",
       JSON.stringify([
         ["SHIFT", "Toggle label modifier"],
-        ["w", "Skip image"],
+        ["q", "Skip image"],
         ["z", "Undo"],
         ["r", "Redo"],
+        ["m", "Brightness -"],
+        ["p", "Brightness +"],
         ["Arrow Up", "Go to previous image"],
         ["Arrow Down", "Go to next image"],
       ])
@@ -204,6 +207,18 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
             this.draw();
           };
         }
+        case "m": {
+          this.brightness -= 0.1;
+          return () => {
+            this.draw();
+          };
+        }
+        case "p": {
+          this.brightness += 0.1;
+          return () => {
+            this.draw();
+          };
+        }
         case "q": {
           dispatchAnnotations((annotations) => {
             annotations[this.imageIndex * 3 + 0] =
@@ -256,6 +271,7 @@ export class PluginKeypointsAtlas extends TemplatePluginInstance {
 
   drawImage() {
     const ctx = this.canvas.getContext("2d");
+    ctx.filter = `brightness(${this.brightness * 100}%)`;
     ctx.drawImage(
       this.atlas,
       0,
