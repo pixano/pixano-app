@@ -1,9 +1,7 @@
 const path = require('path');
 const cliProgress = require('cli-progress');
-// const db = require('../config/db-leveldb');
-// const storage = require('../config/storage-filesystem');
+const storage = require('../config/db');
 const db = require('../config/db');
-const storage = require('../config/storage-bucket');
 const dbkeys = require('../config/db-keys');
 const batchManager = require('../helpers/batch-manager');
 const utils = require('../helpers/utils');
