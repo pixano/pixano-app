@@ -8,8 +8,7 @@
 const cliProgress = require('cli-progress');
 const batchManager = require('./batch-manager');
 const { generateKey } = require('../helpers/utils');
-// const storage = require('../config/storage-filesystem');
-const storage = require('../config/storage-bucket');
+const storage = require('../config/db');
 const dbkeys = require('../config/db-keys');
 
 

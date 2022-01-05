@@ -5,6 +5,7 @@ const dbConverter = require('../config/db-converter');
 const db = require('./db-firestore');
 const storage = require('./storage-bucket');
 module.exports.db = db;
+module.exports.storage = storage;
 
 async function initDB(workspacePath) {
     db.init(workspacePath);
