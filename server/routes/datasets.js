@@ -1,6 +1,7 @@
 const path = require('path');
 // const db = require('../config/db-leveldb');
 const db = require('../config/db-firestore');
+
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -206,6 +207,7 @@ async function getOrcreateDataset(dataset) {
         ...dataset,
         id: utils.generateKey()
       }
+      console.log("newDataset", newDataset);
       await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
       await populator[dataset.data_type](db, newDataset.path, newDataset.id)
       return newDataset;
