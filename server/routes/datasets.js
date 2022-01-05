@@ -1,6 +1,6 @@
 const path = require('path');
 // const db = require('../config/db-leveldb');
-const db = require('../config/db-firestore');
+const db = require('../config/db');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -169,7 +169,6 @@ async function get_datas(req, res) {
 
 
 ///// Utils
-
 /**
  * Get data content from its id
  * @param {string} dataset_id 
