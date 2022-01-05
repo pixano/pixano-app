@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { db } = require('../config/db');
+const db = require('../config/db-leveldb');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 
@@ -86,7 +86,7 @@ async function get_next_job(req, res) {
         }
     }
     // (3) Loop through available jobs
-    const streamA = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+    const streamA = db.stream(dbkeys.keyForResult(taskName), false, true);
     for await(const result of streamA) {
         if (objectiveList.includes(result.status) && !result.in_progress) {
             let job;
@@ -99,7 +99,7 @@ async function get_next_job(req, res) {
         }
     }
     // (3b) Assign less jobs with less priority
-    const streamB = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+    const streamB = db.stream(dbkeys.keyForResult(taskName), false, true);
     for await(const result of streamB) {
         if (objectiveList.includes(result.status) && !result.in_progress) {
             let job;
@@ -311,7 +311,7 @@ async function isJobAvailableForUser(job, targetUser, isPermissive = false) {
     } else if (!job.assigned_to && targetUser.queue[qKey] && targetUser.queue[qKey].includes(job.id)) {
         return true;
     } else if (!job.assigned_to && !isPermissive) {
-        const streamUsers = utils.iterateOnDB(db, dbkeys.keyForUser(), false, true);
+        const streamUsers = db.stream(dbkeys.keyForUser(), false, true);
         for await (const user of streamUsers) {
             if (user.username == targetUser.username) { continue; }
             if (user.queue && user.queue[qKey] && user.queue[qKey].includes(job.id)) {
