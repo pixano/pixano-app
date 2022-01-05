@@ -1,4 +1,4 @@
-const { db } = require('../config/db');
+const db = require('../config/db-leveldb');
 const { checkAdmin } = require('./users');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
@@ -41,7 +41,7 @@ async function get_results(req, res) {
     let doneCounter = 0;
     let toValidateCounter = 0;
 
-    const stream = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+    const stream = db.stream(dbkeys.keyForResult(taskName), false, true);
     const task = await db.get(dbkeys.keyForTask(taskName));
     for await (const result of stream) {
         // filter results
@@ -260,7 +260,7 @@ async function put_results(req,res) {
     const dataId = req.params.data_id;
     const queries = req.query;
     const keys = [...Object.keys(queries)];
-    const stream = utils.iterateOnDBFrom(db, dbkeys.keyForResult(taskName, dataId), dbkeys.keyForResult(taskName), 
+    const stream = db.streamFrom(dbkeys.keyForResult(taskName, dataId), dbkeys.keyForResult(taskName), 
                                             false, true, !forward);
     for await (const result of stream) {
         let included = true;

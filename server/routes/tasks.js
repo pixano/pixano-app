@@ -1,8 +1,7 @@
-const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
-const { db,
-    workspace } = require('../config/db');
+const db = require('../config/db-leveldb');
+const storage = require('../config/storage-filesystem');
 const dbkeys = require('../config/db-keys');
 const batchManager = require('../helpers/batch-manager');
 const utils = require('../helpers/utils');
@@ -51,7 +50,7 @@ async function post_tasks(req, res) {
     checkAdmin(req, async () => {
         const task = req.body;
         const spec = await getOrcreateSpec(task.spec);
-        const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
+        const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type});
 
         try {
             await db.get(dbkeys.keyForTask(task.name));
@@ -95,27 +94,17 @@ async function import_tasks(req, res) {
                 message: 'Invalid path.'
             });
         }
-        const importPath = path.join(workspace, req.body.path);
-        console.log('##### Importing from ', importPath);
-        if(!utils.isSubFolder(workspace, importPath)) {
+        let taskFiles = {};
+        try {
+            taskFiles = storage.parseImportFolder(req.body.path);
+        } catch(err) {
             return res.status(400).json({
                 error: 'wrong_folder',
-                message: 'Import folder should be a sub folder of the working space.'
+                message: 'Import folder does not exist: ' + req.body.path
             });
         }
-        if (!fs.existsSync(importPath)) {
-            return res.status(400).json({
-                error: 'wrong_folder',
-                message: 'Import folder does not exist.'
-            });
-        }
-        console.info('Importing annotation files.')  
-        const filesList = fs.readdirSync(importPath);
 
-        // filter all json files
-        const taskJsonFiles = filesList.filter(f => f.endsWith('.json') && !f.startsWith('_'));
-        const bm = new batchManager.BatchManager(db);
-
+        
         // Create tasks  
         // Format of task file:
         // {
@@ -124,9 +113,10 @@ async function import_tasks(req, res) {
         //  dataset: { path: string, data_type: string }
         // }
         const importedTasks = [];
-        for await (const jsonf of taskJsonFiles) {
-            const taskData = utils.readJSON(path.join(importPath, jsonf));
-            const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type}, workspace);
+        const bm = new batchManager.BatchManager(db);
+        for await (const [taskFile, annFiles] of taskFiles) {
+            const taskData = storage.readJSON(taskFile);
+            const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type});
             const spec = await getOrcreateSpec(taskData.spec);
 
             let newTaskName = taskData.name;
@@ -152,20 +142,14 @@ async function import_tasks(req, res) {
             const dataMap = await getAllPathsFromDataset(newTask.dataset_id);
             
             // Read corresponding task folder
-            const taskFolder = jsonf.substring(0, jsonf.length - 5);
-            const annList = fs.readdirSync(path.join(importPath, taskFolder));
-            const annJsonFiles = annList.filter(f => f.endsWith('.json'));
-            console.info('Importing', taskFolder);
-
             // Format of annotation file:
             // { 
             //    annotations: any[],
             //    data: { type: string, path: string | string[], children: array<{path, timestamp}>}
             // }
-            for await (const jsonFile of annJsonFiles) {
+            for await (const jsonFile of annFiles) {
                 // Create data
-                const fullPath = path.join(importPath, taskFolder, jsonFile);
-                const ann = utils.readJSON(fullPath);
+                const ann = storage.readJson(jsonFile);
                 let sourcePath;
                 if (ann.data.path) {
                     // remove / to normalize path
@@ -192,7 +176,7 @@ async function import_tasks(req, res) {
                         message: `Invalid data url in imported file.
                                 Please check consistency of "${fullPath}"
                                 Task importation aborted and cancelled at '${newTask.name}' task.
-                                If you do not wish to load ${newTask.name}, please prefix ${path.join(importPath, jsonf)},
+                                If you do not wish to load ${newTask.name}, please prefix ${taskFile},
                                 with '_' so it can be ignored. Cancelling import.`
                     });
                 }
@@ -247,20 +231,8 @@ async function export_tasks(req, res) {
                 message: 'Invalid path.'
             });
         }
-        const exportPath = path.join(workspace, req.body.path);
-        console.log('##### Exporting to ', exportPath);
-        if(!utils.isSubFolder(workspace, exportPath)) {
-            return res.status(400).json({
-                error: 'wrong_folder',
-                message: 'Export folder should be a sub folder of the working space.'
-            });
-        }      
-        // If path does not exist create it
-        if (!fs.existsSync(exportPath)) {
-            fs.mkdirSync(exportPath, {recursive: true});
-        }
-
-        const streamTask = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+        const exportPath = req.body.path;
+        const streamTask = db.stream(dbkeys.keyForTask(), false, true);
         for await (const task of streamTask) {
             const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
             delete spec.id;
@@ -270,25 +242,16 @@ async function export_tasks(req, res) {
             const taskJson = {name: task.name, spec, dataset};
 
             // Write task json
-            const err = utils.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
+            const err = storage.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
             if (err) {
                 return;
             }
             
             // Write annotations for each task in a specific folder
             const taskFolder = `${exportPath}/${task.name}`;
-            // Remove existing folder
-            utils.removeDir(taskFolder);
-            // Recreate it
-            fs.mkdirSync(taskFolder, function(err){
-                if(err){
-                console.log(err);
-                response.send(`ERROR! Can't create directory ${taskFolder}`);
-                }
-            });
 
             // Write annotations
-            const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
+            const streamLabels = db.stream(dbkeys.keyForLabels(task.name), false, true);
             for await (const labels of streamLabels) {
                 const data = await getDataDetails(datasetId, labels.data_id, true);
                 delete data.id;
@@ -301,7 +264,7 @@ async function export_tasks(req, res) {
                 const labelsJson = {...labels, data};
                 delete labelsJson.data_id;
 
-                const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
+                const err = storage.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
                 if (err) {
                 return;
                 }
@@ -407,7 +370,7 @@ function delete_task(req, res) {
  */
 const getAllTasksDetails = async () => {
     let tasks = [];
-    const stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+    const stream = db.stream(dbkeys.keyForTask(), false, true);
     for await (const t of stream) {
       const spec = await db.get(dbkeys.keyForSpec(t.spec_id));
       const dataset = await db.get(dbkeys.keyForDataset(t.dataset_id));
@@ -454,7 +417,7 @@ async function generateJobResultAndLabelsLists(task) {
 
         // Get data path
         const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
-        const path = populator.toRelative(dataData.path);
+        const path = storage.toRelativePath(dataData.path);
         // Generate result associated with each data
         const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path);
 
@@ -504,25 +467,25 @@ async function remove_task(taskName) {
     await bm.add({ type: 'del', key});
     
     // delete associated jobs
-    const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
+    const streamJob = db.stream(dbkeys.keyForJob(taskName), false, true);
     for await (const job of streamJob) {
         await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)});
     }
     
     // delete associated result
-    const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+    const streamResults = db.stream(dbkeys.keyForResult(taskName), false, true);
     for await (const result of streamResults) {
         await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)});
     }
     
     // delete associated labels WARNING !!!!
-    const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
+    const streamLabels = db.stream(dbkeys.keyForLabels(taskName), false, true);
     for await (const label of streamLabels) {
         await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)});
     }
 
     // delete associated user information
-    const streamUsers = utils.iterateOnDB(db, dbkeys.keyForUser(), false, true);
+    const streamUsers = db.stream(dbkeys.keyForUser(), false, true);
     for await (const user of streamUsers) {
         ['to_annotate', 'to_validate', 'to_correct'].forEach((obj) => {
             // Delete assigned or queued jobs
@@ -535,7 +498,7 @@ async function remove_task(taskName) {
     // [temporary] if associated dataset is no longer associated
     // to any other task, remove it as well
     let foundAssociation = false;
-    const stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+    const stream = db.stream(dbkeys.keyForTask(), false, true);
     for await (const t of stream) {
         console.log('task', t);
         if (t.id != taskData.id && t.dataset_id == taskData.dataset_id) {
@@ -545,7 +508,7 @@ async function remove_task(taskName) {
     }
     if (!foundAssociation) {
         await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id)});
-        const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
+        const stream = db.stream(dbkeys.keyForData(taskData.dataset_id), true, false);
         for await(const dkey of stream) {
             await bm.add({ type: 'del', key: dbkeys.keyForData(taskData.dataset_id, dkey)});
         }

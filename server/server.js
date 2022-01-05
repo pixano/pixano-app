@@ -9,7 +9,7 @@ const app = express();
 const serveStatic = require('serve-static');
 const path = require('path');
 const cookieParser = require('cookie-parser')
-const { initLevel } = require(__dirname + '/config/db');
+const { initDB } = require(__dirname + '/config/db');
 const os = require( 'os' );
 const interfaces = os.networkInterfaces();
 const chalk = require('chalk');
@@ -94,7 +94,7 @@ if (!fs.existsSync(entry)) {
 }
 
 // initialize database
-initLevel(entry).then(() => {
+initDB(entry).then(() => {
   app.use(serveStatic(__dirname + '/../build/'));
   // must be imported after leveldb is initialized
   // otherwise imported db value is not consistent with

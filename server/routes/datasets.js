@@ -1,5 +1,5 @@
 const path = require('path');
-const { db, workspace } = require('../config/db');
+const db = require('../config/db-leveldb');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -25,7 +25,7 @@ async function get_datasets(req, res) {
     checkAdmin(req, async () => {
         try {
             const datasets = [];
-            const stream = utils.iterateOnDB(db, dbkeys.keyForDataset(), true, true);
+            const stream = db.stream(dbkeys.keyForDataset(), true, true);
             for await(const {key, value} of stream) {
                 if (key.split(':').length == 2) {
                   datasets.push(value)
@@ -57,7 +57,7 @@ async function get_datasets(req, res) {
 async function post_datasets(req, res) {
     checkAdmin(db, req, async () => {
         const dataset = req.body;
-        const ret = await getOrcreateDataset(db, dataset.path, workspace)
+        const ret = await getOrcreateDataset(dataset.path)
         if (ret) {
             return res.status(201).json(ret)
         }
@@ -158,7 +158,7 @@ async function get_data(req, res) {
  */
 async function get_datas(req, res) {
   const datasetId = req.params.dataset_id;
-  const stream = utils.iterateOnDB(db, dbkeys.keyForData(datasetId), false, true);
+  const stream = db.stream(dbkeys.keyForData(datasetId), false, true);
   const datas = []
   for await(const data of stream) {
     datas.push(data);
@@ -181,9 +181,9 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
     let path = dataData.path;
     let children = dataData.children;
     if (relative) {
-      path = populator.toRelative(path);
+      path = storage.toRelativePath(path);
       if (children) {
-        children = children.map((d) => ({...d, path: populator.toRelative(d.path)}));
+        children = children.map((d) => ({...d, path: storage.toRelativePath(d.path)}));
       }
     }
     const output = {
@@ -196,11 +196,9 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
 
 /**
  * Create dataset entry and generate default low-level data entries.
- * @param {Level} db 
- * @param {String} path 
- * @param {String} workspace 
+ * @param {String} path
  */
-async function getOrcreateDataset(dataset, workspace) {
+async function getOrcreateDataset(dataset) {
 	dataset.path = path.normalize(dataset.path+'/');//normalize path in order to not duplicate datasets because of a typo error
     const existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
     if (!existingDataset) {
@@ -209,7 +207,7 @@ async function getOrcreateDataset(dataset, workspace) {
         id: utils.generateKey()
       }
       await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
-      await populator[dataset.data_type](db, newDataset.path, workspace, newDataset.id)
+      await populator[dataset.data_type](db, newDataset.path, newDataset.id)
       return newDataset;
     } else {
       return existingDataset;
@@ -225,7 +223,7 @@ const getDatasetFromPath = (db, path, data_type) => {
     let foundDataset = null;
     return new Promise((resolve, reject) => {
       // update datasets if previously unknown data path is given
-      const s1 = utils.iterateOnDB(db, dbkeys.keyForDataset(), false, true);
+      const s1 = db.stream(dbkeys.keyForDataset(), false, true);
       s1.on('data', (value) => {
         if (value.path === path && value.data_type === data_type) {
           foundDataset = value;
@@ -245,7 +243,7 @@ const getDatasetFromPath = (db, path, data_type) => {
  */
 function getAllDataFromDataset(dataset_id) {
     const dataList = [];
-    const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), true, false)
+    const stream = db.stream(dbkeys.keyForData(dataset_id), true, false)
     return new Promise((resolve) => {
       stream.on('data', (key) => {
         dataList.push(key.slice(dbkeys.keyForData(dataset_id).length));
@@ -263,12 +261,11 @@ function getAllDataFromDataset(dataset_id) {
  */
 function getAllPathsFromDataset(dataset_id) {
   const dataMap = {};
-  const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), false, true)
+  const stream = db.stream(dbkeys.keyForData(dataset_id), false, true)
   return new Promise((resolve) => {
     stream.on('data', (value) => { 
       const p = Array.isArray(value.path) ? value.path[0] : value.path;
-      const relUrl = path.normalize(p.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
-      // console.log('relUrl', relUrl);
+      const relUrl = storage.toRelativePath(p);
       dataMap[relUrl] = value.id;
     }).on('end', () => {
       resolve(dataMap);

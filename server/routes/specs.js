@@ -1,4 +1,4 @@
-const { db } = require('../config/db');
+const db = require('../config/db-leveldb');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -23,7 +23,7 @@ const { checkAdmin } = require('./users');
 async function get_specs(_, res) {
     try {
         const specs = [];
-        const stream = utils.iterateOnDB(db, dbkeys.keyForSpec(), false, true)
+        const stream = db.stream(dbkeys.keyForSpec(), false, true)
         stream.on('data', (value) => {
             specs.push(value);
         }).on('end', () => {
@@ -180,7 +180,7 @@ const getSpecFromContent = (db, spec) => {
     let foundSpec = null;
     return new Promise((resolve, reject) => {
       // update datasets if previously unknown data path is given
-      const s1 = utils.iterateOnDB(db, dbkeys.keyForSpec(), false, true);
+      const s1 = db.stream(dbkeys.keyForSpec(), false, true);
       s1.on('data', (value) => {
         // remove id to only compare other keys
         const data =  {...value};

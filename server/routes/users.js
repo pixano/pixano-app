@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { db } = require('../config/db');
+const db = require('../config/db-leveldb');
 const dbkeys = require('../config/db-keys');
 const config = require('../config/config');
 const { iterateOnDB } = require('../helpers/utils');
@@ -33,6 +33,7 @@ const { expiresIn } = require('../config/middleware');
 async function post_login(req, res) {
   const username = req.body.username;
   const password = req.body.password;
+  console.log('post login', username, password)
   if (username && password) {
     const exists = await isUserExists(username, password);
     if (exists) {
@@ -41,6 +42,7 @@ async function post_login(req, res) {
         { expiresIn }
       );
       const user = await getUserData(username);
+      console.log('user', user);
       // return the JWT token for the future API calls
       res.cookie('token', token, {
         expires: new Date(Date.now() + 604800000),
