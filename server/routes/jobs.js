@@ -1,5 +1,6 @@
 const moment = require('moment');
-const db = require('../config/db-leveldb');
+// const db = require('../config/db-leveldb');
+const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 
@@ -87,27 +88,28 @@ async function get_next_job(req, res) {
     }
     // (3) Loop through available jobs
     const streamA = db.stream(dbkeys.keyForResult(taskName), false, true);
-    for await(const result of streamA) {
-        if (objectiveList.includes(result.status) && !result.in_progress) {
+    for await(const {value} of streamA) {
+        if (objectiveList.includes(value.status) && !value.in_progress) {
             let job;
-            try { job = await db.get(dbkeys.keyForJob(taskName, result.current_job_id)); }
+            try { job = await db.get(dbkeys.keyForJob(taskName, value.current_job_id)); }
             catch (err) { console.log('\tjob no longer exist', err); }
-            if (isJobValid(job, result) && await isJobAvailableForUser(job, user)) {
+            if (isJobValid(job, value) && await isJobAvailableForUser(job, user)) {
+                console.log('found job')
                 await _assignJob(job, user);
-                return res.send({...job, annotator: result.annotator, validator: result.validator});
+                return res.send({...job, annotator: value.annotator, validator: value.validator});
             }
         }
     }
     // (3b) Assign less jobs with less priority
     const streamB = db.stream(dbkeys.keyForResult(taskName), false, true);
-    for await(const result of streamB) {
-        if (objectiveList.includes(result.status) && !result.in_progress) {
+    for await(const {value} of streamB) {
+        if (objectiveList.includes(value.status) && !value.in_progress) {
             let job;
-            try { job = await db.get(dbkeys.keyForJob(taskName, result.current_job_id)); }
+            try { job = await db.get(dbkeys.keyForJob(taskName, value.current_job_id)); }
             catch (err) { console.log('\tjob no longer exist', err); }
-            if (isJobValid(job, result) && await isJobAvailableForUser(job, user, true)) {
+            if (isJobValid(job, value) && await isJobAvailableForUser(job, user, true)) {
                 await _assignJob(job, user);
-                return res.send({...job, annotator: result.annotator, validator: result.validator});
+                return res.send({...job, annotator: value.annotator, validator: value.validator});
             }
         }
     }
@@ -140,6 +142,7 @@ async function put_job(req, res) {
     const jobId = req.params.job_id;
     const interrupt = req.body.interrupt;
     const newObjective = req.body.status; // new status for data item
+
     let user;
     let jobData; // current state of job
     let resultData; // global view of the image status
@@ -151,6 +154,7 @@ async function put_job(req, res) {
         return res.status(400).json({type: 'unknown', message: `Unknown job ${taskName} ${jobId} or user ${req.username}.`});
     }
 
+    console.log('trying to put', jobData, req.username, resultData)
     // Check assignment to user and to result
     if (jobData.assigned_to !== req.username ||
          resultData.current_job_id !== jobId || jobData.start_at == 0) {
@@ -312,9 +316,9 @@ async function isJobAvailableForUser(job, targetUser, isPermissive = false) {
         return true;
     } else if (!job.assigned_to && !isPermissive) {
         const streamUsers = db.stream(dbkeys.keyForUser(), false, true);
-        for await (const user of streamUsers) {
-            if (user.username == targetUser.username) { continue; }
-            if (user.queue && user.queue[qKey] && user.queue[qKey].includes(job.id)) {
+        for await (const {value} of streamUsers) {
+            if (value.username == targetUser.username) { continue; }
+            if (value.queue && value.queue[qKey] && value.queue[qKey].includes(job.id)) {
                 return false;
             }
         }

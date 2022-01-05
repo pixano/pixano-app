@@ -98,7 +98,6 @@ function zipDirectory(source, out) {
 
 async function getThumbnail(browserUrl) {
     const hostUrl = path.join(workspace, path.normalize(browserUrl.replace(MOUNTED_WORKSPACE_PATH, '')));
-    console.log('browserUrl', browserUrl, hostUrl)
     return await imageThumbnail(hostUrl, {responseType: 'base64', height: 100});
 }
 

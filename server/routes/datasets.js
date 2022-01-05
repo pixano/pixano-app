@@ -1,5 +1,6 @@
 const path = require('path');
-const db = require('../config/db-leveldb');
+// const db = require('../config/db-leveldb');
+const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -200,7 +201,7 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
  */
 async function getOrcreateDataset(dataset) {
 	dataset.path = path.normalize(dataset.path+'/');//normalize path in order to not duplicate datasets because of a typo error
-    const existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
+    const existingDataset = await getDatasetFromPath(dataset.path, dataset.data_type);
     if (!existingDataset) {
       const newDataset = {
         ...dataset,
@@ -219,20 +220,17 @@ async function getOrcreateDataset(dataset) {
  * @param {Level} db 
  * @param {String} path 
  */
-const getDatasetFromPath = (db, path, data_type) => {
+const getDatasetFromPath = async (path, data_type) => {
     let foundDataset = null;
-    return new Promise((resolve, reject) => {
-      // update datasets if previously unknown data path is given
-      const s1 = db.stream(dbkeys.keyForDataset(), false, true);
-      s1.on('data', (value) => {
-        if (value.path === path && value.data_type === data_type) {
-          foundDataset = value;
-          s1.destroy();
-        }   
-      }).on('close', () => {
-        resolve(foundDataset);   
-      });
-    });
+    // update datasets if previously unknown data path is given
+    const stream = db.stream(dbkeys.keyForDataset(), false, true);
+    for await(const {value} of stream) {
+      if (value.path === path && value.data_type === data_type) {
+        foundDataset = value;
+        break;
+      }
+    }
+    return foundDataset;
 }
 
 /**
@@ -241,16 +239,13 @@ const getDatasetFromPath = (db, path, data_type) => {
  * @param {String} dataset_id
  * @param {String} type
  */
-function getAllDataFromDataset(dataset_id) {
+async function getAllDataFromDataset(dataset_id) {
     const dataList = [];
-    const stream = db.stream(dbkeys.keyForData(dataset_id), true, false)
-    return new Promise((resolve) => {
-      stream.on('data', (key) => {
-        dataList.push(key.slice(dbkeys.keyForData(dataset_id).length));
-      }).on('end', () => {
-        resolve(dataList);
-      })
-    });
+    const stream = db.stream(dbkeys.keyForData(dataset_id), true, false);
+    for await (const {key} of stream) {
+      dataList.push(key.slice(dbkeys.keyForData(dataset_id).length));
+    }
+    return dataList;
 }
 
 /**
@@ -259,18 +254,15 @@ function getAllDataFromDataset(dataset_id) {
  * @param {String} dataset_id
  * @param {String} type
  */
-function getAllPathsFromDataset(dataset_id) {
+async function getAllPathsFromDataset(dataset_id) {
   const dataMap = {};
-  const stream = db.stream(dbkeys.keyForData(dataset_id), false, true)
-  return new Promise((resolve) => {
-    stream.on('data', (value) => { 
-      const p = Array.isArray(value.path) ? value.path[0] : value.path;
-      const relUrl = storage.toRelativePath(p);
-      dataMap[relUrl] = value.id;
-    }).on('end', () => {
-      resolve(dataMap);
-    })
-  });
+  const stream = db.stream(dbkeys.keyForData(dataset_id), false, true);
+  for await (const {value} of stream) {
+    const p = Array.isArray(value.path) ? value.path[0] : value.path;
+    const relUrl = storage.toRelativePath(p);
+    dataMap[relUrl] = value.id;
+  }
+  return dataMap;
 }
 
 module.exports = {

@@ -19,7 +19,7 @@ const expiresIn = '24h';
  * @param {*} res 
  * @param {*} next 
  */
-const checkToken = (req, res, next) => {
+const checkWhoToken = (req, res, next) => {
   // let token = req.headers['x-access-token'] || req.headers['authorization']; // Express headers are auto converted to lowercase
   let token = req.cookies.token || '';
   if (!token) {
@@ -80,7 +80,24 @@ function updateTokenIfAlmostDead(token, decoded) {
   return token;
 }
 
+
+/**
+ * Get user email from its request
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {email: "string"}
+ */
+ function checkWhoGoogle(req, res, next) {
+  let info = { email : "xxx@gmail.com"};
+  // UNCOMMENT FOR PROD
+  // const assertion = req.header('X-Goog-IAP-JWT-Assertion');
+  // info = await validateAssertion(assertion);
+  req.username = info.email;
+  next();
+}
+
+
 module.exports = {
-  checkToken,
+  checkWhoToken,
+  checkWhoGoogle,
   expiresIn
 }

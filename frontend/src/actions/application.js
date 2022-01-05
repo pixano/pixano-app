@@ -86,7 +86,7 @@ export const navigate = (path) => (dispatch, getState) => {
             path = '/#login';
         }
     }
-    const page = path.slice(2).split('/')[0];
+    let page = path.slice(2).split('/')[0];
     switch(page) {
       case 'login':
           import('../views/app-login.js').then(() => {

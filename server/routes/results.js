@@ -1,7 +1,7 @@
-const db = require('../config/db-leveldb');
+// const db = require('../config/db-leveldb');
+const db = require('../config/db-firestore');
 const { checkAdmin } = require('./users');
 const dbkeys = require('../config/db-keys');
-const utils = require('../helpers/utils');
 const { createJob } = require('./jobs');
 const batchManager = require('../helpers/batch-manager');
 
@@ -43,12 +43,12 @@ async function get_results(req, res) {
 
     const stream = db.stream(dbkeys.keyForResult(taskName), false, true);
     const task = await db.get(dbkeys.keyForTask(taskName));
-    for await (const result of stream) {
+    for await (const {value} of stream) {
         // filter results
         let included = true;
         for (let k of keys) {
             const query = queries[k];
-            const r = JSON.stringify(result[k]) || '';
+            const r = JSON.stringify(value[k]) || '';
             // if the filter is a (semicolon separated) list, include all result that satisfies at least one of them
             const queryList = query.split(";").filter((q) => q != "");
             included = queryList.some((q) => r.includes(q));
@@ -56,15 +56,15 @@ async function get_results(req, res) {
         }
         if (included) {
             if (counter >= (match.page - 1) * match.count && counter < match.page * match.count) {
-                const imgData = await db.get(dbkeys.keyForData(task.dataset_id,result.data_id));
-                results.push({...result,thumbnail: imgData.thumbnail});
+                const imgData = await db.get(dbkeys.keyForData(task.dataset_id, value.data_id));
+                results.push({...value, thumbnail: imgData.thumbnail});
             }
             counter += 1;
         }
-        if (result.status === 'done') {
+        if (value.status === 'done') {
             doneCounter += 1;
         }
-        if (result.status === 'to_validate') {
+        if (value.status === 'to_validate') {
             toValidateCounter += 1;
         }
         globalCounter += 1;
@@ -262,16 +262,16 @@ async function put_results(req,res) {
     const keys = [...Object.keys(queries)];
     const stream = db.streamFrom(dbkeys.keyForResult(taskName, dataId), dbkeys.keyForResult(taskName), 
                                             false, true, !forward);
-    for await (const result of stream) {
+    for await (const {value} of stream) {
         let included = true;
         for (let k of keys) {
-            if (!result[k].includes(queries[k])) {
+            if (!value[k].includes(queries[k])) {
                 included = false;
                 break;
             }
         }
         if (included) {
-            return res.send(result);
+            return res.send(value);
         }
     }
     return res.send({});

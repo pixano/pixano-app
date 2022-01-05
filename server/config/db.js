@@ -1,17 +1,19 @@
 const dbkeys = require('./db-keys');
 const dbConverter = require('../config/db-converter');
-const db = require('./db-leveldb');
-const storage = require('./storage-filesystem');
+// const db = require('./db-leveldb');
+// const storage = require('./storage-filesystem');
+const db = require('./db-firestore');
+const storage = require('./storage-bucket');
 
 async function initDB(workspacePath) {
     db.init(workspacePath);
     storage.init(workspacePath);
     // If no admin user in database create it
-    const admin_key = dbkeys.keyForUser('admin');
+    const admin_key = dbkeys.keyForUser('xxx@gmail.com');
     return checkDatabaseIntegrity().then(() => {
         return db.get(admin_key).catch(() => {
             return db.put(admin_key, {
-                username: 'admin',
+                username: 'xxx@gmail.com',
                 password: 'admin',
                 role: 'admin',
                 preferences: {theme: 'white'},

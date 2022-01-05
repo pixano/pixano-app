@@ -7,25 +7,55 @@
 
 [![pixano.gif](documentation/pixano.gif)](https://www.youtube.com/watch?v=z5T2HhnugJo)
 
+Note: this is a GCP-interoperable PIXANO version. It uses Firestore as a database, Google bucket as storage, and Google Authentication as login.
+To switch back to the local version, do:
+```bash
+# replace the line X in frontend/app.js
+// this.goLogin();
+this.go404();
+# replace the line X in server/config/db.js
+// const db = require('./db-leveldb');
+// const storage = require('./storage-filesystem');
+const db = require('./db-firestore');
+const storage = require('./storage-bucket');
+# replace the line X in server/router.js
+// const auth = middleware.checkWhoToken;
+const auth = middleware.checkWhoGoogle;
+```
+In order to bypass cross-origin issues, a temporary fix is to use the following command to open chrome:
+```bash
+chromium --disable-site-isolation-trials --disable-web-security --user-data-dir="~/tmp"
+``` 
+
 Pixano App
 ===============
 
 ## Table of Contents
-* [Installation](#1-installation)
-	- [Using Docker Image](#using-docker-image)
-	- [From source (for developers)](#install-from-source-for-developers)
-* [Usage](#2-usage)
-	- [Configure your first annotation project](#configure-your-first-annotation-project)
-	- [Start annotating](#start-annotating)
-	- [Export your annotations](#export-your-annotations)
-	- [Standalone vs distributed usage](#standalone-vs-distributed-usage)
-* [Advanced usage](#3-advanced-usage)
-	- [Import predictions](#import-predictions)
-	- [Import/Export annotation format](#importexport-annotation-format)
-	- [Build docker from sources](#build-docker-from-sources)
-* [Contributing](#4-contributing)
-	- [Pixano architecture: Pixano-app and Pixano-elements](#pixano-architecture-pixano-app-and-pixano-elements)
-	- [Some documentation to get started](#some-documentation-to-get-started)
+- [<img src="frontend/images/pixano_logo.png" alt="Pixano" height="100"/>](#)
+	- [What is PIXANO ?](#what-is-pixano-)
+- [Pixano App](#pixano-app)
+	- [Table of Contents](#table-of-contents)
+	- [1. Installation](#1-installation)
+		- [Using Docker Image](#using-docker-image)
+			- [Optional: create an alias](#optional-create-an-alias)
+		- [Install from source (for developers)](#install-from-source-for-developers)
+			- [Install global dependencies](#install-global-dependencies)
+			- [Install application dependencies](#install-application-dependencies)
+				- [Using a local pixano-element](#using-a-local-pixano-element)
+			- [Build the application](#build-the-application)
+			- [Run the application](#run-the-application)
+	- [2. Usage](#2-usage)
+		- [Configure your first annotation project](#configure-your-first-annotation-project)
+		- [Start annotating](#start-annotating)
+		- [Export your annotations](#export-your-annotations)
+		- [Standalone vs distributed usage](#standalone-vs-distributed-usage)
+	- [3. Advanced usage](#3-advanced-usage)
+		- [Import predictions](#import-predictions)
+		- [Import/Export annotation format](#importexport-annotation-format)
+		- [Build docker from sources](#build-docker-from-sources)
+	- [4. Contributing](#4-contributing)
+		- [Pixano architecture: Pixano-app and Pixano-elements](#pixano-architecture-pixano-app-and-pixano-elements)
+		- [Some documentation to get started](#some-documentation-to-get-started)
 
 
 ## 1. Installation
@@ -104,9 +134,9 @@ npm run build
 
 #### Run the application
 
-In the command prompt, type in `node server/server.js /path/to/your/workspace` from the root folder and hit enter.
+In the command prompt, type in `node server/server.js` from the root folder and hit enter.
 
-*NB: Make sure when typing this command that the workspace (`/path/to/your/workspace`) contains all of the data you want to use.*
+*NB: Make sure you have filled the firestoreConfiguration and bucketName.*
 
 
 ## 2. Usage
@@ -124,11 +154,7 @@ After running Pixano-App, you’ll see something similar to this:
    └────────────────────────────────────────────────────────────────────────┘
 ```
 
-Open your browser and hit _http://localhost:3000_. You should see the login page of the application.
-
-![pixano-elements](./documentation/images/page-login.png)
-
-First authentication is: `username: admin` `password: admin`.
+Open your browser and hit _http://localhost:3000_. You should see the google login page if you are not connected.
 
 ### Configure your first annotation project
 

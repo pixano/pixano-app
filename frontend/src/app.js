@@ -72,6 +72,12 @@ class MyApp extends connect(store)(LitElement)  {
     store.dispatch(navigate(page));
   }
 
+  go404() {
+    const page = '/#view404';
+    window.history.pushState({}, '', page);
+    store.dispatch(navigate(page));
+  }
+
   goLogin() {
     const page = '/#login';
     window.history.pushState({}, '', page);
@@ -94,7 +100,9 @@ class MyApp extends connect(store)(LitElement)  {
       });
     }).catch(() => {
       this.ready = true;
-      this.goLogin();
+      // this.goLogin();
+      this.go404();
+      installRouter(this._locationChanged);
       installRouter(this._locationChanged);
     });  
   }

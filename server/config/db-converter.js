@@ -8,7 +8,8 @@
 const path = require('path');
 const semver = require('semver');
 const dbkeys = require('./db-keys');
-const db = require('../config/db-leveldb');
+// const db = require('../config/db-leveldb');
+const db = require('../config/db-firestore');
 const pkg = require('../../package');
 
 const REFERENCE_DB_VERSION = ['0.2.0', '0.1.0', '0.0.0'];

@@ -1,12 +1,13 @@
 const jwt = require('jsonwebtoken');
-const db = require('../config/db-leveldb');
+// const db = require('../config/db-leveldb');
+const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const config = require('../config/config');
-const { iterateOnDB } = require('../helpers/utils');
 const { expiresIn } = require('../config/middleware');
 
 /**
  * @api {post} /login Request login from username and password
+ * ONLY if using PIXANO login system
  * @apiName PostLogin
  * @apiGroup User
  * 
@@ -19,7 +20,7 @@ const { expiresIn } = require('../config/middleware');
  *       "message": "Success"
  *       "user": {
  *           "username": "john",
- *           "password": "pwd",
+ *           "password": "pwd", // ONLY if using PIXANO login system
  *           "role": "admin",
  *           "preferences": {},
  *           "curr_assigned_jobs": {},
@@ -135,9 +136,11 @@ async function post_users(req, res) {
  */
 async function get_users(_, res) {
     const values = [];
-    iterateOnDB(db, dbkeys.keyForUser(), false, true)
-        .on('data', (value) => values.push(value))
-        .on('end', () => res.json(values));
+    const stream = db.stream(dbkeys.keyForDataset());
+    for await(const {value} of stream) {
+      values.push(value);
+    }
+    res.json(values);
 }
 
 /**
