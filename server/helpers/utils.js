@@ -14,39 +14,39 @@ const generateKey = () => {
   return crypto.randomBytes(8).toString('hex');
 }
 
-/**
- * Create a database stream interator.
- * @param {Level} db 
- * @param {String} prefix 
- * @param {Boolean} keys 
- * @param {Boolean} values 
- * @param {Boolean} reverse 
- */
-const iterateOnDB = (db, prefix, keys=true, values=true, reverse=false) => {
-  const params = {gte: `${prefix}!`, lte: `${prefix}~`, keys, values, reverse};
-  return db.createReadStream(params);
-}
+// /**
+//  * Create a database stream interator.
+//  * @param {Level} db 
+//  * @param {String} prefix 
+//  * @param {Boolean} keys 
+//  * @param {Boolean} values 
+//  * @param {Boolean} reverse 
+//  */
+// const iterateOnDB = (db, prefix, keys=true, values=true, reverse=false) => {
+//   const params = {gte: `${prefix}!`, lte: `${prefix}~`, keys, values, reverse};
+//   return db.createReadStream(params);
+// }
 
-/**
- * Create a database stream interator with a starting key.
- * @param {Level} db 
- * @param {String} from starting key
- * @param {String} prefix 
- * @param {Boolean} keys 
- * @param {Boolean} values 
- * @param {Boolean} reverse 
- */
-const iterateOnDBFrom = (db, from, prefix, keys=true, values=true, reverse=false) => {
-  let params = {keys, values, reverse}
-  if (reverse) {
-    params.gte = `${prefix}!`;
-    params.lt = from;
-  } else {
-    params.gt = from;
-    params.lte = `${prefix}~`;
-  }  
-  return db.createReadStream(params);
-}
+// /**
+//  * Create a database stream interator with a starting key.
+//  * @param {Level} db 
+//  * @param {String} from starting key
+//  * @param {String} prefix 
+//  * @param {Boolean} keys 
+//  * @param {Boolean} values 
+//  * @param {Boolean} reverse 
+//  */
+// const iterateOnDBFrom = (db, from, prefix, keys=true, values=true, reverse=false) => {
+//   let params = {keys, values, reverse}
+//   if (reverse) {
+//     params.gte = `${prefix}!`;
+//     params.lt = from;
+//   } else {
+//     params.gt = from;
+//     params.lte = `${prefix}~`;
+//   }  
+//   return db.createReadStream(params);
+// }
 
 /**
  * Utility function to parse recursively a directory.
@@ -238,8 +238,6 @@ const pathToFilename = (path, removeExt = true) => {
 
 module.exports = {
   generateKey,
-  iterateOnDB,
-  iterateOnDBFrom,
   isEqual,
   zipDirectory,
   removeDir,

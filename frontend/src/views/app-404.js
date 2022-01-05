@@ -9,7 +9,7 @@ import { LitElement, html } from 'lit-element';
 class App404 extends LitElement {
     render() {
       return html`
-        Not Found :(
+        Something went wrong.
         `;
     }
 }

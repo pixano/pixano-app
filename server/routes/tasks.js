@@ -1,7 +1,9 @@
 const path = require('path');
 const cliProgress = require('cli-progress');
-const db = require('../config/db-leveldb');
-const storage = require('../config/storage-filesystem');
+// const db = require('../config/db-leveldb');
+// const storage = require('../config/storage-filesystem');
+const db = require('../config/db-firestore');
+const storage = require('../config/storage-bucket');
 const dbkeys = require('../config/db-keys');
 const batchManager = require('../helpers/batch-manager');
 const utils = require('../helpers/utils');
@@ -9,7 +11,6 @@ const { checkAdmin } = require('./users');
 const { getOrcreateSpec } = require('./specs');
 const { getOrcreateDataset } = require('./datasets');
 const { createJob } = require('./jobs');
-const populator = require('../helpers/data-populator');
 const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
@@ -51,7 +52,6 @@ async function post_tasks(req, res) {
         const task = req.body;
         const spec = await getOrcreateSpec(task.spec);
         const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type});
-
         try {
             await db.get(dbkeys.keyForTask(task.name));
             return res.status(400).json({message: 'Taskname already existing'});
@@ -252,8 +252,8 @@ async function export_tasks(req, res) {
 
             // Write annotations
             const streamLabels = db.stream(dbkeys.keyForLabels(task.name), false, true);
-            for await (const labels of streamLabels) {
-                const data = await getDataDetails(datasetId, labels.data_id, true);
+            for await (const {value} of streamLabels) {
+                const data = await getDataDetails(datasetId, value.data_id, true);
                 delete data.id;
                 delete data.dataset_id;
                 let path = data.path;
@@ -261,7 +261,7 @@ async function export_tasks(req, res) {
                 path = path.replace(dataset.path, '')
                 const filename = utils.pathToFilename(path);
 
-                const labelsJson = {...labels, data};
+                const labelsJson = {...value, data};
                 delete labelsJson.data_id;
 
                 const err = storage.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
@@ -371,10 +371,10 @@ function delete_task(req, res) {
 const getAllTasksDetails = async () => {
     let tasks = [];
     const stream = db.stream(dbkeys.keyForTask(), false, true);
-    for await (const t of stream) {
-      const spec = await db.get(dbkeys.keyForSpec(t.spec_id));
-      const dataset = await db.get(dbkeys.keyForDataset(t.dataset_id));
-      const taskDetail = {name: t.name, dataset, spec}
+    for await (const {value} of stream) {
+      const spec = await db.get(dbkeys.keyForSpec(value.spec_id));
+      const dataset = await db.get(dbkeys.keyForDataset(value.dataset_id));
+      const taskDetail = {name: value.name, dataset, spec}
       tasks.push(taskDetail);
     }
     return tasks;
@@ -468,40 +468,40 @@ async function remove_task(taskName) {
     
     // delete associated jobs
     const streamJob = db.stream(dbkeys.keyForJob(taskName), false, true);
-    for await (const job of streamJob) {
-        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)});
+    for await (const {value} of streamJob) {
+        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, value.id)});
     }
     
     // delete associated result
     const streamResults = db.stream(dbkeys.keyForResult(taskName), false, true);
-    for await (const result of streamResults) {
-        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)});
+    for await (const {value} of streamResults) {
+        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, value.data_id)});
     }
     
     // delete associated labels WARNING !!!!
     const streamLabels = db.stream(dbkeys.keyForLabels(taskName), false, true);
-    for await (const label of streamLabels) {
-        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)});
+    for await (const {value} of streamLabels) {
+        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, value.data_id)});
     }
 
     // delete associated user information
     const streamUsers = db.stream(dbkeys.keyForUser(), false, true);
-    for await (const user of streamUsers) {
+    for await (const {value} of streamUsers) {
         ['to_annotate', 'to_validate', 'to_correct'].forEach((obj) => {
             // Delete assigned or queued jobs
-            delete user.curr_assigned_jobs[taskName+'/'+obj];
-            delete user.queue[taskName+'/'+obj];
+            delete value.curr_assigned_jobs[taskName+'/'+obj];
+            delete value.queue[taskName+'/'+obj];
         });
-        await bm.add({ type: 'put', key: dbkeys.keyForUser(user.username), value: user})
+        await bm.add({ type: 'put', key: dbkeys.keyForUser(value.username), value: value})
     }
 
     // [temporary] if associated dataset is no longer associated
     // to any other task, remove it as well
     let foundAssociation = false;
     const stream = db.stream(dbkeys.keyForTask(), false, true);
-    for await (const t of stream) {
-        console.log('task', t);
-        if (t.id != taskData.id && t.dataset_id == taskData.dataset_id) {
+    for await (const {value} of stream) {
+        console.log('task', value);
+        if (value.id != taskData.id && value.dataset_id == taskData.dataset_id) {
             foundAssociation = true;
             break; 
         }
@@ -509,8 +509,8 @@ async function remove_task(taskName) {
     if (!foundAssociation) {
         await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id)});
         const stream = db.stream(dbkeys.keyForData(taskData.dataset_id), true, false);
-        for await(const dkey of stream) {
-            await bm.add({ type: 'del', key: dbkeys.keyForData(taskData.dataset_id, dkey)});
+        for await(const v of stream) {
+            await bm.add({ type: 'del', key: dbkeys.keyForData(taskData.dataset_id, v.key)});
         }
     }
     await bm.flush();
