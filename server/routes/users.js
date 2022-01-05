@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 // const db = require('../config/db-leveldb');
-const db = require('../config/db-firestore');
+const db = require('../config/db');
 const dbkeys = require('../config/db-keys');
 const config = require('../config/config');
 const { expiresIn } = require('../config/middleware');
