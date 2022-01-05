@@ -8,11 +8,12 @@
 const cliProgress = require('cli-progress');
 const batchManager = require('./batch-manager');
 const { generateKey } = require('../helpers/utils');
-const storage = require('../config/db');
+const storage = require('../config/storage-bucket');
 const dbkeys = require('../config/db-keys');
 
 
 async function image(db, mediaRelativePath, datasetId) {
+
   return populateSimple(db, mediaRelativePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image');
 }
 
@@ -51,6 +52,7 @@ async function populateSimple(db, mediaRelativePath, datasetId,
     format: 'Dataset creation | {bar} | {percentage}% || {value}/{total} files'
   });
   bar1.start(total, 0);
+  
   for await (const files of Object.values(folders)) {
     for await (const url of files) {
       const id = generateKey();

@@ -12,11 +12,15 @@ const toRelativePath = (url) => { return url; };
 
 async function parseFolder(url, ext, bucketName = 'valeo-cp1816-dev.appspot.com') {
     // Lists files in the bucket
+    url = url.split(path.sep).join(path.posix.sep);
+
     const [files] = await storage.bucket(bucketName).getFiles({ prefix: url});
+
     const metaPromises = files.map((f) => f.name);
     const fileUrls = (await Promise.all(metaPromises)).filter(d => {
         return d[d.toString().length-1] != '/'
     });
+    console.log("fileUrls ", fileUrls);
     // regroup files by directory
     const fileSepUrls = {};
     fileUrls.forEach((f) => {

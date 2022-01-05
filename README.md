@@ -25,6 +25,18 @@ const auth = middleware.checkWhoGoogle;
 In order to bypass cross-origin issues, a temporary fix is to use the following command to open chrome:
 ```bash
 chromium --disable-site-isolation-trials --disable-web-security --user-data-dir="~/tmp"
+
+For Windows :- 
+
+1. Open the start menu
+
+2. Type windows+R or open "Run"
+
+3. Execute the following command:
+
+chrome.exe --user-data-dir="C://Chrome dev session" --disable-web-security
+
+
 ``` 
 
 Pixano App

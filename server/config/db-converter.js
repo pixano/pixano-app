@@ -9,7 +9,7 @@ const path = require('path');
 const semver = require('semver');
 const dbkeys = require('./db-keys');
 // const db = require('../config/db-leveldb');
-const db = require('../config/db');
+const db = require('../config/db-firestore');
 const pkg = require('../../package');
 
 const REFERENCE_DB_VERSION = ['0.2.0', '0.1.0', '0.0.0'];
@@ -18,6 +18,7 @@ async function convert_0_0_0_to_0_1_0() {
   console.log('Upgrading DB from version 0.0.0 to 0.1.0');
 
   const ops = [];
+  console.log("db ", db)
   const stream = db.stream(dbkeys.keyForAllResults(), true, true);
   for await(const pair of stream) {
     const key = pair.key;

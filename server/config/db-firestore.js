@@ -10,11 +10,13 @@ const collectionName = "PIXANO-DB";
 let db = '';
 
 function init() {
+  // console.log("db ", db)
   const serviceAccount = require("./firebaseServiceAccount.json");
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
   db = admin.firestore();
+  // console.log("db ", db)
   db.settings({ ignoreUndefinedProperties: true });
 }
 
