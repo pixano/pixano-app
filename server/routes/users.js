@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-// const db = require('../config/db-leveldb');
-const db = require('../config/db');
+const db = require('../config/db-firestore');
+// const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const config = require('../config/config');
 const { expiresIn } = require('../config/middleware');
@@ -190,7 +190,9 @@ async function delete_user(req,res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function get_profile(req, res) {
+    console.log("req.username ", req.username)
     const user = await getUserData(req.username);
+    console.log("user ", user);
     if (user) {
         return res.send(user);
     } else {

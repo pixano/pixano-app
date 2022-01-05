@@ -1,5 +1,5 @@
 // const db = require('../config/db-leveldb');
-const db = require('../config/db');
+const db = require('../config/db-firestore');
 
 
 /**
