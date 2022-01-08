@@ -454,9 +454,7 @@ class AppDashboardAdmin extends TemplatePage {
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoProjectManager()}>Tasks</mwc-button>
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoUserManager()}>Users</mwc-button>
         <div class="unselectable" style="margin: 10px;">${this.username}</div>
-        <mwc-icon-button icon="exit_to_app"
-                       @click=${() => store.dispatch(logout())}
-                       title="Log out"></mwc-icon-button>
+        ${super.headerContent}
       </div>
     `
   }

@@ -1,6 +1,5 @@
-const path = require('path');
-// const db = require('../config/db-leveldb');
 const db = require('../config/db-firestore');
+const storage = require('../config/storage-bucket');
 
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
@@ -186,6 +185,11 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
       if (children) {
         children = children.map((d) => ({...d, path: storage.toRelativePath(d.path)}));
       }
+    } else {
+      path = storage.toClientPath(path);
+      if (children) {
+        children = children.map((d) => ({...d, path: storage.toClientPath(d.path)}));
+      }
     }
     const output = {
 		...dataData,
@@ -200,14 +204,13 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
  * @param {String} path
  */
 async function getOrcreateDataset(dataset) {
-	dataset.path = path.normalize(dataset.path+'/');//normalize path in order to not duplicate datasets because of a typo error
+	dataset.path = utils.toNormalizedPath(dataset.path+'/');
     const existingDataset = await getDatasetFromPath(dataset.path, dataset.data_type);
     if (!existingDataset) {
       const newDataset = {
         ...dataset,
         id: utils.generateKey()
       }
-      console.log("newDataset", newDataset);
       await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
       await populator[dataset.data_type](db, newDataset.path, newDataset.id)
       return newDataset;

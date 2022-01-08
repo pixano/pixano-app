@@ -1,6 +1,7 @@
 const imageThumbnail = require('image-thumbnail');
 const path = require('path');
 const fs = require('fs');
+const utils = require("../helpers/utils");
 const MOUNTED_WORKSPACE_PATH = '/data/';
 let workspace = "";
 
@@ -8,19 +9,57 @@ function init(workspacePath="") {
     workspace = workspacePath;
 }
 
-const toRelativePath = (url) => {
+/**
+ * Way the data path is stored, relative to the data root storage
+ * @param {*} url 
+ * @returns 
+ */
+ const toRelativePath = (url) => {
     if (Array.isArray(url)) {
-      return url.map((u) => u.replace(MOUNTED_WORKSPACE_PATH, ''));
+      return url.map((u) => u.replace(MOUNTED_WORKSPACE_PATH, '').replace(workspace, ''));
     } else {
-      return url.replace(MOUNTED_WORKSPACE_PATH, '');
+      return url.replace(MOUNTED_WORKSPACE_PATH, '').replace(workspace, '');
     }
 }
 
+/**
+ * Way the data path is accessible on the client side
+ * @param {*} url 
+ * @returns 
+ */
+const toClientPath = (url) => {
+    url = toRelativePath(url);
+    if (Array.isArray(url)) {
+        return url.map((u) => path.join(MOUNTED_WORKSPACE_PATH, u));
+    } else {
+        return path.join(MOUNTED_WORKSPACE_PATH, url);
+    } 
+};
 
-function parseImportFolder(relPath) {
+/**
+ * Way the data path is accessible on the backend side
+ * @param {*} url 
+ * @returns 
+ */
+const toBackendPath = (url) => {
+    url = toRelativePath(url);
+    if (Array.isArray(url)) {
+        return url.map((u) => path.normalize(path.join(workspace, u)));
+    } else {
+        return path.normalize(path.join(workspace, url));
+    }
+};
+
+/**
+ * Import relative path containing task content.
+ * @param {string} relPath 
+ * @returns {[relTaskFile]: relAnnFiles[]} relative path from storage root of task file and annotation files.
+ * eg. {"export/task1.json": ["export/task1/image1.json", "export/task1/image2.json"]}
+ */
+ async function parseImportFolder(relPath) {
     const importInfo = {};
-    const importPath = path.join(workspace, relPath);
-    console.log('##### Importing from ', importPath);
+    const importPath = toBackendPath(relPath);
+    console.info('Importing folder ', importPath);
     if(!utils.isSubFolder(workspace, importPath)) {
         throw 'wrong_folder';
     }
@@ -36,15 +75,15 @@ function parseImportFolder(relPath) {
     taskJsonFiles.forEach((taskFile) => {
         const taskFolder = taskFile.substring(0, taskFile.length - 5);
         const annList = fs.readdirSync(path.join(importPath, taskFolder));
-        const annJsonFiles = annList.filter(f => f.endsWith('.json'));
-        importInfo[taskFile] = annJsonFiles;
+        const annJsonFiles = annList.filter(f => f.endsWith('.json')).map((u) => toRelativePath(path.join(relPath, taskFolder, u)));
+        importInfo[toRelativePath(path.join(relPath, taskFile))] = annJsonFiles;
     });
     return importInfo;
 }
 
 
 function writeJSON(data, filename) {
-    filename = path.join(workspace, filename);
+    filename = toBackendPath(filename);
     // If path does not exist create it
     if (!fs.existsSync(path.dirname(filename))) {
         fs.mkdirSync(path.dirname(filename), {recursive: true});
@@ -62,9 +101,9 @@ function writeJSON(data, filename) {
 }
 
 
-function readJson(filename) {
+function readJson(relFilename) {
     try {
-        const s = fs.readFileSync(filename);
+        const s = fs.readFileSync(toBackendPath(relFilename));
         return JSON.parse(s);
     } catch (err) {
         console.error(err);
@@ -79,7 +118,7 @@ function readJson(filename) {
  * @returns {Promise}
  */
 function zipDirectory(source, out) {
-    const outPath = path.join(workspace, out);
+    const outPath = toBackendPath(out);
     const archive = archiver('zip', { zlib: { level: 9 }});
     const stream = fs.createWriteStream(outPath);
 
@@ -96,8 +135,8 @@ function zipDirectory(source, out) {
 }
 
 
-async function getThumbnail(browserUrl) {
-    const hostUrl = path.join(workspace, path.normalize(browserUrl.replace(MOUNTED_WORKSPACE_PATH, '')));
+async function getThumbnail(relUrl) {
+    const hostUrl = toBackendPath(relUrl);
     return await imageThumbnail(hostUrl, {responseType: 'base64', height: 100});
 }
 
@@ -107,7 +146,7 @@ async function getThumbnail(browserUrl) {
  * @param {string[]} extensions 
  */
 function parseFolder(relPath, extensions = ['jpg', 'png']) {
-    const dir = path.resolve(workspace, relPath); // host folder
+    const dir = toBackendPath(relPath); // host folder
     return new Promise((resolve, reject) => {
         console.info(`Parsing folder ${dir}`);
         if (!(fs.existsSync(dir))) {
@@ -153,8 +192,8 @@ const walk = (dir, ext, done) => {
             } else {
             if (ext.includes(file.split('.').pop())) {
                 if (!folders[dir]) folders[dir] = [];
-                const browserUrl = path.normalize(file.replace(workspace, MOUNTED_WORKSPACE_PATH));
-                folders[dir].push(browserUrl);
+                const relUrl = toRelativePath(file);
+                folders[dir].push(relUrl);
                 total += 1;
             }
             if (!--pending) done(null, {folders, total});
@@ -172,5 +211,7 @@ module.exports = {
     readJson,
     writeJSON,
     zipDirectory,
-    toRelativePath
+    toRelativePath,
+    toClientPath,
+    toBackendPath
 }

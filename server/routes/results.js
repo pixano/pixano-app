@@ -1,4 +1,3 @@
-// const db = require('../config/db-leveldb');
 const db = require('../config/db-firestore');
 const { checkAdmin } = require('./users');
 const dbkeys = require('../config/db-keys');
@@ -260,8 +259,7 @@ async function put_results(req,res) {
     const dataId = req.params.data_id;
     const queries = req.query;
     const keys = [...Object.keys(queries)];
-    const stream = db.streamFrom(dbkeys.keyForResult(taskName, dataId), dbkeys.keyForResult(taskName), 
-                                            false, true, !forward);
+    const stream = db.streamFrom(dbkeys.keyForResult(taskName, dataId), dbkeys.keyForResult(taskName), !forward);
     for await (const {value} of stream) {
         let included = true;
         for (let k of keys) {

@@ -94,14 +94,13 @@ async function import_tasks(req, res) {
         }
         let taskFiles = {};
         try {
-            taskFiles = storage.parseImportFolder(req.body.path);
+            taskFiles = await storage.parseImportFolder(req.body.path);
         } catch(err) {
             return res.status(400).json({
                 error: 'wrong_folder',
                 message: 'Import folder does not exist: ' + req.body.path
             });
         }
-
         
         // Create tasks  
         // Format of task file:
@@ -112,8 +111,10 @@ async function import_tasks(req, res) {
         // }
         const importedTasks = [];
         const bm = new batchManager.BatchManager(db);
-        for await (const [taskFile, annFiles] of taskFiles) {
-            const taskData = storage.readJSON(taskFile);
+        console.log('taskFiles', taskFiles)
+        for await (const [taskFile, annFiles] of Object.entries(taskFiles)) {
+            const taskData = await storage.readJson(taskFile);
+            console.log('taskData',taskData, taskFile, annFiles)
             const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type});
             const spec = await getOrcreateSpec(taskData.spec);
 
@@ -147,19 +148,18 @@ async function import_tasks(req, res) {
             // }
             for await (const jsonFile of annFiles) {
                 // Create data
-                const ann = storage.readJson(jsonFile);
+                const ann = await storage.readJson(jsonFile);
                 let sourcePath;
                 if (ann.data.path) {
-                    // remove / to normalize path
                     const p = Array.isArray(ann.data.path) ? ann.data.path[0] : ann.data.path;
-                    sourcePath = path.normalize(p);
+                    sourcePath = utils.toNormalizedPath(p);
                 } else {
                     try {
                         // try to get first children image if path is not available
                         const children = ann.data.url || ann.data.children;
                         let firstItemPath = children[0].path || children[0].url;
                         firstItemPath = Array.isArray(firstItemPath) ? firstItemPath[0] : firstItemPath;
-                        sourcePath = path.normalize(path.dirname(firstItemPath));
+                        sourcePath = utils.toNormalizedPath(path.dirname(firstItemPath));
                     } catch(err) {
                         console.warn('Should be: { annotations: any[], data: { type: string, path: string | string[], children: array<{path, timestamp}>} ')
                     }
@@ -231,14 +231,14 @@ async function export_tasks(req, res) {
         }
         const exportPath = req.body.path;
         const streamTask = db.stream(dbkeys.keyForTask(), false, true);
-        for await (const task of streamTask) {
+        for await (const it of streamTask) {
+            const task = it.value;
             const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
             delete spec.id;
             const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
             const datasetId = dataset.id; 
             delete dataset.id;
             const taskJson = {name: task.name, spec, dataset};
-
             // Write task json
             const err = storage.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
             if (err) {
@@ -261,10 +261,9 @@ async function export_tasks(req, res) {
 
                 const labelsJson = {...value, data};
                 delete labelsJson.data_id;
-
                 const err = storage.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
                 if (err) {
-                return;
+                    return;
                 }
             }
         }
@@ -370,10 +369,10 @@ const getAllTasksDetails = async () => {
     let tasks = [];
     const stream = db.stream(dbkeys.keyForTask(), false, true);
     for await (const {value} of stream) {
-      const spec = await db.get(dbkeys.keyForSpec(value.spec_id));
-      const dataset = await db.get(dbkeys.keyForDataset(value.dataset_id));
-      const taskDetail = {name: value.name, dataset, spec}
-      tasks.push(taskDetail);
+        const spec = await db.get(dbkeys.keyForSpec(value.spec_id));
+        const dataset = await db.get(dbkeys.keyForDataset(value.dataset_id));
+        const taskDetail = {name: value.name, dataset, spec}
+        tasks.push(taskDetail);
     }
     return tasks;
 }
@@ -391,7 +390,7 @@ const getTaskDetails = async (taskName) => {
       const taskDetail = {name: taskName, dataset, spec};
       return taskDetail;
     } catch (err) {
-      console.log('Error while searching task detail', err)
+      console.warn('Error while searching task detail', err)
       return {};
     }
 }
@@ -498,7 +497,6 @@ async function remove_task(taskName) {
     let foundAssociation = false;
     const stream = db.stream(dbkeys.keyForTask(), false, true);
     for await (const {value} of stream) {
-        console.log('task', value);
         if (value.id != taskData.id && value.dataset_id == taskData.dataset_id) {
             foundAssociation = true;
             break; 

@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db-firestore');
-// const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const config = require('../config/config');
 const { expiresIn } = require('../config/middleware');
@@ -34,7 +33,6 @@ const { expiresIn } = require('../config/middleware');
 async function post_login(req, res) {
   const username = req.body.username;
   const password = req.body.password;
-  console.log('post login', username, password)
   if (username && password) {
     const exists = await isUserExists(username, password);
     if (exists) {
@@ -43,7 +41,6 @@ async function post_login(req, res) {
         { expiresIn }
       );
       const user = await getUserData(username);
-      console.log('user', user);
       // return the JWT token for the future API calls
       res.cookie('token', token, {
         expires: new Date(Date.now() + 604800000),
@@ -136,7 +133,7 @@ async function post_users(req, res) {
  */
 async function get_users(_, res) {
     const values = [];
-    const stream = db.stream(dbkeys.keyForDataset());
+    const stream = db.stream(dbkeys.keyForUser());
     for await(const {value} of stream) {
       values.push(value);
     }
@@ -190,9 +187,7 @@ async function delete_user(req,res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function get_profile(req, res) {
-    console.log("req.username ", req.username)
     const user = await getUserData(req.username);
-    console.log("user ", user);
     if (user) {
         return res.send(user);
     } else {

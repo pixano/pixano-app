@@ -25,7 +25,7 @@ async function put(id , data) {
 }
 
 function stream(prefix, keys, values, reverse) {
-    const params = {gte: `${prefix}!`, lte: `${prefix}~`, keys, values, reverse};
+    const params = {gte: `${prefix}!`, lte: `${prefix}~`, reverse};
     return db.createReadStream(params);
 }
 

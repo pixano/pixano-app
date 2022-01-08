@@ -87,7 +87,7 @@ const removeDir = function(path) {
   if (fs.existsSync(path)) {
     const files = fs.readdirSync(path)
     if (files.length > 0) {
-      files.forEach(function(filename) {
+      files.forEach((filename) => {
         if (fs.statSync(path + "/" + filename).isDirectory()) {
           removeDir(path + "/" + filename)
         } else {
@@ -103,7 +103,7 @@ const removeDir = function(path) {
   }
 }
 
-const isSubFolder = function(parent, dir) {
+const isSubFolder = (parent, dir) => {
   const relative = path.relative(parent, dir);
   return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
@@ -234,6 +234,15 @@ const pathToFilename = (path, removeExt = true) => {
   return filename;
 }
 
+/**
+ * Normalize path in POSIX in order to not duplicate datasets because of a path convention
+ * @param {*} url 
+ * @returns 
+ */
+ const toNormalizedPath = (url) => {
+  return path.normalize(url).split(path.sep).join(path.posix.sep);
+}
+
 
 
 module.exports = {
@@ -244,5 +253,6 @@ module.exports = {
   readJSON,  
   writeJSON,
   isSubFolder,
-  pathToFilename
+  pathToFilename,
+  toNormalizedPath
 }

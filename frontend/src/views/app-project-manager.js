@@ -279,9 +279,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     return html`
       <mwc-icon-button style="margin: 0;" icon="keyboard_backspace" @click=${() => this.goHome()}></mwc-icon-button>
       <h1 class="display-4">Task Manager</h1>
-      <mwc-icon-button icon="exit_to_app"
-                       @click=${() => store.dispatch(logout())}
-                       title="Log out"></mwc-icon-button>
+      ${super.headerContent}
     `
   }
 
@@ -312,10 +310,10 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     return html`
       <div class="section-header"> Task Configuration
         <div style="display: block; float: right;">
-          <mwc-button outlined
+          <!--mwc-button outlined
                         type="button"
                         title="Copy database with annotation and their status into an archive"
-                        @click="${() => snapshotProject()}">Snapshot</mwc-button>
+                        @click="${() => snapshotProject()}">Snapshot</mwc-button--!>
             <mwc-button outlined
                         type="button"
                         title="Export annotations only to json files"
