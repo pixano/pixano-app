@@ -1,5 +1,4 @@
 const moment = require('moment');
-// const db = require('../config/db-leveldb');
 const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
@@ -154,7 +153,6 @@ async function put_job(req, res) {
         return res.status(400).json({type: 'unknown', message: `Unknown job ${taskName} ${jobId} or user ${req.username}.`});
     }
 
-    console.log('trying to put', jobData, req.username, resultData)
     // Check assignment to user and to result
     if (jobData.assigned_to !== req.username ||
          resultData.current_job_id !== jobId || jobData.start_at == 0) {

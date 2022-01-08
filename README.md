@@ -13,6 +13,9 @@ To switch back to the local version, do:
 # replace the line X in frontend/app.js
 // this.goLogin();
 this.go404();
+# replace the headerContent in frontend/src/templates/template-page.js
+// return html``
+return html`<mwc-icon-button icon="exit_to_app" @click=${() => store.dispatch(logout())} title="Log out"></mwc-icon-button>`
 # replace the line X in server/config/db.js
 // const db = require('./db-leveldb');
 // const storage = require('./storage-filesystem');
@@ -21,19 +24,18 @@ const storage = require('./storage-bucket');
 # replace the line X in server/router.js
 // const auth = middleware.checkWhoToken;
 const auth = middleware.checkWhoGoogle;
+# remove the snapshot button in frontend/src/views/app-project-manager.js
+<mwc-button @click="${() => snapshotProject()}">Snapshot</mwc-button>
 ```
 In order to bypass cross-origin issues, a temporary fix is to use the following command to open chrome:
 ```bash
+For Linux :
 chromium --disable-site-isolation-trials --disable-web-security --user-data-dir="~/tmp"
 
-For Windows :- 
-
-1. Open the start menu
-
-2. Type windows+R or open "Run"
-
-3. Execute the following command:
-
+For Windows :
+#1. Open the start menu
+#2. Type windows+R or open "Run"
+#3. Execute the following command:
 chrome.exe --user-data-dir="C://Chrome dev session" --disable-web-security
 
 

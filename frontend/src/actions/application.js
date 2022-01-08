@@ -190,6 +190,7 @@ const _fetchNextResult = (forward=true) => (dispatch, getState) => {
             }
         }
         return GET(url, dispatch).then((result) => {
+            console.log('get next', result)
             if (result.data_id) {
                 return dispatch(updateResult(result));
             }

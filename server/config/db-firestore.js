@@ -60,35 +60,45 @@ async function* stream(prefix) {
   }
 }
 
-async function streamFromBase(from, prefix, reverse) {
-
-  let query = db.collection(collectionName)
-                .where(admin.firestore.FieldPath.documentId(), '>=', `${from}`)
-                .where(admin.firestore.FieldPath.documentId(), '<', `${prefix}`);
+function streamFromBase(from, prefix, reverse) {
+  let query = db.collection(collectionName);
+  if (reverse) {
+    return query.where(admin.firestore.FieldPath.documentId(), '>=', `${prefix}!`)
+                .where(admin.firestore.FieldPath.documentId(), '<', `${from}`).stream();
+  } else {
+    // store all in memory bc we cannot reverse
+    return query.where(admin.firestore.FieldPath.documentId(), '>=', `${from}!`)
+                .where(admin.firestore.FieldPath.documentId(), '<', `${prefix}~`).stream();
+  }
   // replace by this if you made sure to have a key field in the value that equals the document id
   // let query = coll.where("key", '>=', `!`)
   //                 .where("key", '<', `~`)
   //                 .orderBy('key','desc')
-  // let result = [];
-  // const s = query.stream()
-  //  return new Promise((resolve) => {
-  //     s.on('data', (documentSnapshot) => {
-  //       result.push({
-  //         key : documentSnapshot.id,
-  //         value: documentSnapshot.data()
-  //       })
-  //     }).on('end', () => {
-  //       resolve(result);
-  //     })
-  //   });
-  return query.stream();
+}
+
+function readStream(stream) {
+  return new Promise((resolve, reject) => {
+      let data = [];
+      stream.on("data", chunk => data = [...data, {key: chunk.id, value: chunk.data()}]);
+      stream.on("end", () => resolve(data));
+      stream.on("error", error => reject(error));
+  });
 }
 
 
-async function* streamFrom(prefix) {
-  const s = streamFromBase(prefix);
-  for await (let d of s) {
-    yield {key: d.id, value: d.data()}
+async function* streamFrom(from, prefix, reverse) {
+  const s = streamFromBase(from, prefix, reverse);
+  if (!reverse) {
+    for await (let d of s) {
+      yield {key: d.id, value: d.data()}
+    }
+  } else {
+    // we cannot sort document id with firestore: instead we store everything
+    // in memory and sort the array afterwards.
+    const res = (await readStream(s)).sort((a, b) => b.key.localeCompare(a.key));
+    for (let d of res) {
+      yield d;
+    }
   }
 }
 
@@ -113,7 +123,6 @@ async function del(id) {
 
 async function get(id) {
   try {
-      console.log("id  ", id)
       const document = db.collection(collectionName).where(admin.firestore.FieldPath.documentId(), '==', id);
       let foundDocuments = await document.get().then(async querySnapshot => {
           let docs = await querySnapshot.docs;

@@ -1,9 +1,7 @@
 const dbkeys = require('./db-keys');
 const dbConverter = require('../config/db-converter');
-// const db = require('./db-leveldb');
-// const storage = require('./storage-filesystem');
 const db = require('../config/db-firestore');
-const storage = require('./storage-bucket');
+const storage = require('../config/storage-bucket');
 // module.exports.db = db;
 // module.exports.storage = storage;
 
