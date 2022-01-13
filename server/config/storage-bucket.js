@@ -18,9 +18,9 @@ function init() {
  */
 const toRelativePath = (url) => {
     if (Array.isArray(url)) {
-        return url.map((u) => u.replace(bucketHttpPrefix, '').split(path.sep).join(path.posix.sep));
+        return url.map((u) => u.replace(bucketHttpPrefix, '').split(path.sep).join('/'));
     } else {
-        return url.replace(bucketHttpPrefix, '').split(path.sep).join(path.posix.sep);
+        return url.replace(bucketHttpPrefix, '').split(path.sep).join('/');
     }
  };
 
@@ -32,9 +32,10 @@ const toRelativePath = (url) => {
 const toClientPath = (url) => {
     url = toRelativePath(url);
     if (Array.isArray(url)) {
-        return url.map((u) => path.join(bucketHttpPrefix, u));
+        return url.map((u) => bucketHttpPrefix + u);
     } else {
-        return path.join(bucketHttpPrefix, url);
+        console.log('browser url', bucketHttpPrefix + url)
+        return bucketHttpPrefix + url;
     } 
 };
 
