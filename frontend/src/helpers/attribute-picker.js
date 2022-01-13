@@ -131,7 +131,7 @@ export class AttributePicker extends LitElement {
       if (!category && schema.category.length) {
         category = schema.category[0];
       }
-      if (category.properties) {
+      if (category && category.properties) {
         const d = {};
         category.properties.forEach((p) => {
           d[p.name] = p.default;
@@ -179,6 +179,7 @@ export class AttributePicker extends LitElement {
         this.showDetail = false;
         this.mem = '';
         this.schema = {};
+		this.schema.category = [];
         const options = {};
         this.value = {category: '', options };
         this.onKeyDown = this.onKeyDown.bind(this);

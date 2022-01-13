@@ -11,7 +11,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 # AFAIRE :
 
 ## général
-- [o] [#doc] Manque README global qui explique comment est construit Pixano et ses dépôts, mettre des schémas pour montrer les utilisations (distribué, standalone facile, etc)
+- [x] [#doc] Manque README global qui explique comment est construit Pixano et ses dépôts, mettre des schémas pour montrer les utilisations (distribué, standalone facile, etc)
 - [ ] [#doc] Getting started blog post
 - [ ] [#doc] Ajouter des démos complètes sexy + ajouter un bouton ajouter une config pour tester ton projet facilelement
 - [ ] [#feature] Ajouter un exécutable
@@ -41,8 +41,9 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 - [x] [#bogue] le REJECT ne fonctionne pas (firefox sur rectangle sans annotation dans l'image)
 ### gestion des jeux de données
 - [ ] [#feature] séparer la gestion des tâches et des datasets => implémentation du bouton création
-- [ ] [#feature] possibilité de prendre en compte une modification de la base de données images => bouton "refresh database" ?
+- [ ] [#feature] possibilité de prendre en compte une modification de la datasets => bouton "refresh database" ?
 - [ ] [#feature] avoir des tags test/train/validation et pouvoir segmenter la base en fonction (en lien avec l’intégration de Semfeat ?)
+- [ ] [#feature] possibilité de gérer des "sélections" au lieu d'annoter systématiquement l'ensemble d'une base de données (supprime le point précédent ?)
 - [x] [#feature] intégration Semfeat/Élise (sur une branche Élise)
 	- [x] ajouter Élise dans la génération du docker
 	- [x] synchroniser la base de données image
@@ -52,7 +53,7 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 ### visualisation / sélection des données
 - [ ] [#feature] commencer par mettre les images en visu et ne plus mettre nécessairement toutes les images en to_annotate par défaut => il faut pouvoir sélectionner une partie de la base de donnée facilement pour l'étiquetage
 - [ ] [#feature] passerelle Mturk / Amazon SageMaker
-- [ ] [#bogue] l'affichage n'est pas le même (boutons manquants) quand on appuie sur le bouton image dans la liste par rapport à un appui sur les "start *"
+- [ ] [#bogue] l'affichage n'est pas le même (boutons manquants) quand on appuie sur le bouton image dans la liste par rapport à un appui sur les "start *" ???
 - [o] [#feature] affichage sous forme d’imagettes plutôt qu’une liste
 	- [x] [#feature] création des imagettes et intégration dans la liste de fichiers
 	- [ ] [#feature] généralisation des imagettes à toutes les formes de fichiers en entrée
@@ -60,9 +61,10 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- [ ] [#feature] possibilité de n'afficher dans ce mur qu'une sous-sélection grâce aux filtres dans la liste
 - [ ] [#feature] visualisation des annotations existantes/de résultats importés dans ces imagettes => recalculer les thumbnails après chaque submit ?
 - [ ] [#bogue] après une sélection via un filtre, on reste sur la même page d'affichage, mais s'il n'y a plus autant d'images à afficher => il faudrait revenir à 0
-- [ ] [#bogue] quand on clique sur l'affichage d'image après avoir filtré une partie du contenu, il ne fait rien (image vide ou image précédente s'il y en avait une
+- [ ] [#bogue] quand on clique sur l'affichage d'image après avoir filtré une partie du contenu, il ne fait rien (image vide ou image précédente s'il y en avait une ???
 
 ## annotation
+- [ ] [#bogue] supprimer les plugins inutilisés ? : tracking-point, keypoints-box, sequence-point-rectangle
 - [x] [#feature] ajouter un champs commentaire : le validateur peut commenter, l'annotateur peut voir les commentaires, les commentaires sont transmissibles via json. => cf. branche eurovanille
 - [ ] [#feature] rajout d'informations dans les jsons : date de dernière annotation, utilisateur à l'origine de la dernière annotation
 - [ ] [#feature] possibilité de transmettre l'état des annotations (validé/rejeté) via json
@@ -78,9 +80,9 @@ Ce fichier contient la liste des modifications/corrections prévues dans ce code
 	- ils reprennent la valeur par défaut si on passe à une annotation de classe différente puis qu'on y revient
 	- si on modifie la valeur sur une boite, c'est propagé à toutes les autres boites de même classe sur lesquelles on clique
 - [x] [#bogue #firefox] quand on édite les annotations, puis qu'on crée de nouveau sur la même image, les propriétés restent celles de la dernière annotation modifiée (et on la modifie donc) (uniquement sous firefox)
-- [ ] [#feature] possibilité de sélectionner plusieurs éléments pour leur donner des caractéristiques communes ?
+- [x] [#feature] possibilité de sélectionner plusieurs éléments pour leur donner des caractéristiques communes ?
 ### plugin keypoints
-- [ ] [#feature] possibilité de ne pas annoter tous les keypoints (non visibles) ?
+- [ ] [#feature] possibilité de ne pas annoter tous les keypoints (non visibles) ? => elements
 ### plugin segmentation
 - [x] [#bogue] segmentation : mes modifs union/substract ne fonctionnent pas dans l'app
 - [x] [#bogue] setMask non entièrement fonctionnel : rien en s'affiche et on ne peut rien sélectionner

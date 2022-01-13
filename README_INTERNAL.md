@@ -68,7 +68,8 @@ master  <------push------  github <--merge-- master <--merge--> p2
 
 ## Publication
 ### 0) prepare gitlab version
-	VERSION=0.6.0
+	LAST_VERSION=0.4.9
+	VERSION=0.5.0
 	git fetch
 	git checkout master
 	git pull origin master
@@ -83,24 +84,27 @@ master  <------push------  github <--merge-- master <--merge--> p2
 	- on your fork github (on github.com), click on "Fetch upstream", then "Fetch and merge"
 2. Locally:
 
+	2.1 Merge with master
+	
 		# make sure the repositories are up-to-date
 		git fetch upstream
 		git checkout github
+		git pull
 		
 		# integrate our modifications to the github branch
 		# merge all commits without commit which lets you inspect (and modify) the result before committing
 		# ensure that you `git rm --cached` every internal file/section
 		git merge --no-commit master
-		# when everything is ok, commit the changes
-		git commit -m "release $VERSION"
 
-During the merge / before commiting, **do not include / delete files and internal/proprietary codes** :  
+	During the merge / before commiting, **do not include / delete files and internal/proprietary codes** :  
 
-- do not include the present file [README_INTERNAL.md](./README_INTERNAL.md), nor the .gitlab-ci.yml
-- do not include the folder [doc_interne](./doc_interne)
-- do not include the files with tag "proprietary"
-- do not include with code blocks surrounded by tag "proprietary"
-
+	- do not include the present file [README_INTERNAL.md](./README_INTERNAL.md) and [TODO_INTERNAL.md](./TODO_INTERNAL.md), nor the .gitlab-ci.yml
+	- do not include the files with tag "proprietary"
+	- do not include with code blocks surrounded by tag "proprietary"
+	
+	2.2 Commit blacked out merge
+		
+		git commit
 
 ### 2) Verify and validate code
 #### clean and recompile "from scratch"
@@ -108,8 +112,8 @@ During the merge / before commiting, **do not include / delete files and interna
 	rm -rf node_modules frontend/node_modules
 	rm package-lock.json frontend/package-lock.json
 	# compilation
-	npm i
-	cd frontend ; npm i ; npm run build ; cd -
+	npm run deps
+	npm run build
 #### verify "by hand"
 	node server/server.js data-test/
 	## you can create tasks for images using the folder "images/"
@@ -120,22 +124,35 @@ During the merge / before commiting, **do not include / delete files and interna
 	git tag -m "v$VERSION" "v$VERSION"
 	# push modifications on the fork
 	git push upstream github:master --follow-tags
-	
-	# tag report on master
-	git checkout master
-	#OR git checkout f5f56daf if the reference commit is not the last one
-	git tag -m "vi$VERSION" "vi$VERSION"
-	git push origin master --follow-tags
+
 #### 2. pull-request
 The rest is on [github](https://github.com) :
 
-- on the fork $MYACCOUNT : onglet "Pull requests" => "New pull request" => "Create pull request" => "Create pull request"
-- automatic verifications are made by github
-- on the pixano account : got to "Merge pull request" => "Confirm merge"
+- on the fork $MYACCOUNT : onglet "Pull requests" => "New pull request" => "Create pull request"
+- complete the merge request message with:
+	- Tip: To easily list the commits and descriptions: ```git log v$LAST_VERSION..v$VERSION --oneline --pretty="format:%s"```
+	- in Title: v$VERSION
+	- in Comment: write something like:
+```
+## server
+* file: modifications...
+* file: modifications...
+* ...
+## frontend
+* ...
+
+Co-authored-by: Camille Dupont camille.dupont@cea.fr
+Co-authored-by: Brice Burger brice.burger@cea.fr
+Co-authored-by: ...
+```
+- click on "Create pull request" => automatic verifications are made by github
+- at the bottom of the page: click on "Merge pull request" => "Confirm merge"
+
+
 #### 3. release
 Transform the tag in github release (makes the last tag more visible and detailed) :
 <!--	DOES NOT WORK (yet)?) because tags are not exported in pull requests-->
-<!--	- go to the page [tags](https://github.com/pixano/pixano-elements/tags)-->
+<!--	- go to the page [tags](https://github.com/pixano/pixano-app/tags)-->
 <!--	- select the last tag-->
 <!--	- "Edit release"-->
 <!--	- in "Release title", put the version vX.Y.Z-->
@@ -143,11 +160,9 @@ Transform the tag in github release (makes the last tag more visible and detaile
 
 	- go to the page in [release](https://github.com/pixano/pixano-app/releases)
 	- button "Draft a new release"
-	- "Tag version" vX.Y.Z
-	- in "Release title", put the version vX.Y.Z
-	- complete the comments
-		- To easily list the commits and descriptions :
-			git log v0.5.15..v0.5.16 --oneline
+	- click on "Tag version" button: vX.Y.Z => "create new tag"
+	- in "Release title": vX.Y.Z
+	- complete the comments with the same comment then the pull request
 	- "Publish release"
 
 #### 4. push on docker hub
@@ -164,4 +179,17 @@ Transform the tag in github release (makes the last tag more visible and detaile
 	# push to docker hub
 	sudo docker push pixano/pixano-app:$VERSION
 	sudo docker push pixano/pixano-app:latest
+
+#### 5. report all to master
+	# tag report on master
+	git checkout master
+	#OR git checkout f5f56daf if the reference commit is not the last one
 	
+	# if some changes have to be reported back
+	git cherry-pick last_github_commit_hash
+	
+	# push to origin
+	git tag -m "vi$VERSION" "vi$VERSION"
+	git push origin master --follow-tags
+
+
