@@ -76,8 +76,8 @@ if (args['--port']) {
   port = args['--port'];
 }
 
-
-const entry = args._.length > 0 ? path.resolve(args._[0]) : '/data/';
+const entry = args._.length > 0 ? args._[0] : 'PIXANO-DB';
+// const entry = args._.length > 0 ? path.resolve(args._[0]) : '/data/';
 
 // support json encoded bodies
 // and set maximal entity request size (default is 100Kb)
@@ -87,11 +87,11 @@ app.use('/data/', express.static(entry));
 app.use('/data/', express.static(path.resolve('server/'), { maxAge: '1d' }));
 app.use(cookieParser());
 
-if (!fs.existsSync(entry)) {
-  console.error('Please enter a valid path for workspace:');
-  console.log(getHelp());
-  return;
-}
+// if (!fs.existsSync(entry)) {
+//   console.error('Please enter a valid path for workspace:');
+//   console.log(getHelp());
+//   return;
+// }
 
 // initialize database
 initDB(entry).then(() => {

@@ -6,18 +6,17 @@
 
 
 const admin = require('firebase-admin');
-const collectionName = "PIXANO-DB";
+let collectionName = "PIXANO-DB";
 let db = '';
 
-function init() {
-  // console.log("db ", db)
+function init(collName = "PIXANO-DB") {
   const serviceAccount = require("./firebaseServiceAccount.json");
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
   db = admin.firestore();
-  // console.log("db ", db)
   db.settings({ ignoreUndefinedProperties: true });
+  collectionName = collName;
 }
 
 async function put(id , data) {
