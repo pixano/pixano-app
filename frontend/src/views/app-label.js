@@ -52,7 +52,7 @@ class AppLabel extends AppExplore {
   
   onActivate() {
     const paths = window.location.hash.split('/');
-    const taskName = paths[1];
+    const taskName = decodeURI(paths[1]);
     this.jobObjective = paths[2] || this.jobDefaultObjective;
     store.dispatch(updateTaskName(taskName));
     const task = getState('application').tasks.find((t) => t.name === taskName);
