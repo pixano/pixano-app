@@ -7,6 +7,7 @@
 		"topicName": "selection"
 	},
 	"minio": {
+		"fake": false,
 		"endPoint": "minio",
 		"port": 9000,
 		"useSSL": false,

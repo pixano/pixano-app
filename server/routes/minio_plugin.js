@@ -16,8 +16,29 @@ function waitFor(conditionFunction) {//rajouter un timeout
  * @return ["url1","url2",...]: returns the list of the corresponding URLs
  * @doc https://docs.min.io/docs/javascript-client-api-reference
  */
-const downloadFilesFromMinio = async (listIds,workspace) => {
-	console.log("downloadFilesFromMinio:",listIds);
+const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
+	console.log("downloadFilesFromMinio (",selection_name,"):",listIds);
+	if (JSON.parse(CONFIG.minio.fake)) {
+		// // test whith a list of served urls
+		// var urlList = [
+		// 	'http://localhost:1234/video/01.png',
+		// 	'http://localhost:1234/video/02.png',
+		// 	'http://localhost:1234/video/03.png',
+		// 	'http://localhost:1234/video/04.png',
+		// 	'http://localhost:1234/video/05.png',
+		// 	'http://localhost:1234/video/06.png',
+		// 	'http://localhost:1234/video/07.png',
+		// 	'http://localhost:1234/video/08.png',
+		// 	'http://localhost:1234/video/09.png',
+		// 	'http://localhost:1234/video/10.png'
+		// ];
+		// test whith a list of local files
+		var urlList = [
+			workspace+'/fakeminiodb/01.png',
+			workspace+'/fakeminiodb/10.png'
+		];
+		return urlList;
+	}
 	// Instantiate the minio client with the endpoint
 	// and access keys as shown below.
 	const minioClient = new Minio.Client({
@@ -28,7 +49,7 @@ const downloadFilesFromMinio = async (listIds,workspace) => {
 		secretKey: CONFIG.minio.secretKey
 	});
 
-	const pixano_local_save_image_directory = workspace+'/minio_saved_images/'+'importedFromKafka/';//... TODO
+	const pixano_local_save_image_directory = workspace+'/minio_saved_images/'+'importedFromKafka/'+selection_name+'/';//... TODO
 
 	// check if bucket exists/can be accessed
 	var exists = await minioClient.bucketExists(CONFIG.minio.bucket_name).catch((e) => {throw "Minio: Bucket does not exist\n"+e;});

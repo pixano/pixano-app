@@ -14,7 +14,7 @@ const populator = require('../helpers/data-populator');
 const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
-const { getIdsInputListFromKafka } = require('./kafka_plugin');
+const { getSelectionFromKafka } = require('./kafka_plugin');
 const { downloadFilesFromMinio } = require('./minio_plugin');
 
 /**
@@ -94,60 +94,38 @@ async function post_tasks(req, res) {
 async function import_tasks_from_kafka(req, res) {
 	checkAdmin(req, async () => {// only admin can modify tasks and datasets
 		console.log('##### Importing from KAFKA');
-		var listIds = await getIdsInputListFromKafka().catch((e) => {
+		var kafkaSelection = await getSelectionFromKafka().catch((e) => {
 			console.error();
 			res.status(404).json({ message: 'Error in Kafka import\n'+e });
 			return;
 		});
-		if (!listIds) return;// if kafka failed, nothing else to do
-		console.log("liste=",listIds);
+		if (!kafkaSelection.sample_ids.length===0) {
+			res.status(404).json({ message: 'Error in Kafka import\n'+e });
+			return;// if kafka failed, nothing else to do
+		}
+		console.log("kafkaSelection=",kafkaSelection);
 		console.log('##### Create a new task');
 		const task = req.body;
 		const spec = await getOrcreateSpec(task.spec);
+		const name = kafkaSelection.selection_name;
 		try {
-			await db.get(dbkeys.keyForTask(task.name));
+			await db.get(dbkeys.keyForTask(name));
 			return res.status(400).json({message: 'Taskname already existing'});
 		} catch(e) {}//catch === everything is ok (Taskname not in use)
 
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) getPathFromIds');
-		task.dataset.urlList = await downloadFilesFromMinio(listIds,workspace).catch((e) => {
+		task.dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name).catch((e) => {
 			console.error();
 			res.status(404).json({ message: 'Error in Minio import\n'+e });
 			return;
 		});
 		if (!task.dataset.urlList) return;// if minio failed, nothing else to do
-		// // test whith a list of served urls
-		// task.dataset.urlList = [
-		// 	'http://localhost:1234/video/01.png',
-		// 	'http://localhost:1234/video/02.png',
-		// 	'http://localhost:1234/video/03.png',
-		// 	'http://localhost:1234/video/04.png',
-		// 	'http://localhost:1234/video/05.png',
-		// 	'http://localhost:1234/video/06.png',
-		// 	'http://localhost:1234/video/07.png',
-		// 	'http://localhost:1234/video/08.png',
-		// 	'http://localhost:1234/video/09.png',
-		// 	'http://localhost:1234/video/10.png'
-		// ];
-		// // test whith a list of local files
-		// task.dataset.urlList = [
-		// 	'/data/PIXANOws/video/01.png',
-		// 	'/data/PIXANOws/video/02.png',
-		// 	'/data/PIXANOws/video/03.png',
-		// 	'/data/PIXANOws/video/04.png',
-		// 	'/data/PIXANOws/video/05.png',
-		// 	'/data/PIXANOws/video/06.png',
-		// 	'/data/PIXANOws/video/07.png',
-		// 	'/data/PIXANOws/video/08.png',
-		// 	'/data/PIXANOws/video/09.png',
-		// 	'/data/PIXANOws/video/10.png'
-		// ];
 		console.log('# 1.2) getImagesFromPath');
 		const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
 		console.log('# 2) Push the new task + dataset');
 		// Task does not exist create it
-		const newTask = {name: task.name, dataset_id: dataset.id, spec_id: spec.id}
+		const newTask = {name: name, dataset_id: dataset.id, spec_id: spec.id}
 		await db.put(dbkeys.keyForTask(newTask.name), newTask);
 		// Generate first job list
 		await generateJobResultAndLabelsLists(newTask);
