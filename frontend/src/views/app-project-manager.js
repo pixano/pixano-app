@@ -229,12 +229,12 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	 */
 	SaveOrCreateTask() {
 		let task = { ...this.tasks[this.taskIdx] };
-		const reg = new RegExp('[^=a-zA-Z0-9-_]+',);
-		const isWrongContained = reg.test(task.name);
-		if (!task.name || isWrongContained) {
-			this.errorPopup("Enter a correct task name");
-			return;
-		}
+		// const reg = new RegExp('[^=a-zA-Z0-9-_]+',);
+		// const isWrongContained = reg.test(task.name);
+		// if (!task.name || isWrongContained) {
+		// 	this.errorPopup("Enter a correct task name");
+		// 	return;
+		// }
 		task.spec.label_schema = this.taskSettings.json;
 		task.spec.settings = this.pluginSettings.json;
 		const fn = this.creatingTask ? postTask : putTask;
