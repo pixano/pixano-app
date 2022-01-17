@@ -1,0 +1,27 @@
+{
+ "name": "Rectangle",
+ "spec": {
+  "plugin_name": "rectangle",
+  "label_schema": {
+   "category": [
+    {
+     "name": "person_face",
+     "color": "green",
+     "properties": [
+      {
+       "name": "recognizable",
+       "type": "checkbox",
+       "default": true
+      }
+     ]
+    }
+   ]
+  },
+  "settings": {},
+  "data_type": "image"
+ },
+ "dataset": {
+  "path": "images/",
+  "data_type": "image"
+ }
+}

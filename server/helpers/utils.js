@@ -227,6 +227,10 @@ const pathToFilename = (path, removeExt = true) => {
   // path with no leading or trailing slashes
   let filename = path.slice(idx0, idx1);
   filename = filename.replace(new RegExp('/', 'g'), '_');
+   // add by Tom
+  filename = filename.split("\\");
+  filename = filename.join("_")
+  //filename = filename.replace(new RegExp('\\', 'g'), '_'); // TO CHANGE TOM
   if (removeExt) {
     const exts = ['.jpg', '.jpeg', '.png', '.bin'];
     exts.forEach((e) => filename = filename.replace(e, ''));
