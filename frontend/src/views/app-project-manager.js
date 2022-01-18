@@ -19,6 +19,7 @@ import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
 import '@material/mwc-select';
 import '@material/mwc-list/mwc-list-item';
+import '@material/mwc-switch';
 import '@trystan2k/fleshy-jsoneditor/fleshy-jsoneditor.js';
 
 import { defaultLabelValues, pluginsList, getDataType, defaultSettings } from '../plugins/index';
@@ -34,13 +35,16 @@ import {
   putTask,
   getTasks
   } from '../actions/application';
+import { Select } from '@material/mwc-select';
 
 class AppProjectManager extends connect(store)(TemplatePage) {
   static get properties() {
     return {
       tasks: { type: Array },
       taskIdx: { type: Number },
-      creatingTask: { type: Boolean }
+      creatingTask: { type: Boolean },
+	  importExportText: { type: String },
+	  pathOrURL: { type: String },
     };
   }
 
@@ -57,6 +61,9 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     this.tasks = [];
     this.taskIdx = -1;
     this.creatingTask = false;
+	this.importExportText = "undetermined";
+	this.pathOrURL = "undetermined";
+	this.default_path = "";
   }
 
   onActivate() {
@@ -89,6 +96,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
    */
   onExport() {
     const browserElem = this.shadowRoot.getElementById('dialog-import-export-path');
+	this.importExportText = 'export';
     browserElem.mode = 'export';
     browserElem.open = true;
   }
@@ -98,6 +106,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
    */
   onImport() {
     const browserElem = this.shadowRoot.getElementById('dialog-import-export-path');
+	this.importExportText = 'import';
     browserElem.mode = 'import';
     browserElem.open = true;
   }
@@ -135,8 +144,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     const fn = pathDiag.mode === 'export' ?
                 exportTasks : importTasks;
     
-    const ioPath = this.shadowRoot.getElementById('io-path').value;
-    store.dispatch(fn(ioPath)).then(() => {
+	const ioPath = this.shadowRoot.getElementById('io-path').value;
+	store.dispatch(fn(ioPath,this.pathOrURL==='URL')).then(() => {
       store.dispatch(getTasks()).then(() => {
         this.onActivate();
       })
@@ -440,24 +449,56 @@ class AppProjectManager extends connect(store)(TemplatePage) {
     `;
   }
 
-  get pageContent() {
-    return html`
-    <div id="project-page">
-      ${this.taskSection}
-    </div>
+	get pageContent() {
+		return html`
+			<div id="project-page">
+				${this.taskSection}
+			</div>
 
-
-    <mwc-dialog heading="Import/Export" id="dialog-import-export-path">
-      <div>
-        Enter path of folder to Import/Export
-      </div>
-      <mwc-textfield id="io-path" label="path for import/export" value="my_export" dialogInitialFocus></mwc-textfield>
-      <mwc-button slot="primaryAction" dialogAction="close" @click=${this.importExport}>
-        Ok
-      </mwc-button>
-    </mwc-dialog>
-    `
-  } 
-
+			<mwc-dialog style="text-align: center;" heading="${this.importExportText.toUpperCase()}" id="dialog-import-export-path">
+				<div> Choose an ${this.importExportText} location type</div>
+				<div><mwc-select style="width: 16em;" id='mwc-select' label="${this.importExportText} type" @selected=${(evt) => {
+								if (evt.detail.index==-1) {//reinitialize dialog
+									this.shadowRoot.getElementById('importexportdialog_disabled').hidden=false;//disable dialog second part
+									this.shadowRoot.getElementById('importexportdialog_enabled').hidden=true;
+								} else {
+									switch (evt.detail.index) {
+										case 0://local path
+											this.default_path = "my_export";
+											this.pathOrURL = 'Path';
+											break;
+										case 1://URL
+											this.default_path = "http://elasticsearch-coordinating-only:9200/pixano_export_data/";
+											this.pathOrURL = 'URL';
+											break;
+									}
+									//enable dialog second part
+									this.shadowRoot.getElementById('importexportdialog_disabled').hidden=true;
+									this.shadowRoot.getElementById('importexportdialog_enabled').hidden=false;
+								}
+							}}>
+					<mwc-list-item twoline value="0"><span>Local path - </span><span slot="secondary">(Use a relative path to workspace)</span></mwc-list-item>
+					<mwc-list-item twoline value="1"><span>URL - </span><span slot="secondary">(Use a remote address)</span></mwc-list-item>
+				</mwc-select></div>
+				<div id='importexportdialog_disabled'>
+					<div style="color: #ccc"> Enter a location to ${this.importExportText} </div>
+					<div><mwc-textfield disabled label="location for ${this.importExportText}"></mwc-textfield></div>
+					<div>
+						<mwc-button disabled slot="primaryAction" dialogAction="close"> Ok </mwc-button>
+						<mwc-button slot="secondaryAction" dialogAction="close"> Cancel </mwc-button>
+					</div>
+				</div>
+				<div id='importexportdialog_enabled' hidden>
+					<div> Enter a ${this.pathOrURL.toLowerCase()} to ${this.importExportText} </div>
+					<div><mwc-textfield id="io-path" label="${this.pathOrURL} for ${this.importExportText}" value=${this.default_path} dialogInitialFocus></mwc-textfield></div>
+					<div>
+						<mwc-button slot="primaryAction" dialogAction="close" @click=${() => {this.importExport(); this.shadowRoot.getElementById('mwc-select').select(-1);}}> Ok </mwc-button>
+						<mwc-button slot="secondaryAction" dialogAction="close" @click=${() => this.shadowRoot.getElementById('mwc-select').select(-1)}> Cancel </mwc-button>
+					</div>
+				</div>
+			</mwc-dialog>
+		`
+	}
 }
 customElements.define('app-project-manager', AppProjectManager);
+

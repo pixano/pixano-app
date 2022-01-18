@@ -16,6 +16,7 @@ const { getAllDataFromDataset,
         getDataDetails } = require('./datasets');
 const { getSelectionFromKafka } = require('./kafka_plugin');
 const { downloadFilesFromMinio } = require('./minio_plugin');
+const fetch = require("node-fetch");
 
 const annotation_format_version = "0.9";
 
@@ -156,6 +157,12 @@ async function import_tasks_from_kafka(req, res) {
  */
 async function import_tasks(req, res) {
     checkAdmin(req, async () => {
+		if (req.body.url) {
+			return res.status(400).json({
+				error: 'url_not_implemented',
+				message: 'Import tasks from URL is not yet implemented.'
+			});
+		}
         if (!req.body.path) {
             return res.status(400).json({
                 error: 'wrong_path',
@@ -307,7 +314,7 @@ async function import_tasks(req, res) {
  * @apiGroup Tasks
  * @apiPermission admin
  * 
- * @apiParam {string} [path] Relative path to tasks folder
+ * @apiParam {string} [path] Relative path to tasks folder OR [url] destination URL for online export
  * 
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
@@ -316,87 +323,132 @@ async function import_tasks(req, res) {
  *     HTTP/1.1 400 Failed to create export folder
  */
 async function export_tasks(req, res) {
-    checkAdmin(req, async () => {
-        if (!req.body.path) {
-            return res.status(400).json({
-                error: 'wrong_path',
-                message: 'Invalid path.'
-            });
-        }
-        const exportPath = path.join(workspace, req.body.path);
-        console.log('##### Exporting to ', exportPath);
-        if(!utils.isSubFolder(workspace, exportPath)) {
-            return res.status(400).json({
-                error: 'wrong_folder',
-                message: 'Export folder should be a sub folder of the working space.'
-            });
-        }      
-        // If path does not exist create it
-        if (!fs.existsSync(exportPath)) {
-            fs.mkdirSync(exportPath, {recursive: true});
-        }
-
-        const streamTask = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
-        for await (const task of streamTask) {
-            const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
-            delete spec.id;
-            const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
-            const datasetId = dataset.id; 
-            delete dataset.id;
-            const taskJson = {name: task.name, version: annotation_format_version, spec, dataset};
-
-            // Write task json
-            const err = utils.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
-            if (err) {
+	checkAdmin(req, async () => {
+		if (!req.body.path && !req.body.url) {
+			return res.status(400).json({
+				error: 'wrong_path',
+				message: 'Invalid path.'
+			});
+		}
+		if (req.body.path) {//export to local file system
+			var exportPath = path.join(workspace, req.body.path);
+			console.log('##### Exporting to ', exportPath);
+			if (!utils.isSubFolder(workspace, exportPath)) {
 				return res.status(400).json({
-					error: 'cannot_write',
-					message: `Cannot write json file ${exportPath}/${task.name}.json`
+					error: 'wrong_folder',
+					message: 'Export folder should be a sub folder of the working space.'
 				});
-            }
-            
-            // Write annotations for each task in a specific folder
-            const taskFolder = `${exportPath}/${task.name}`;
-            // Remove existing folder
-            utils.removeDir(taskFolder);
-            // Recreate it
-            fs.mkdirSync(taskFolder, function(err){
-                if(err){
-					console.log(err);
-					return res.status(400).json({
-						error: 'cannot_create',
-						message: `ERROR! Can't create directory ${taskFolder}`
-					});
-                }
-            });
+			}
+			// If path does not exist create it
+			if (!fs.existsSync(exportPath)) {
+				fs.mkdirSync(exportPath, { recursive: true });
+			}
+		}
 
-            // Write annotations
-            const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
-            for await (const labels of streamLabels) {
-				console.log("labels=",labels);
-                const data = await getDataDetails(datasetId, labels.data_id, true);
-				console.log("data=",data);
-                delete data.id;
-                delete data.dataset_id;
-				delete data.thumbnail;
-                let path = data.path;
-                path = Array.isArray(path) ? path[0] : path;
-                path = path.replace(dataset.path, '')
-                const filename = utils.pathToFilename(path);
-
-                const labelsJson = {...labels, data};
-                delete labelsJson.data_id;
-
-                const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
-                if (err) {
+		const streamTask = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+		for await (const task of streamTask) {
+			const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
+			delete spec.id;
+			const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
+			const datasetId = dataset.id;
+			delete dataset.id;
+			const taskJson = { name: task.name, version: annotation_format_version, spec, dataset };
+			
+			// EXPORT task json
+			if (req.body.path) {//export to local file system
+				const err = utils.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
+				if (err) {
 					return res.status(400).json({
 						error: 'cannot_write',
-						message: `Cannot write json file ${taskFolder}/${filename}.json`
+						message: `Cannot write json file ${exportPath}/${task.name}.json`
 					});
-                }
-            }
-        }
-        res.send();
-    });
+				}
+			} else {//export to destination URL
+				var err = '';
+				await fetch(req.body.url+`/${task.name}.json`, {
+					method: 'post',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify( taskJson )
+				})// send POST request
+				.then(res => {
+					if (res.statusText=='OK') return res.json();
+					else console.log("KO :\n",res);
+				})
+				.then(res => { console.log(res);
+				}).catch((e) => { err = e; });
+				if (err) {
+					return res.status(400).json({
+						error: 'cannot_write',
+						message: `Cannot write json file '${task.name}.json'.\n\nERROR while calling ELASTIC:${err}`
+					});
+				}
+			}
+
+			if (req.body.path) {
+				// Write annotations for each task in a specific folder
+				var taskFolder = `${exportPath}/${task.name}`;
+				// Remove existing folder
+				utils.removeDir(taskFolder);
+				// Recreate it
+				fs.mkdirSync(taskFolder, function (err) {
+					if (err) {
+						console.log(err);
+						return res.status(400).json({
+							error: 'cannot_create',
+							message: `ERROR! Can't create directory ${taskFolder}`
+						});
+					}
+				});
+			}
+
+			// Write annotations
+			const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
+			for await (const labels of streamLabels) {
+				const data = await getDataDetails(datasetId, labels.data_id, true);
+				delete data.id;
+				delete data.dataset_id;
+				delete data.thumbnail;
+				let path = data.path;
+				path = Array.isArray(path) ? path[0] : path;
+				path = path.replace(dataset.path, '')
+				const filename = utils.pathToFilename(path);
+
+				const labelsJson = { ...labels, data };
+				delete labelsJson.data_id;
+
+				// EXPORT task json
+				if (req.body.path) {//export to local file system
+					const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
+					if (err) {
+						return res.status(400).json({
+							error: 'cannot_write',
+							message: `Cannot write json file ${taskFolder}/${filename}.json`
+						});
+					}
+				} else {//export to destination URL
+					var err = '';
+					await fetch(req.body.url+`/${task.name}/${filename}.json`, {
+						method: 'post',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify( labelsJson )
+					})// send POST request
+					.then(res => {
+						if (res.statusText=='OK') return res.json();
+						else console.log("KO :\n",res);
+					})
+					.then(res => { console.log(res);
+					}).catch((e) => { err = e; });
+					if (err) {
+						return res.status(400).json({
+							error: 'cannot_write',
+							message: `Cannot write json file '${task.name}/${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
+						});
+					}
+				}
+			}
+		}
+		res.send();
+	});
 }
 
 /**
