@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: "pixano"
-        image: "pixano/pixano-dev:confiance-v1"
+        image: "pixano/pixano-dev:confiance-v1.2"
         imagePullPolicy: Always
         ports:
         - name: web

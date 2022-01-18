@@ -29,6 +29,14 @@ node server/server.js /data/PIXANOws/
 ```
 
 -----------------
+## accès aux autres ressources du projet Confiance sur ec5-dev :
+### [DEBIAI](https://debiai-ec5.confiance.irtsystemx.org/#/)
+### [KAFKA](https://kafka-ec5.confiance.irtsystemx.org/topic/selection/)
+### [MINIO](https://minio-ec5.confiance.irtsystemx.org/buckets/pixanoimagesselection/)
+### [ELASTIC](https://elasticsearch-ec5.confiance.irtsystemx.org/)
+### [KIBANA](https://kibana-ec5.confiance.irtsystemx.org/)
+
+-----------------
 ## Démo dans l'environnement ec5-dev avec code dans conteneur démo (dvc-pod-2)
 ### connexion
 ```
@@ -79,41 +87,47 @@ node server/server.js /mlops/pixdata/
 # s'assurer que le code est bien construit
 npm run build
 # lancer la construction
-sudo docker build -t pixano/pixano-app:confiance-v1 -f Dockerfile-local .
+sudo docker build -t pixano/pixano-app:confiance-v1.2 -f Dockerfile-local .
 # tester le bon fonctionnement (pas de volumes dans confiance)
-sudo docker run -it --rm -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance-v1
+sudo docker run -it --rm -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance-v1.2
 # le cas échéant en faire une sauvegarde locale
-sudo docker save -o /data/pixano-confiance-v1.tar pixano/pixano-app:confiance-v1
+sudo docker save -o /data/pixano-confiance-v1.2.tar pixano/pixano-app:confiance-v1.2
 ```
 ### pousser sur dockerhub
 ```
 # si l'image venait d'ailleurs, commencer par la charger
 sudo docker load -i /data/pixano-confiance.tar
 # modifier le tag et pousser
-sudo docker tag pixano/pixano-app:confiance-v1 pixano/pixano-dev:confiance-v1
-sudo docker push pixano/pixano-dev:confiance-v1
+sudo docker tag pixano/pixano-app:confiance-v1 pixano/pixano-dev:confiance-v1.2
+sudo docker push pixano/pixano-dev:confiance-v1.2
 ```
 ### connexion
 ```
 sudo swanctl --initiate --ike ikev1-psk-xauth-aggressive --child ikev1-psk-xauth-aggressive
 k login
 ```
-### importer l'image sur kubernetes et la lancer
+### importer l'image sur kubernetes et la lancer (sans déploiement, pour test)
 ```
 # création du pod :
-k run pixano-v1 -n ec5-dev --image pixano/pixano-dev:confiance-v1
+k run pixano-v1-2 -n ec5-dev --image pixano/pixano-dev:confiance-v1.2
 # vérification (au départ, il faut le temps qu'il télécharge l'image depuis dockerhub) :
 k get pods
 # en cas de problème, on peut avoir plus de détails
-k describe pod pixano-v1
+k describe pod pixano-v1-2
 # forwarder les ports pour pouvoir accéder à Pixano
-k port-forward pixano-v1 3000:3000 &
+k port-forward pixano-v1-2 3012:3000 &
+## accès à pixano via http://localhost:3012
+
 ###... port à valider : DebiAI utilise a priori le même, d'autres peut-être aussi, on pourra éventuellement le rediriger sur un autre port du genre : 3001:3000
 ###... si on veut rendre Élise accessible, il suffira également de forwarder les ports : 8081:8081
 ```
-
-
-
+### déploiement réel :
+```
+## commencer par adapter la version de l'image docker dans pixano-app/kubernetes_deploy_pixano.yaml
+k apply -f kubernetes_deploy_pixano.yaml
+## attendre un peu : l'image va être téléchargée en tâche de fond
+## accès à pixano via https://pixano-ec5.confiance.irtsystemx.org/#/
+```
 
 
 
