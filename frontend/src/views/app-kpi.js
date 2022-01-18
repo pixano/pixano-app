@@ -571,6 +571,7 @@ class AppKPI extends TemplatePage {
         var dateTaskTime = new Date(totalTaskTime);
         dateTaskTime.setHours(dateTaskTime.getHours() - 1);
         var TaskTimeStr = dateTaskTime.toTimeString().split(' ')[0]
+        totalTaskTime = totalTaskTime*0.001
 
         var totalLoadingTime = this.items.map(x => +(x.loading_time_cumulated)).reduce((a, b) => a + b, 0) 
         var dateLoadingTime = new Date(totalLoadingTime); // time already in miliseconds here
@@ -639,6 +640,24 @@ class AppKPI extends TemplatePage {
                     <br>Total Other Activities Time : ${OtherActivitiesTimeStr}
         */
         // ${categories.join(', ')}
+        /*
+          <select name="cars" id="cars">
+              <optgroup label="Total">
+                <option value="Total">Total</option>
+              </optgroup>
+              <optgroup label="Annotators">
+                <option value="mercedes">Mercedes</option>
+                <option value="audi">Audi</option>
+              </optgroup>
+            </select>
+
+            KPI per user :
+            <br>${uniqueAnnotators[0]}
+            <br>${annotatorsKPI[0]}
+            <br>${uniqueAnnotators[1]}
+            <br>${annotatorsKPI[1]}
+        
+        */
 
 
         return html`
