@@ -6,8 +6,8 @@
 
 import { html } from 'lit-element';
 import '@pixano/graphics-2d/lib/pxn-classification';
+import '@pixano/core/lib/attribute-picker';
 import { TemplatePlugin } from '../templates/template-plugin';
-import '../helpers/attribute-picker';
 import { store } from '../store';
 import { setAnnotations } from '../actions/annotations';
 
