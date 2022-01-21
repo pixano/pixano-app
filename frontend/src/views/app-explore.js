@@ -39,7 +39,7 @@ export class AppExplore extends TemplatePage {
 
     onActivate() {
       const paths = window.location.hash.split('/');
-      const taskName = paths[1];
+      const taskName = decodeURI(paths[1]);
       const dataId = paths[2];
       store.dispatch(updateTaskName(taskName));
       const task = getState('application').tasks.find((t) => t.name === taskName);
@@ -102,7 +102,8 @@ export class AppExplore extends TemplatePage {
         const appState = getState('application');
         const nextDataId = appState.dataId;
         if (nextDataId !== currentDataId) {
-          window.history.pushState({}, '', `/#explore/${appState.taskName}/${nextDataId}`);
+          const page = '/#explore/'+appState.taskName+'/'+nextDataId;
+          window.history.pushState({}, '', encodeURI(page));
           this.dataPath = this.path;
         }        
       });
