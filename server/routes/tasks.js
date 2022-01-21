@@ -15,6 +15,8 @@ const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
 
+const annotation_format_version = "0.9";
+
 /**
  * @api {get} /tasks Get list of tasks details
  * @apiName GetTasks
@@ -126,6 +128,15 @@ async function import_tasks(req, res) {
         const importedTasks = [];
         for await (const jsonf of taskJsonFiles) {
             const taskData = utils.readJSON(path.join(importPath, jsonf));
+			let version = taskData.version;
+			// check annotation format version
+			if (!version) version = "0.9";//0.9 is the first versioned format
+			if (parseFloat(version) < parseFloat(annotation_format_version)) {
+				// TO BE DETERMINED when new version will arrise: solve compatibility issues
+			}
+			console.info("Annotation format version:",annotation_format_version);
+			
+
             const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type}, workspace);
             const spec = await getOrcreateSpec(taskData.spec);
 
@@ -267,12 +278,15 @@ async function export_tasks(req, res) {
             const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
             const datasetId = dataset.id; 
             delete dataset.id;
-            const taskJson = {name: task.name, spec, dataset};
+            const taskJson = {name: task.name, version: annotation_format_version, spec, dataset};
 
             // Write task json
             const err = utils.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
             if (err) {
-                return;
+				return res.status(400).json({
+					error: 'cannot_write',
+					message: `Cannot write json file ${exportPath}/${task.name}.json`
+				});
             }
             
             // Write annotations for each task in a specific folder
@@ -282,8 +296,11 @@ async function export_tasks(req, res) {
             // Recreate it
             fs.mkdirSync(taskFolder, function(err){
                 if(err){
-                console.log(err);
-                response.send(`ERROR! Can't create directory ${taskFolder}`);
+					console.log(err);
+					return res.status(400).json({
+						error: 'cannot_create',
+						message: `ERROR! Can't create directory ${taskFolder}`
+					});
                 }
             });
 
@@ -293,6 +310,7 @@ async function export_tasks(req, res) {
                 const data = await getDataDetails(datasetId, labels.data_id, true);
                 delete data.id;
                 delete data.dataset_id;
+				delete data.thumbnail;
                 let path = data.path;
                 path = Array.isArray(path) ? path[0] : path;
                 path = path.replace(dataset.path, '')
@@ -303,7 +321,10 @@ async function export_tasks(req, res) {
 
                 const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
                 if (err) {
-                return;
+					return res.status(400).json({
+						error: 'cannot_write',
+						message: `Cannot write json file ${taskFolder}/${filename}.json`
+					});
                 }
             }
         }
