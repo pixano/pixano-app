@@ -23,6 +23,7 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
     super();
     this.atlas = new Image();
     this.imageIndex = -1;
+    this.brightness = 1;
   }
 
   firstUpdated() {
@@ -61,6 +62,8 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
         ["SPACE", "Skip image"],
         ["z", "Undo"],
         ["r", "Redo"],
+        ["m", "Brightness -"],
+        ["p", "Brightness +"],
         ...this.shortcuts.map(({ key, label }) => [key, label]),
       ])
     );
@@ -112,6 +115,14 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
 
   onKeyUp(e) {
     if (e.repeat) return;
+    if (e.key.toLowerCase() === "m") {
+      this.brightness -= 0.1;
+      this.draw();
+    }
+    if (e.key.toLowerCase() === "p") {
+      this.brightness += 0.1;
+      this.draw();
+    }
     if (e.key === " ") {
       dispatchAnnotations((annotations) => {
         annotations[this.imageIndex] = null;
@@ -148,6 +159,7 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
 
   drawImage() {
     const ctx = this.canvas.getContext("2d");
+    ctx.filter = `brightness(${this.brightness * 100}%)`;
     ctx.drawImage(
       this.atlas,
       0,
