@@ -59,7 +59,7 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
     this.attributePicker.setAttribute(
       "shortcuts",
       JSON.stringify([
-        ["SPACE", "Skip image"],
+        ["q", "Skip image"],
         ["z", "Undo"],
         ["r", "Redo"],
         ["m", "Brightness -"],
@@ -123,7 +123,7 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
       this.brightness += 0.1;
       this.draw();
     }
-    if (e.key === " ") {
+    if (e.key === "q") {
       dispatchAnnotations((annotations) => {
         annotations[this.imageIndex] = null;
         return annotations;
