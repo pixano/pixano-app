@@ -64,6 +64,8 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
         ["r", "Redo"],
         ["m", "Brightness -"],
         ["p", "Brightness +"],
+        ["ArrowUp", "Previous image"],
+        ["ArrowDown", "Next image"],
         ...this.shortcuts.map(({ key, label }) => [key, label]),
       ])
     );
@@ -83,6 +85,15 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
         this.draw();
       });
     });
+  }
+
+  get label() {
+    const currentAnnotation = getAnnotations().annotations[this.imageIndex];
+    return (
+      this.attributePicker.schema.category.find(
+        (c) => c.name === currentAnnotation
+      ) || { name: "" }
+    );
   }
 
   disconnectedCallback() {
@@ -115,6 +126,12 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
 
   onKeyUp(e) {
     if (e.repeat) return;
+    if (e.key === "ArrowUp") {
+      this.goToPreviousImage();
+    }
+    if (e.key === "ArrowDown") {
+      this.goToNextImage();
+    }
     if (e.key.toLowerCase() === "m") {
       this.brightness -= 0.1;
       this.draw();
@@ -149,12 +166,25 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
     const atlasPath = getState().media.info.path;
     this.atlas.src = atlasPath;
     this.atlas.addEventListener("load", async () => {
+      this.imageIndex = getAnnotations().annotations.length || 0;
       this.sizeCanvas();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
         this.draw();
       });
     });
+  }
+
+  goToPreviousImage() {
+    this.imageIndex = Math.max(this.imageIndex - 1, 0);
+    this.attributePicker.setCategory(this.label.name);
+    this.draw();
+  }
+
+  goToNextImage() {
+    this.imageIndex = Math.min(this.imageIndex + 1, this.imagesPerAtlas - 1);
+    this.attributePicker.setCategory(this.label.name);
+    this.draw();
   }
 
   drawImage() {
@@ -172,7 +202,6 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
 
   onSelection(e) {
     super.onSelection(e);
-    console.log(e);
   }
 
   drawLabel() {
@@ -217,19 +246,13 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
       <mwc-icon-button
         icon="arrow_upward"
         @click=${() => {
-          if (this.imageIndex > 0) {
-            this.imageIndex--;
-            this.draw();
-          }
+          this.goToPreviousImage();
         }}
       ></mwc-icon-button>
       <mwc-icon-button
         icon="arrow_downward"
         @click=${() => {
-          if (this.imageIndex < (getAnnotations().annotations || []).length) {
-            this.setNextImageIndex();
-            this.draw();
-          }
+          this.goToNextImage();
         }}
       ></mwc-icon-button>
     `;

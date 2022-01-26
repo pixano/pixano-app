@@ -155,7 +155,7 @@ export const defaultLabelValues = (pluginName) => {
           },
           {
             name: "lying",
-            color: "#eca0a0",
+            color: "#5e4fff",
           },
         ],
       };
