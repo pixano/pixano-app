@@ -96,6 +96,7 @@ async function import_tasks(req, res) {
         try {
             taskFiles = await storage.parseImportFolder(req.body.path);
         } catch(err) {
+            console.log('error import')
             return res.status(400).json({
                 error: 'wrong_folder',
                 message: 'Import folder does not exist: ' + req.body.path
@@ -111,10 +112,8 @@ async function import_tasks(req, res) {
         // }
         const importedTasks = [];
         const bm = new batchManager.BatchManager(db);
-        console.log('taskFiles', taskFiles)
         for await (const [taskFile, annFiles] of Object.entries(taskFiles)) {
             const taskData = await storage.readJson(taskFile);
-            console.log('taskData',taskData, taskFile, annFiles)
             const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type});
             const spec = await getOrcreateSpec(taskData.spec);
 
@@ -131,10 +130,9 @@ async function import_tasks(req, res) {
                 // task with this updated name does not exist, use this name
                 taskData.name = newTaskName;
             }
-
             // Create it
             const newTask = {name: taskData.name, dataset_id: dataset.id, spec_id: spec.id};
-            await bm.add({ type: 'put', key: dbkeys.keyForTask(newTask.name), value: newTask})
+            await bm.add({ type: 'post', key: dbkeys.keyForTask(newTask.name), value: newTask})
 
             // Generate first job list
             await generateJobResultAndLabelsLists(newTask); 
@@ -146,6 +144,7 @@ async function import_tasks(req, res) {
             //    annotations: any[],
             //    data: { type: string, path: string | string[], children: array<{path, timestamp}>}
             // }
+            console.log('Now importing the labels', annFiles.length)
             for await (const jsonFile of annFiles) {
                 // Create data
                 const ann = await storage.readJson(jsonFile);
@@ -425,9 +424,9 @@ async function generateJobResultAndLabelsLists(task) {
             annotations: []
         };
 
-        await bm.add({ type: 'put', key: dbkeys.keyForJob(task.name, newJob.id), value: newJob});
-        await bm.add({ type: 'put', key: dbkeys.keyForResult(task.name, newResult.data_id), value: newResult});
-        await bm.add({ type: 'put', key: dbkeys.keyForLabels(task.name, newLabels.data_id), value: newLabels});
+        await bm.add({ type: 'post', key: dbkeys.keyForJob(task.name, newJob.id), value: newJob});
+        await bm.add({ type: 'post', key: dbkeys.keyForResult(task.name, newResult.data_id), value: newResult});
+        await bm.add({ type: 'post', key: dbkeys.keyForLabels(task.name, newLabels.data_id), value: newLabels});
         bar.increment();
     }
     bar.stop();
@@ -497,7 +496,7 @@ async function remove_task(taskName) {
     let foundAssociation = false;
     const stream = db.stream(dbkeys.keyForTask(), false, true);
     for await (const {value} of stream) {
-        if (value.id != taskData.id && value.dataset_id == taskData.dataset_id) {
+        if (value.name != taskData.name && value.dataset_id == taskData.dataset_id) {
             foundAssociation = true;
             break; 
         }

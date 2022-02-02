@@ -230,7 +230,7 @@ async function put_job(req, res) {
         nextUser.queue[taskName+'/'+newJob.objective].push(newJob.id);
         ops.push({ type: 'put', key: dbkeys.keyForUser(nextUser.username), value: nextUser});
     }
-    ops.push({ type: 'put', key: dbkeys.keyForJob(taskName, newJob.id), value: newJob});
+    ops.push({ type: 'post', key: dbkeys.keyForJob(taskName, newJob.id), value: newJob});
     ops.push({ type: 'put', key: dbkeys.keyForResult(taskName, resultData.data_id), value: resultData});
     await db.batch(ops);
     return res.status(204).json({});

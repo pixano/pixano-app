@@ -18,9 +18,9 @@ function init() {
  */
 const toRelativePath = (url) => {
     if (Array.isArray(url)) {
-        return url.map((u) => u.replace(bucketHttpPrefix, '').split(path.sep).join('/'));
+        return url.map((u) => path.normalize(u).split(path.sep).join(path.posix.sep).replace(bucketHttpPrefix, ''));
     } else {
-        return url.replace(bucketHttpPrefix, '').split(path.sep).join('/');
+        return path.normalize(url).split(path.sep).join(path.posix.sep).replace(bucketHttpPrefix, '');
     }
  };
 
@@ -34,7 +34,7 @@ const toClientPath = (url) => {
     if (Array.isArray(url)) {
         return url.map((u) => bucketHttpPrefix + u);
     } else {
-        console.log('browser url', bucketHttpPrefix + url)
+        // console.log('browser url', bucketHttpPrefix + url)
         return bucketHttpPrefix + url;
     } 
 };
@@ -50,12 +50,10 @@ const toBackendPath = toRelativePath;
 async function parseFolder(url, ext) {
     // Lists files in the bucket
     const [files] = await bucket.getFiles({ prefix: toRelativePath(url)});
-
     const metaPromises = files.map((f) => f.name);
     const fileUrls = (await Promise.all(metaPromises)).filter(d => {
         return d[d.toString().length-1] != '/'
     });
-    console.log("fileUrls ", fileUrls);
     // regroup files by directory
     const fileSepUrls = {};
     fileUrls.forEach((f) => {
@@ -83,14 +81,16 @@ async function parseImportFolder(relPath) {
     // filter all json files
     // to only include top-level files, we ignore files which include "/" (cf. delimiter)
     // TODO: find a way to always have a trailing / at the end
-    const [files] = await bucket.getFiles({ prefix: toRelativePath(relPath) + '/', delimiter: "/"});
+    console.log('url:::', toRelativePath(relPath + "/"))
+    const [files] = await bucket.getFiles({ prefix: toRelativePath(relPath + "/"), delimiter: "/"});
     const taskJsonFiles = (await Promise.all(files.map((f) => f.name))).filter(d => d.endsWith('.json'));
 
     for (const taskFile of taskJsonFiles) {
         let taskFolder = path.basename(taskFile.substring(0, taskFile.length - 5));
-        taskFolder = toRelativePath(path.join(relPath, taskFolder));
-        const [annList] = await bucket.getFiles({ prefix: taskFolder + "/"});
-        
+        taskFolder = toRelativePath(path.join(relPath, taskFolder+ "/"));
+        console.log('taskFolder', taskFolder)
+        const [annList] = await bucket.getFiles({ prefix: taskFolder });
+        console.log('annList', annList)
         // const annList = fs.readdirSync(path.join(importPath, taskFolder));
         const annJsonFiles = (await Promise.all(annList.map((f) => f.name))).filter(d => d.endsWith('.json'));
         console.log('annList', annJsonFiles)
@@ -137,17 +137,23 @@ async function readJson(filename) {
 
 
 async function getThumbnail(relUrl) {
+    const stream = bucket.file(relUrl).createReadStream();
+    const thumbnail = await imageThumbnail(stream, {responseType: 'base64', height: 100, jpegOptions: { force:true, quality: 70}});
+    return thumbnail;
     // Downloads the file
-    return new Promise((resolve) => {
-        var chunkNew = new Buffer('');
-        bucket.file(relUrl).createReadStream().on('data', (chunk) => {
-            chunkNew = Buffer.concat([chunkNew,chunk]);
-        })
-        .on('end', async () => {
-            const thumbnail = await imageThumbnail(chunkNew.toString('base64'), {responseType: 'base64', height: 100});
-            resolve(thumbnail);
-        })
-    });
+    // return new Promise((resolve) => {
+    //     var chunkNew = new Buffer.from('');
+    //     const stream = bucket.file(relUrl).createReadStream();
+    //     const thumbnail = await imageThumbnail(stream, {responseType: 'base64', height: 100, jpegOptions: { force:true, quality: 70}});
+    //     resolve(thumbnail);
+        // bucket.file(relUrl).createReadStream().on('data', (chunk) => {
+        //     chunkNew = Buffer.concat([chunkNew,chunk]);
+        // })
+        // .on('end', async () => {
+        //     const thumbnail = await imageThumbnail(chunkNew.toString('base64'), {responseType: 'base64', height: 50});
+        //     resolve(thumbnail);
+        // })
+    //});
 }
 
 module.exports = {

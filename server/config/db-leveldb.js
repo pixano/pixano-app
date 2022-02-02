@@ -51,6 +51,10 @@ async function get(id) {
 }
 
 async function batch(ops) {
+    ops = ops.map((o) => {
+        o.type = o.type === 'post' ? 'put' : o.type;
+        return o;
+    })
     return db.batch(ops);
 }
 

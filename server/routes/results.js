@@ -25,6 +25,8 @@ const batchManager = require('../helpers/batch-manager');
  *     }
  */
 async function get_results(req, res) {
+    // console.time('get_results')
+    // console.time('get_results_page')
     const taskName = req.params.task_name;
     const queries = req.query;
     const match = {
@@ -44,6 +46,7 @@ async function get_results(req, res) {
     const task = await db.get(dbkeys.keyForTask(taskName));
     for await (const {value} of stream) {
         // filter results
+        //console.time('get_results_sub')
         let included = true;
         for (let k of keys) {
             const query = queries[k];
@@ -55,8 +58,12 @@ async function get_results(req, res) {
         }
         if (included) {
             if (counter >= (match.page - 1) * match.count && counter < match.page * match.count) {
-                const imgData = await db.get(dbkeys.keyForData(task.dataset_id, value.data_id));
-                results.push({...value, thumbnail: imgData.thumbnail});
+                //const imgData = await db.get(dbkeys.keyForData(task.dataset_id, value.data_id));
+                // results.push({...value, thumbnail: imgData.thumbnail});
+                results.push({...value, thumbnail: ''});
+                if (counter == (match.page * match.count-1)) {
+                    // console.timeEnd('get_results_page')
+                }
             }
             counter += 1;
         }
@@ -67,7 +74,9 @@ async function get_results(req, res) {
             toValidateCounter += 1;
         }
         globalCounter += 1;
+        //console.timeEnd('get_results_sub')
     }
+    //console.timeEnd('get_results')
     return res.send({results, counter, globalCounter, doneCounter, toValidateCounter});
 }
 

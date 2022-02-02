@@ -10,8 +10,8 @@ const path = require('path');
 const archiver = require('archiver');
 const fs = require('fs');
 
-const generateKey = () => {
-  return crypto.randomBytes(8).toString('hex');
+const generateKey = (prefix = '') => {
+  return prefix + crypto.randomBytes(8).toString('hex');
 }
 
 // /**
