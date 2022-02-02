@@ -18,7 +18,7 @@ class BatchManager {
   async add(entry) {
     const entrySize = sizeof(entry);
     // console.log('entry size', entrySize, this._currentByteSize);
-    if (this._currentByteSize + entrySize > this._maxByteSize) {
+    if (this._currentByteSize + entrySize > this._maxByteSize || this.ops.length > 498) {
       // Need to flush
       console.log('Flushing ...');
       await this.flush();

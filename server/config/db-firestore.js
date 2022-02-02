@@ -145,16 +145,12 @@ async function get(id) {
 async function batch(ops) {
   const batch = db.batch();
   for (let op of ops) {
+    const ref = db.collection(collectionName).doc(op.key);
     if (op.type == 'put') {
-      const ref = db.collection(collectionName).doc(op.key);
-      const isHere = (await ref.get())._createTime;
-      if (isHere) {
-        batch.update(ref, op.value);
-      } else {
-        batch.create(ref, op.value);
-      }
+      batch.update(ref, op.value);
+    } else if (op.type == 'post') {
+      batch.create(ref, op.value);
     } else if (op.type == 'del') {
-      const ref = db.collection(collectionName).doc(op.key);
       batch.delete(ref)
     }
   }
@@ -177,7 +173,7 @@ async function batch(ops) {
   try {
     await batch.commit();
   } catch(err) {
-    console.log('err when commit', err, ops)
+    console.log('err when commit', err)
   }
 }
 
