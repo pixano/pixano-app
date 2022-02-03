@@ -9,11 +9,11 @@ async function initDB(workspacePath) {
     db.init(workspacePath);
     storage.init(workspacePath);
     // If no admin user in database create it
-    const admin_key = dbkeys.keyForUser('ramachandra-sah.ganesh@valeo.com');
+    const admin_key = dbkeys.keyForUser('tom.keldenich@valeo.com');
     return checkDatabaseIntegrity().then(() => {
         return db.get(admin_key).catch(() => {
             return db.put(admin_key, {
-                username: 'ramachandra-sah.ganesh@valeo.com',
+                username: 'tom.keldenich@valeo.com',
                 password: 'admin',
                 role: 'admin',
                 preferences: {theme: 'white'},

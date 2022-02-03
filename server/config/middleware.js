@@ -89,16 +89,17 @@ function updateTokenIfAlmostDead(token, decoded) {
  * @return {email: "string"}
  */
  function checkWhoGoogle(req, res, next) {
-  let info = { email : "ramachandra-sah.ganesh@valeo.com"};
+  // Local
+  // let info = { email : "tom.keldenich@valeo.com"};
+  // req.username = info.email;
+  // next();
  
   // UNCOMMENT FOR PROD
-  // const assertion = req.header('X-Goog-IAP-JWT-Assertion');
-  // validateAssertion(assertion).then(function(info){
-  //     req.username = info.email;
-  //     next();
-  // });
-  req.username = info.email;
-  next();
+  const assertion = req.header('X-Goog-IAP-JWT-Assertion');
+  validateAssertion(assertion).then(function(info){
+       req.username = info.email;
+       next();
+   });
 }
 
 
