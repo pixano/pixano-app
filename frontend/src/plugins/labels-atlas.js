@@ -166,7 +166,12 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
     const atlasPath = getState().media.info.path;
     this.atlas.src = atlasPath;
     this.atlas.addEventListener("load", async () => {
-      this.imageIndex = getAnnotations().annotations.length || 0;
+      this.imageIndex = window.location.href.endsWith("/to_validate")
+        ? 0
+        : Math.min(
+            getAnnotations().annotations.length || 0,
+            this.imagesPerAtlas - 1
+          );
       this.sizeCanvas();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
