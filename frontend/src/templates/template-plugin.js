@@ -9,6 +9,16 @@
 import { LitElement, html } from 'lit-element';
 import { getState, getAnnotations } from '../store';
 import { PluginStyle } from './plugin-style';
+import { initializeApp } from "firebase/app";
+import { getStorage, ref, getDownloadURL, getBlob } from "firebase/storage";
+
+function blobToBase64(blob) {
+  return new Promise((resolve, _) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
 
 export class TemplatePlugin extends LitElement  {
 
@@ -20,6 +30,39 @@ export class TemplatePlugin extends LitElement  {
     return {
       mode: { type: String }
     };
+  }
+
+  constructor() {
+    super();
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6DBxN_eymkda8qGu0uFN1rUjDFql8wSo",
+      authDomain: "valeo-cp1816-dev.firebaseapp.com",
+      projectId: "valeo-cp1816-dev",
+      storageBucket: "valeo-cp1816-dev.appspot.com",
+      messagingSenderId: "998782652816",
+      appId: "1:998782652816:web:e7d46cd8f0c65e29656315",
+      measurementId: "G-LQS226E657"
+    };
+    const firebaseApp = initializeApp(firebaseConfig);
+
+    // Get a reference to the storage service, which is used to create references in your storage bucket
+    this.storage = getStorage(firebaseApp);
+  }
+
+  getImage(path = "images/my_image.jpg") {
+    path = path.replace("https://storage.cloud.google.com/valeo-cp1816-dev.appspot.com/", "");
+    return new Promise((resolve, reject) => {
+      return getBlob(ref(this.storage, path))
+      .then((url) => {
+        blobToBase64(url).then((base64) => {
+          resolve(base64);
+        })
+      })
+      .catch((error) => {
+        console.log('catch', error)
+        reject("Failed to download!!!")
+      });
+    });
   }
 
     /**
@@ -70,7 +113,9 @@ export class TemplatePlugin extends LitElement  {
   newData() {
     const media = getState('media');
     const path = media.info.path;
-    this.element.input = path;
+    this.getImage(path).then((blob) => {
+      this.element.input = blob;
+    });
     
     this.element.addEventListener('load', () => {
       // refresh annoations on media loaded
