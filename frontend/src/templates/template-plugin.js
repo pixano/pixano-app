@@ -54,9 +54,8 @@ export class TemplatePlugin extends LitElement  {
     return new Promise((resolve, reject) => {
       return getBlob(ref(this.storage, path))
       .then((url) => {
-        blobToBase64(url).then((base64) => {
-          resolve(base64);
-        })
+        const imageUrl = URL.createObjectURL(url);
+        resolve(imageUrl);
       })
       .catch((error) => {
         console.log('catch', error)
