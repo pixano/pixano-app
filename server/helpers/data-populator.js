@@ -56,7 +56,7 @@ async function populateSimple(db, mediaRelativePath, datasetId,
     for await (const url of files) {
       const id = generateKey(pathToFilename(url));
       let value = { id, dataset_id: datasetId, type: dataType, path: url, children: ''}
-      // if (dataType=='image') value.thumbnail = await storage.getThumbnail(url);
+      if (dataType=='image') value.thumbnail = await storage.getThumbnail(url);
       await bm.add({ type: 'post', key: dbkeys.keyForData(datasetId, id), value: value});
       bar1.increment();
     }
