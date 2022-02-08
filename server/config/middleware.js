@@ -89,7 +89,7 @@ function updateTokenIfAlmostDead(token, decoded) {
  * @return {email: "string"}
  */
  function checkWhoGoogle(req, res, next) {
-  // Local
+  // UNCOMMENT FOR LOCAL DEV
   // let info = { email : "tom.keldenich@valeo.com"};
   // req.username = info.email;
   // next();

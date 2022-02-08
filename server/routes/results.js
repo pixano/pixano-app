@@ -241,7 +241,7 @@ async function put_results(req,res) {
                     if (newStatus !== 'done') {
                         const newJob = createJob(taskName, d, newStatus);
                         resultData.current_job_id = newJob.id;
-                        await bm.add({ type: 'put', key: dbkeys.keyForJob(taskName, newJob.id), value: newJob});
+                        await bm.add({ type: 'post', key: dbkeys.keyForJob(taskName, newJob.id), value: newJob});
                     } else {
                         resultData.current_job_id = '';
                     }
