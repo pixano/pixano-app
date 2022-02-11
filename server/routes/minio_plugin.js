@@ -18,6 +18,10 @@ function waitFor(conditionFunction) {//rajouter un timeout
  */
 const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 	console.log("downloadFilesFromMinio (",selection_name,"):",listIds);
+
+	const pixano_local_save_image_directory = workspace+'/minio_saved_images/'+'importedFromKafka/'+selection_name+'/';//... TODO
+	var listOfURLs = [];
+
 	if (JSON.parse(CONFIG.minio.fake)) {
 		// // test whith a list of served urls
 		// var urlList = [
@@ -33,11 +37,43 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 		// 	'http://localhost:1234/video/10.png'
 		// ];
 		// test whith a list of local files
-		var urlList = [
-			workspace+'/fakeminiodb/01.png',
-			workspace+'/fakeminiodb/10.png'
-		];
-		return urlList;
+		if (selection_name==="1") {
+			listOfURLs.push(pixano_local_save_image_directory +'/01.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/02.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/03.png');
+		} else if (selection_name==="2") {
+			listOfURLs.push(pixano_local_save_image_directory +'/01.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/02.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/03.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/04.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/05.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/06.png');
+		} else if (selection_name==="3") {
+			listOfURLs.push(pixano_local_save_image_directory +'/01.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/02.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/03.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/04.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/05.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/06.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/07.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/08.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/09.png');
+		} else {
+			listOfURLs.push(pixano_local_save_image_directory +'/01.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/02.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/03.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/04.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/05.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/06.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/07.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/08.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/09.png');
+			listOfURLs.push(pixano_local_save_image_directory +'/10.png');
+		}
+
+		console.info("Minio: got "+listOfURLs.length+" images over "+listIds.length+" in the input list");
+
+		return listOfURLs;
 	}
 	// Instantiate the minio client with the endpoint
 	// and access keys as shown below.
@@ -49,15 +85,12 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 		secretKey: CONFIG.minio.secretKey
 	});
 
-	const pixano_local_save_image_directory = workspace+'/minio_saved_images/'+'importedFromKafka/'+selection_name+'/';//... TODO
-
 	// check if bucket exists/can be accessed
 	var exists = await minioClient.bucketExists(CONFIG.minio.bucket_name).catch((e) => {throw "Minio: Bucket does not exist\n"+e;});
 	if (!exists) throw "Minio: Bucket does not exist";
 	console.log('Bucket exists.')
 
 	// Extract the list of image from the bucket
-	var listOfURLs = [];
 	var data = [];
 	var doneData = 0;
 	var stream = minioClient.listObjects(CONFIG.minio.bucket_name, '', true);
@@ -83,7 +116,7 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 					//Download image in current directory//... TODO : use web links when available
 					minioClient.fGetObject(CONFIG.minio.bucket_name, obj.name, pixano_local_save_image_directory + obj.name, function (e) {
 						if (e) throw(e);
-						console.log('append:',pixano_local_save_image_directory + obj.name);
+						console.info('append:',pixano_local_save_image_directory + obj.name);
 						listOfURLs.push(pixano_local_save_image_directory + obj.name);
 						doneData++;
 					});

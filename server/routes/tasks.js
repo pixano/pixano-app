@@ -112,6 +112,7 @@ async function import_tasks_from_kafka(req, res) {
 		const spec = await getOrcreateSpec(task.spec);
 		const name = kafkaSelection.selection_name;
 		task.dataset.date = kafkaSelection.date;
+		task.dataset.path += '/'+kafkaSelection.selection_name;
 		try {
 			await db.get(dbkeys.keyForTask(name));
 			return res.status(400).json({message: 'Taskname already existing'});
