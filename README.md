@@ -63,7 +63,7 @@ pixano ./data-test --port 3001
 
 #### Install global dependencies
 
-- NodeJS (>=12)
+- NodeJS (10, 12 or 14)
 	To install on ubuntu:
 
 ```bash
@@ -78,6 +78,8 @@ nodejs --version
 npm install -g npm@6.10.0
 ```
 	You can read this nice [introduction](https://codeburst.io/the-only-nodejs-introduction-youll-ever-need-d969a47ef219) to NodeJS in case you're curious on how it works.
+	
+> ATTENTION: node version 16 is not compatible for now
 
 #### Install application dependencies
 
@@ -187,10 +189,13 @@ The `task1.json` file contains global task settings (task type, task categories,
 
 ### Build docker from sources
 
-To create a docker image of the application, build the application (step 1.b) and then run:
+To create a docker image of the application, you can use the standard docker command:
 ```bash
 # You can change `pixano` by your choosen image name
 sudo docker build -t pixano/pixano-app:my-tag .
+```
+If you used a local pixano-element, build the application (step 1.b) and then run:
+```bash
 # You can use the local Dockerfile if the build folder already exists
 sudo docker build -t pixano/pixano-app:my-tag -f Dockerfile-local .
 ```

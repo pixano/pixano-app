@@ -10,6 +10,7 @@
   },
   "scripts": {
     "deps": "rm -f package-lock.json && npm i && cd frontend && rm -f package-lock.json && npm i",
+    "clearall": "rm -rf node_modules/ package-lock.json frontend/node_modules/ frontend/package-lock.json",
     "build": "cd frontend && npm run build",
     "elise_clone": "mkdir -p ELISE && cd ELISE && git clone ssh://git@is154588.intra.cea.fr:10122/hleborgne/elise.git && git clone ssh://git@is154588.intra.cea.fr:10122/hleborgne/fastsearch.git && git clone ssh://git@is154588.intra.cea.fr:10122/hleborgne/juliet.git",
     "installLocalElements": "cd frontend && npm run installLocalElements"
