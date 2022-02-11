@@ -10,6 +10,7 @@
   },
   "scripts": {
     "deps": "rm -f package-lock.json && npm i && cd frontend && rm -f package-lock.json && npm i",
+    "clearall": "rm -rf node_modules/ package-lock.json frontend/node_modules/ frontend/package-lock.json",
     "build": "cd frontend && npm run build",
     "installLocalElements": "cd frontend && npm run installLocalElements"
   },
