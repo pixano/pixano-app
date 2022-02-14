@@ -41,6 +41,7 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
     this.imagesPerAtlas = imagesPerAtlas;
     this.canvas = this.shadowRoot.querySelector("#frame");
     this.sizeCanvas();
+    document.addEventListener("keyup", this.onKeyUp.bind(this));
     this.dispatchEvent(new Event("ready"));
   }
 
@@ -69,7 +70,6 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
         ...this.shortcuts.map(({ key, label }) => [key, label]),
       ])
     );
-    document.addEventListener("keyup", this.onKeyUp.bind(this));
     this.attributePicker.shadowRoot
       .querySelectorAll(".category")
       .forEach((el) =>
@@ -78,7 +78,7 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
 
     const atlasPath = getState().media.info.path;
     this.atlas.src = atlasPath;
-    this.atlas.addEventListener("load", async () => {
+    this.atlas.addEventListener("load", () => {
       this.sizeCanvas();
       this.draw();
       this.unsubscriber = store.subscribe(() => {
@@ -98,7 +98,7 @@ export class PluginLabelsAtlas extends TemplatePluginInstance {
 
   disconnectedCallback() {
     this.unsubscriber();
-    document.removeEventListener("keyup", this.onKeyUp);
+    document.removeEventListener("keyup", this.onKeyUp.bind(this));
     this.attributePicker.shadowRoot
       .querySelectorAll(".category")
       .forEach((el) => el.removeEventListener("click", this.onCategoryClick));
