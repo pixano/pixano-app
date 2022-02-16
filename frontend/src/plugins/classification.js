@@ -24,6 +24,7 @@ export class PluginClassification extends TemplatePlugin {
 
 	refresh() {
 		if (!this.element) return;
+		this.attributePicker.showDetail = true;// exception for classification: always show details
 		if (this.annotations.length===0) this.attributePicker.setAttributes(this.attributePicker.defaultValue);// initialize to default
 		else {
 			this.element.annotations = JSON.parse(JSON.stringify(this.annotations));
@@ -44,7 +45,7 @@ export class PluginClassification extends TemplatePlugin {
 	 * Implement property panel content, details always visible
 	 */
 	get propertyPanel() {
-		return html`<attribute-picker ?showDetail=true @update=${this.onAttributeChanged}></attribute-picker>`
+		return html`<attribute-picker @update=${this.onAttributeChanged}></attribute-picker>`
 	}
 
 	get editor() {

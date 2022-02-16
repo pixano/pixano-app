@@ -92,9 +92,15 @@ If you want to use custom `pixano-element` modules from local path instead of th
 
 ```bash
 # Install application dependencies and local pixano-elements
-npm run installLocalElements --path=../../pixano-elements
+npm run installLocalElements --path=$PIXANO_ELEMENTS_PATH
 ```
 *NB: Make sure you have the git repository of pixano-elements next to the pixano-app folder and that you have followed the pixano-elements build instructions before running the above commands.*
+
+If this command breaks your local pixano-elements demo, this command will repear it:
+```bash
+cd $PIXANO_ELEMENTS_PATH
+npm run bootstrap
+```
 
 #### Build the application
 

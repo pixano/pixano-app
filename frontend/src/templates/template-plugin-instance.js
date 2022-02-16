@@ -127,7 +127,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    */
   get propertyPanel() {
     return html`
-        <attribute-picker ?showDetail=${this.selectedIds.length === 0}
+        <attribute-picker ?showDetail=${this.selectedIds.length}
                             @update=${this.onAttributeChanged}></attribute-picker>
     `
   }
