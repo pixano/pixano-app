@@ -99,8 +99,10 @@ export const defaultLabelValues = (pluginName) => {
 		case 'classification':
 			return {
 				category: [
+                    { name: 'class1', color: "blue", properties: [] },
+                    { name: 'class2', color: "#eca0a0", properties: [] },
 					{
-						name: 'classification', color: "black", properties: [
+						name: 'class3', color: "black", properties: [
 							{ name: 'checkbox example', type: 'checkbox', default: false },
 							{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
 							{ name: 'textfield example', type: 'textfield', default: 'some text' }

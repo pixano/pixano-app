@@ -348,6 +348,7 @@ async function export_tasks(req, res) {
 
 		const streamTask = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
 		for await (const task of streamTask) {
+            console.log("task=",task);
 			const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
 			delete spec.id;
 			const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
@@ -365,24 +366,25 @@ async function export_tasks(req, res) {
 					});
 				}
 			} else {//export to destination URL
-				var err = '';
-				await fetch(req.body.url+`/${task.name}.json`, {
-					method: 'post',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify( taskJson )
-				})// send POST request
-				.then(res => {
-					if (res.statusText=='OK') return res.json();
-					else console.log("KO :\n",res);
-				})
-				.then(res => { console.log(res);
-				}).catch((e) => { err = e; });
-				if (err) {
-					return res.status(400).json({
-						error: 'cannot_write',
-						message: `Cannot write json file '${task.name}.json'.\n\nERROR while calling ELASTIC:${err}`
-					});
-				}
+                /// TODO: the task is not exported in Confiance
+				// var err = '';
+				// await fetch(req.body.url+`/_doc`, {
+				// 	method: 'post',
+				// 	headers: { 'Content-Type': 'application/json' },
+				// 	body: JSON.stringify( taskJson )
+				// })// send POST request
+				// .then(res => {
+				// 	if (res.statusText=='OK') return res.json();
+				// 	else console.log("KO :\n",res);
+				// })
+				// .then(res => { console.log(res);
+				// }).catch((e) => { err = e; });
+				// if (err) {
+				// 	return res.status(400).json({
+				// 		error: 'cannot_write',
+				// 		message: `Cannot write json file '${task.name}.json'.\n\nERROR while calling ELASTIC:${err}`
+				// 	});
+				// }
 			}
 
 			if (req.body.path) {
@@ -415,7 +417,6 @@ async function export_tasks(req, res) {
 				const filename = utils.pathToFilename(path);
 
 				const labelsJson = { ...labels, data };
-				delete labelsJson.data_id;
 
 				// EXPORT task json
 				if (req.body.path) {//export to local file system
@@ -428,16 +429,17 @@ async function export_tasks(req, res) {
 					}
 				} else {//export to destination URL
 					var err = '';
-					await fetch(req.body.url+`/${task.name}/${filename}.json`, {
+					await fetch(req.body.url+`/_doc`, {
 						method: 'post',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify( labelsJson )
 					})// send POST request
 					.then(res => {
-						if (res.statusText=='OK') return res.json();
-						else console.log("KO :\n",res);
-					})
-					.then(res => { console.log(res);
+						if (res.statusText=='OK') return res.json();//TODO: le catch n'est pas bon : on n'a pas le retour d'erreur => ok ?
+						else {
+                            console.log("KO :\n",res);
+                            console.log("string=",JSON.stringify( labelsJson ));//TODO: à cause des à la ligne ? à cause des \" à mettre à la place des " ? => commencer par ajouter des petits tests avec des lignes fakes comme j'ai fait pour curl
+                        }
 					}).catch((e) => { err = e; });
 					if (err) {
 						return res.status(400).json({

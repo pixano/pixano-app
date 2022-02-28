@@ -24,19 +24,23 @@ const getSelectionFromKafka = async () => {
 		return { sample_ids: sample_ids, project_name: project_name, selection_name: selection_name, date: date };
 	}
 	// Topic kafka : selection
-	// Exemple de message envoyé :
+	// FORMAT:
 	// {
-	//   "origine": "DEBIAI",
-	//   "project_name": "Conf-ia renault welding 4.1 Josquin",
-	//   "selection_name": "FP",
-	//   "date": 1636472282.113034,
-	//   "sample_ids": [
-	//      "labeled/c27-2/190513-1613_2752766_ - C27/",
-	//      "labeled/c27-2/190522-1642_2776102_ - C27/",
-	//      "labeled/c27-2/140319-0540_2658484_ - C27_2/",
-	//      "labeled/c27-2/190428-2241_2728102_ - C27/",
-	//      ...
-	//    ]
+	//	"origine": "DEBIAI", 
+	//	"project_name": "Renault welding 4.1", 
+	//	"selection_name": "for_pixano", 
+	//	"date": 1639664706.857575, 
+	//	"sample_ids": [ 
+	//		{
+	//			"dataset": "not_labeled",                 
+	//			"subject": "c34", 
+	//			"relative_path": "not_labeled/c34/", 
+	//			"url": "", 
+	//			"type": "image" 
+	//			"id": "191003-2237_2953236_ - C101_OK.jpgImage" 
+	//		}, 
+	//		... 
+	//	]
 	// }
 
 	// 1) initialisation

@@ -87,19 +87,19 @@ node server/server.js /mlops/pixdata/
 # s'assurer que le code est bien construit
 npm run build
 # lancer la construction
-sudo docker build -t pixano/pixano-app:confiance-v1.3 -f Dockerfile-local .
+sudo docker build -t pixano/pixano-app:confiance-v1.4 -f Dockerfile-local .
 # tester le bon fonctionnement (pas de volumes dans confiance)
-sudo docker run -it --rm -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance-v1.3
+sudo docker run -it --rm -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance-v1.4
 # le cas échéant en faire une sauvegarde locale
-sudo docker save -o /data/pixano-confiance-v1.3.tar pixano/pixano-app:confiance-v1.3
+sudo docker save -o /data/pixano-confiance-v1.4.tar pixano/pixano-app:confiance-v1.4
 ```
 ### pousser sur dockerhub
 ```
 # si l'image venait d'ailleurs, commencer par la charger
 sudo docker load -i /data/pixano-confiance.tar
 # modifier le tag et pousser
-sudo docker tag pixano/pixano-app:confiance-v1.3 pixano/pixano-dev:confiance-v1.3
-sudo docker push pixano/pixano-dev:confiance-v1.3
+sudo docker tag pixano/pixano-app:confiance-v1.4 pixano/pixano-dev:confiance-v1.4
+sudo docker push pixano/pixano-dev:confiance-v1.4
 ```
 ### connexion
 ```
@@ -109,7 +109,7 @@ k login
 ### importer l'image sur kubernetes et la lancer (sans déploiement, pour test)
 ```
 # création du pod :
-k run pixano-v1-2 -n ec5-dev --image pixano/pixano-dev:confiance-v1.3
+k run pixano-v1-2 -n ec5-dev --image pixano/pixano-dev:confiance-v1.4
 # vérification (au départ, il faut le temps qu'il télécharge l'image depuis dockerhub) :
 k get pods
 # en cas de problème, on peut avoir plus de détails

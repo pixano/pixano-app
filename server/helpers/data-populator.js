@@ -61,6 +61,8 @@ async function sequence_pcl_image(db, mediaRelativePath, hostWorkspacePath, data
  * @param {string} mediaRelativePath 
  * @param {string} hostWorkspacePath 
  * @param {string} datasetId 
+ * @param {Array} urlList: a list of urls to be loaded (instead of a full directory through mediaRelativePath)
+ *                      OR a list of {url,id} to be loaded (instead of a full directory through mediaRelativePath), this method assigns an id to each url
  */
 async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
@@ -78,9 +80,9 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 	});
 	bar1.start(total, 0);
 	for await (const files of Object.values(folders)) {
-		for await (const f of files) {
-			const id = generateKey();
-			const url = f;
+		for await (const fi of files) {
+      const id = fi.id ? fi.id : generateKey();//if ids are given or generated
+      const url = fi.url ? fi.url : fi;// only used when urlList is given as input in combination with ids
 			let value = { id, dataset_id: datasetId, type: dataType, path: url, children: '' };
 			if (dataType=='image') {
 				// compute a thumbnail for this image
@@ -117,9 +119,11 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 /**
  * Populate elementary data entries (image, pcl)
  * @param {Level} db 
- * @param {string} mediaRelativePath 
+ * @param {string} mediaRelativePath: full directory to be loaded (not used if urlList is present)
  * @param {string} hostWorkspacePath 
  * @param {string} datasetId 
+ * @param {Array} urlList: a list of urls to be loaded (instead of a full directory through mediaRelativePath)
+ *                      OR a list of {url,id} to be loaded (instead of a full directory through mediaRelativePath), this method assigns an id to each url
  */
 async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
@@ -139,8 +143,10 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
   });
   bar1.start(total, 0);
   for await (const files of Object.values(folders)) {
-    for await (const f of files) {
-      const id = generateKey();
+    console.log("files=",files);
+    for await (const fi of files) {
+      const id = fi.id ? fi.id : generateKey();//if ids are given or generated
+      const f = fi.url ? fi.url : fi;// only used when urlList is given as input in combination with ids
       const url = workspaceToMount(hostWorkspacePath, f);
       let value = { id, dataset_id: datasetId, type: dataType, path: url, children: ''};
       if (dataType=='image') {
