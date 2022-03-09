@@ -25,8 +25,10 @@ export class PluginClassification extends TemplatePlugin {
 	refresh() {
 		if (!this.element) return;
 		this.attributePicker.showDetail = true;// exception for classification: always show details
-		if (this.annotations.length===0) this.attributePicker.setAttributes(this.attributePicker.defaultValue);// initialize to default
-		else {
+		if (this.annotations.length===0) {// initialize to default
+			this.attributePicker.setAttributes(this.attributePicker.defaultValue);
+			store.dispatch(setAnnotations({annotations: [this.attributePicker.value]}));//Save current state to redux database (to keep history)
+		} else {
 			this.element.annotations = JSON.parse(JSON.stringify(this.annotations));
 			this.attributePicker.setAttributes(this.element.annotations[0]);
 		}
