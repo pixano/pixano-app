@@ -468,7 +468,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 											this.pathOrURL = 'Path';
 											break;
 										case 1://URL
-											this.default_path = "http://elasticsearch-coordinating-only:9200/pixano_export_data/";
+											this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/";
 											this.pathOrURL = 'URL';
 											break;
 									}
