@@ -3,7 +3,7 @@ var CONFIG = require('../../exconf.json');
 var num = 1;// TODO: temporary, only used for fake kafka
 /**
  * Get list of ids to be loaded, from KAFKA
- * @return ["id1","id2",...]: returns the list of selected ids
+ * @return { sample_ids: {...}, project_name: '', selection_name: '', date: '' }: returns the list of selected ids
  * @doc https://kafka.js.org/docs/getting-started
  */
 const getSelectionFromKafka = async () => {
@@ -60,7 +60,7 @@ const getSelectionFromKafka = async () => {
 	
 	var resolveOnConsumption = () => { console.log("resolveOnConsumption"); };
 	var consumePromise = new Promise((resolve, reject) => { resolveOnConsumption = resolve });
-	const timeoutms = 10000;
+	const timeoutms = 5000;
 	var timeOutPromise = new Promise((resolve, reject) => { setTimeout(reject,timeoutms) }); 
 	
 	kafkaConsumer.run({

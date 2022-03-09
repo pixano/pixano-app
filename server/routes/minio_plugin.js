@@ -97,9 +97,9 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 	stream.on('data', function (obj) { data.push(obj); });
 	stream.on('end', function () {
 		if (data.length===0) throw "Minio: no data found in bucket "+CONFIG.minio.bucket_name;
-		for (var i=0; i<data.length; i++) {//search for urls that correspond to the input list and get them
-		//data.forEach(obj => {//search for urls that correspond to the input list and get them
-			const obj = data[i];
+		//for (var i=0; i<data.length; i++) {//search for urls that correspond to the input list and get them
+		data.forEach(obj => {//search for urls that correspond to the input list and get them
+			//const obj = data[i];
 			console.log(obj);
 			if ('name' in obj) {
 				console.log("name in obj");
@@ -115,12 +115,13 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 				//			"id": "191003-2237_2953236_ - C101_OK.jpgImage" 
 				//		}, ... ]
 				var sample;
-				for (var i=0; i<=listIds.length ; i++) {
+				for (var i=0; i<listIds.length ; i++) {
 					sample = listIds[i];
-					console.log("sample=",sample);
-					console.log("sample.id.replace('.jpgImage', '.jpg')=",sample.id.replace('.jpgImage', '.jpg'));
+					if (!sample.id) throw(e);
+					// console.log("sample=",sample);
+					// console.log("sample.id.replace('.jpgImage', '.jpg')=",sample.id.replace('.jpgImage', '.jpg'));
 					if (obj.name.includes(sample.id.replace('.jpgImage', '.jpg'))) {
-						console.log("obj.name includes sample",obj.name);
+						console.log(`obj.name ${obj.name} includes sample ${sample}`);
 						corresponding=true;
 						break;
 					}
@@ -136,8 +137,8 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 					});
 				} else doneData++;
 			} else doneData++;
-		}
-	});
+		});//throw errors further
+	});//throw errors further
 	
 	console.log("waitFor",doneData,data.length);
 	await waitFor(() => { console.log("test",doneData,data.length); if (data.length>0) return(doneData === data.length); });

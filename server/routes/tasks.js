@@ -100,12 +100,8 @@ async function import_tasks_from_kafka(req, res) {
 		var kafkaSelection = await getSelectionFromKafka().catch((e) => {
 			console.error();
 			res.status(404).json({ message: 'Error in Kafka import\n'+e });
-			return;
 		});
-		if (!kafkaSelection.sample_ids.length===0) {
-			res.status(404).json({ message: 'Error in Kafka import\n'+e });
-			return;// if kafka failed, nothing else to do
-		}
+		if ((!kafkaSelection) || (!kafkaSelection.sample_ids.length===0)) return;// if kafka failed, nothing else to do
 		console.log("kafkaSelection=",kafkaSelection);
 		console.log('##### Create a new task');
 		const task = req.body;
@@ -123,7 +119,6 @@ async function import_tasks_from_kafka(req, res) {
 		task.dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name).catch((e) => {
 			console.error();
 			res.status(404).json({ message: 'Error in Minio import\n'+e });
-			return;
 		});
 		if (!task.dataset.urlList) return;// if minio failed, nothing else to do
 		console.log('# 1.2) getImagesFromPath');
