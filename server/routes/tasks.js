@@ -368,7 +368,8 @@ async function export_tasks(req, res) {
 			} else {//export to destination URL
                 /// TODO: the task is not exported in Confiance
 				// var err = '';
-				// await fetch(req.body.url+`/_doc`, {
+                // const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
+				// await fetch(url+`/_doc`, {
 				// 	method: 'post',
 				// 	headers: { 'Content-Type': 'application/json' },
 				// 	body: JSON.stringify( taskJson )
@@ -429,22 +430,21 @@ async function export_tasks(req, res) {
 					}
 				} else {//export to destination URL
 					var err = '';
-					await fetch(req.body.url+`/_doc`, {
+					console.log("string=",JSON.stringify( labelsJson ));
+                    const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
+					await fetch(url, {
 						method: 'post',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify( labelsJson )
 					})// send POST request
 					.then(res => {
-						if (res.statusText=='OK') return res.json();//TODO: le catch n'est pas bon : on n'a pas le retour d'erreur => ok ?
-						else {
-                            console.log("KO :\n",res);
-                            console.log("string=",JSON.stringify( labelsJson ));//TODO: à cause des à la ligne ? à cause des \" à mettre à la place des " ? => commencer par ajouter des petits tests avec des lignes fakes comme j'ai fait pour curl
-                        }
+						if (res.ok) return res.json();
+						else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
 					}).catch((e) => { err = e; });
 					if (err) {
 						return res.status(400).json({
 							error: 'cannot_write',
-							message: `Cannot write json file '${task.name}/${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
+							message: `Cannot write json file '${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
 						});
 					}
 				}

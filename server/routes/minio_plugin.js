@@ -111,14 +111,16 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 				//			"subject": "c34", 
 				//			"relative_path": "not_labeled/c34/", 
 				//			"url": "", 
-				//			"type": "image" 
+				//			"type": "image",
 				//			"id": "191003-2237_2953236_ - C101_OK.jpgImage" 
 				//		}, ... ]
 				var sample;
 				for (var i=0; i<=listIds.length ; i++) {
 					sample = listIds[i];
 					console.log("sample=",sample);
-					if (obj.name.includes(id.replace('.jpgImage', '.jpg'))) {
+					console.log("sample.id.replace('.jpgImage', '.jpg')=",sample.id.replace('.jpgImage', '.jpg'));
+					if (obj.name.includes(sample.id.replace('.jpgImage', '.jpg'))) {
+						console.log("obj.name includes sample",obj.name);
 						corresponding=true;
 						break;
 					}
