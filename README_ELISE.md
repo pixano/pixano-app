@@ -46,7 +46,7 @@ mkdir -p $ELISE_EXTERNALS/data/idx/
 ## launch the service
 ### via a Docker image
 ```
-sudo docker run -it --rm -v "$PWD":/data -v /home/bburger/CEA/PIXANO2021/code/exconf.json:/exconf.json -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance
+sudo docker run -it --rm -v "$PWD":/data -v /home/bburger/CEA/PIXANO2021/code/pixano_config:/config -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance
 ```
 ### via the local build  (for developpers)
 ```

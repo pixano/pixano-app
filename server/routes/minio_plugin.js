@@ -1,5 +1,5 @@
 const Minio = require('minio')
-var CONFIG = require('../../exconf.json');
+var CONFIG = require('../../config/minio.json');
 
 function waitFor(conditionFunction) {//rajouter un timeout
 	const poll = resolve => {
@@ -22,7 +22,7 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 	const pixano_local_save_image_directory = workspace+'/minio_saved_images/'+'importedFromKafka/'+selection_name+'/';//... TODO
 	var listOfURLs = [];
 
-	if (JSON.parse(CONFIG.minio.fake)) {
+	if (JSON.parse(CONFIG.fake)) {
 		// // test whith a list of served urls
 		// var urlList = [
 		// 	'http://localhost:1234/video/01.png',
@@ -77,26 +77,26 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 	// Instantiate the minio client with the endpoint
 	// and access keys as shown below.
 	const minioClient = new Minio.Client({
-		endPoint: CONFIG.minio.endPoint,
-		port: CONFIG.minio.port,
-		useSSL: CONFIG.minio.useSSL,
-		accessKey: CONFIG.minio.accessKey,
-		secretKey: CONFIG.minio.secretKey
+		endPoint: CONFIG.endPoint,
+		port: CONFIG.port,
+		useSSL: CONFIG.useSSL,
+		accessKey: CONFIG.accessKey,
+		secretKey: CONFIG.secretKey
 	});
 
 	// check if bucket exists/can be accessed
-	var exists = await minioClient.bucketExists(CONFIG.minio.bucket_name).catch((e) => {throw "Minio: Bucket does not exist\n"+e;});
+	var exists = await minioClient.bucketExists(CONFIG.bucket_name).catch((e) => {throw "Minio: Bucket does not exist\n"+e;});
 	if (!exists) throw "Minio: Bucket does not exist";
 	console.log('Bucket exists.')
 
 	// Extract the list of image from the bucket
 	var data = [];
 	var doneData = 0;
-	var stream = minioClient.listObjects(CONFIG.minio.bucket_name, '', true);
+	var stream = minioClient.listObjects(CONFIG.bucket_name, '', true);
 	stream.on('error', function (e) { throw(e); });
 	stream.on('data', function (obj) { data.push(obj); });
 	stream.on('end', function () {
-		if (data.length===0) throw "Minio: no data found in bucket "+CONFIG.minio.bucket_name;
+		if (data.length===0) throw "Minio: no data found in bucket "+CONFIG.bucket_name;
 		//for (var i=0; i<data.length; i++) {//search for urls that correspond to the input list and get them
 		data.forEach(obj => {//search for urls that correspond to the input list and get them
 			//const obj = data[i];
@@ -129,7 +129,7 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 				if (corresponding) {
 					console.log("corresponding sample=",sample);
 					//Download image in current directory//... TODO : use web links when available
-					minioClient.fGetObject(CONFIG.minio.bucket_name, obj.name, pixano_local_save_image_directory + obj.name, function (e) {
+					minioClient.fGetObject(CONFIG.bucket_name, obj.name, pixano_local_save_image_directory + obj.name, function (e) {
 						if (e) throw(e);
 						console.info('append:',{url: pixano_local_save_image_directory + obj.name, id: sample.id});
 						listOfURLs.push({url: pixano_local_save_image_directory + obj.name, id: sample.id});
@@ -144,7 +144,7 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 	await waitFor(() => { console.log("test",doneData,data.length); if (data.length>0) return(doneData === data.length); });
 	console.log("listOfURLs=",listOfURLs);
 	console.info("Minio: got "+listOfURLs.length+" images over "+listIds.length+" in the input list");
-	if (listOfURLs.length===0) throw "Minio: no corresponding data found in bucket "+CONFIG.minio.bucket_name;
+	if (listOfURLs.length===0) throw "Minio: no corresponding data found in bucket "+CONFIG.bucket_name;
 
 	return listOfURLs;
 }

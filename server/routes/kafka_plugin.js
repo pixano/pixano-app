@@ -1,5 +1,5 @@
 const { Kafka } = require('kafkajs')
-var CONFIG = require('../../exconf.json');
+var CONFIG = require('../../config/kafka.json');
 var num = 1;// TODO: temporary, only used for fake kafka
 /**
  * Get list of ids to be loaded, from KAFKA
@@ -14,8 +14,8 @@ const getSelectionFromKafka = async () => {
 	var selection_name = "";
 	var date = "";
 
-	if (JSON.parse(CONFIG.kafka.fake)) {
-		sample_ids = ["labeled/c27-2/190513-1613_2752766_ - C27/", "labeled/c27-2/190522-1642_2776102_ - C27/", "labeled/c27-2/140319-0540_2658484_ - C27_2 (/", "labeled/c27-2/190428-2241_2728102_ - C27/", "labeled/c27-2/190503-1351_2738143_ - C27/", "labeled/c27-2/190527-1208_2780352_ - C27/", "labeled/c27-2/190415-0207_2706182_ - C27/", "labeled/c27-2/190404-1110_2701688_ - C27/", "labeled/c27-2/190514-0536_2763697_ - C27/", "labeled/c27-2/190513-2223_2752649_ - C27/", "labeled/c27-2/190415-0109_2706199_ - C27/", "labeled/c27-2/190514-1410_2763530_ - C27/", "labeled/c33/20201107014921-3365800_C33_OK.jpg"];
+	if (JSON.parse(CONFIG.fake)) {
+		sample_ids = [{id:"191120-0954_1597536_ - C65_OK.jpgImage"},{id:"191003-2237_6318756_ - C10_OK.jpgImage"},{id:"191003-2237_2953236_ - C101_OK.jpgImage"},{id:"191120-0954_3034415_ - C34_OK.jpgImage"}];
 		project_name = "my project";
 		if (num<=3) selection_name = num.toString();
 		else selection_name = "my selection";
@@ -45,18 +45,18 @@ const getSelectionFromKafka = async () => {
 
 	// 1) initialisation
 	const kafka = new Kafka({
-		clientId: CONFIG.kafka.clientId,
-		brokers: CONFIG.kafka.brokers,
+		clientId: CONFIG.clientId,
+		brokers: CONFIG.brokers,
 		retry: {
 			retries: 3,
 			restartOnFailure: false
 		}
 	});
-	const kafkaConsumer = kafka.consumer({ groupId: CONFIG.kafka.groupId });
+	const kafkaConsumer = kafka.consumer({ groupId: CONFIG.groupId });
 
 	// 2) get ids (with timeout)
 	await kafkaConsumer.connect().catch((e) => { throw e; });
-	await kafkaConsumer.subscribe({ topic: CONFIG.kafka.topicName, fromBeginning: true}).catch((e) => { throw e; });//fromBeginning has to be true in order to be able to get messages sent before calling this function
+	await kafkaConsumer.subscribe({ topic: CONFIG.topicName, fromBeginning: true}).catch((e) => { throw e; });//fromBeginning has to be true in order to be able to get messages sent before calling this function
 	
 	var resolveOnConsumption = () => { console.log("resolveOnConsumption"); };
 	var consumePromise = new Promise((resolve, reject) => { resolveOnConsumption = resolve });

@@ -1,0 +1,7 @@
+{
+	"fake": false,
+	"clientId": "PIXANO",
+	"brokers": ["kafka.ec5-dev.svc.cluster.local:9092"],
+	"groupId": "confiance-group",
+	"topicName": "selection"
+}

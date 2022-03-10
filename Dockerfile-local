@@ -49,11 +49,12 @@ COPY .logo-ascii .logo-ascii
 EXPOSE 3000
 
 # clean the image
-RUN rm -rf ELISE/elise/repository.db ELISE/Elise_sqlite/ ELISE/elise_ext/data/idx/*
+RUN rm -rf $ELISE_BASE/elise/repository.db $ELISE_BASE/Elise_sqlite/ $ELISE_BASE/elise_ext/data/idx/*
+RUN rm -rf $ELISE_BASE/elasticlient $ELISE_BASE/fastsearch $ELISE_BASE/juliet
 
 # default files and folders (usefull when no volume can be mounted with this image)
+COPY config config
 RUN mkdir -p /data
-COPY exconf.json /exconf.json
 COPY data-test /data/data-test
 
 # ENTRYPOINT ["node", "server/server.js"]
