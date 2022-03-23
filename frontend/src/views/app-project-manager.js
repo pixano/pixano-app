@@ -116,7 +116,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	 */
 	onImportFromKafka() {// ... TODO : get back from 'image' to 'remote_image' when minio will work without local copy
 		// create a new task squeleton to be populated
-		const plugin_name = 'classification';
+		const plugin_name = 'classification';//default task is classification
 		const task = {
 			name : 'importedFromKafka',
 			spec: {
@@ -450,6 +450,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
   }
 
 	get pageContent() {
+    const t = this.tasks[this.taskIdx];
+    const pluginName = t ? t.spec.plugin_name : '';
 		return html`
 			<div id="project-page">
 				${this.taskSection}
@@ -468,7 +470,9 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 											this.pathOrURL = 'Path';
 											break;
 										case 1://URL
-											this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/";
+											if (pluginName==='classification') this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/";
+                      else if (pluginName==='smart-rectangle') this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v4_valeo_test/";
+                      else this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/";
 											this.pathOrURL = 'URL';
 											break;
 									}

@@ -111,17 +111,11 @@ export const defaultLabelValues = (pluginName) => {
         default:
             return {
 					category: [
-						{ name: 'class1', color: "blue", properties: [] },
-						{ name: 'class2', color: "#eca0a0", properties: [] },
-						{
-							name: 'class3', color: "green", properties: [
-								{ name: 'checkbox example', type: 'checkbox', default: false },
-								{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
-								{ name: 'textfield example', type: 'textfield', default: 'some text' }
-							]
-						}
+						{ name: 'car', color: "blue", properties: [ { name: 'occluded', type: 'checkbox', default: false } ] },
+						{ name: 'bus', color: "#eca0a0", properties: [ { name: 'occluded', type: 'checkbox', default: false } ] },
+						{ name: 'truck', color: "green", properties: [ { name: 'occluded', type: 'checkbox', default: false } ] }
 					],
-					default: 'class1'
+					default: 'car'
 				};
     }
 }

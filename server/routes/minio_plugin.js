@@ -100,9 +100,9 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 		//for (var i=0; i<data.length; i++) {//search for urls that correspond to the input list and get them
 		data.forEach(obj => {//search for urls that correspond to the input list and get them
 			//const obj = data[i];
-			console.log(obj);
+			// console.log(obj);
 			if ('name' in obj) {
-				console.log("name in obj");
+				// console.log("name in obj");
 				var corresponding = false;
 				// FORMAT of sample_ids :
 				//	"sample_ids": [ 

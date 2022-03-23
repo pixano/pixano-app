@@ -105,6 +105,11 @@ async function import_tasks_from_kafka(req, res) {
 		console.log("kafkaSelection=",kafkaSelection);
 		console.log('##### Create a new task');
 		const task = req.body;
+        if (kafkaSelection.project_name==='ARGHAFAIRE') {// special case : change default plugin
+            task.spec.plugin_name = 'smart-rectangle';
+            task.spec.label_schema = defaultLabelValues(task.spec.plugin_name);
+            task.spec.settings = defaultSettings(task.spec.plugin_name);
+        }
 		const spec = await getOrcreateSpec(task.spec);
 		const name = kafkaSelection.selection_name;
 		task.dataset.date = kafkaSelection.date;
@@ -425,62 +430,126 @@ async function export_tasks(req, res) {
 					}
 				} else {//export to destination URL
 					var err = '';
-					console.log("labelsJson=",JSON.stringify( labelsJson ));
+					console.log("labelsJson=",labelsJson);
                     const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
 
-                    // CONFIANCE specific: adapt Body to temporary
-                    // real data:
-                    // {
-                    //     "task_name": "1",
-                    //     "data_id": "01.png",
-                    //     "annotations": [
-                    //         {
-                    //         "category": "class1",
-                    //         "options": {}
-                    //         }
-                    //     ],
-                    //     "data": {
-                    //         "type": "image",
-                    //         "path": "minio_saved_images/importedFromKafka/1/01.png",
-                    //         "children": ""
-                    //     }
-                    // }
-                    // wanted output:
-                    // {
-                    //     "id_data": "01.png",
-                    //     "value": {
-                    //         "value": true,
-                    //         "name": "blurred"
-                    //     },
-                    //     "actorId": "pixano_annotator1",
-                    //     "atorType": "annotator"
-                    // }
-                    var isBlurred = false;
-                    if (labelsJson.annotations.length) {
-                        if (labelsJson.annotations[0].category === 'blurred') isBlurred = true;
-                    };
-                    const labelsJson_confiance = {
-                        id_data: labelsJson.data_id,
-                        value: {
-                            value: isBlurred,
-                            name: 'blurred'
-                        },
-                        actorId: 'pixano_annotator1',
-                        atorType: 'annotator'
-                    };
-					console.log("labelsJson_confiance=",JSON.stringify( labelsJson_confiance ));
-                    // CONFIANCE: recompose url in order to use the same identifier then in elastic (enabling versionning)
-                    //     Exemple : PUT https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/_doc/190923-1805_2934305_ - C101_OK.jpgImage blurred totoPixano/
-                    //     data.id: 190923-1805_2934305_ - C101_OK.jpgImage
-                    //     state.name: Blurred
-                    //     annotation.actorId: totoPixano
-                    const url_confiance = url + '/' + labelsJson_confiance.id_data + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
-                    console.log("url_confiance=",url_confiance);
+                    console.log("spec.plugin_name=",spec.plugin_name);
+                    if (spec.plugin_name==='classification') {// CONFIANCE specific: adapt Body to temporary
+                        // real data:
+                        // {
+                        //     "task_name": "1",
+                        //     "data_id": "01.png",
+                        //     "annotations": [
+                        //         {
+                        //         "category": "class1",
+                        //         "options": {}
+                        //         }
+                        //     ],
+                        //     "data": {
+                        //         "type": "image",
+                        //         "path": "minio_saved_images/importedFromKafka/1/01.png",
+                        //         "children": ""
+                        //     }
+                        // }
+                        // wanted output:
+                        // {
+                        //     "id_data": "01.png",
+                        //     "value": {
+                        //         "value": true,
+                        //         "name": "blurred"
+                        //     },
+                        //     "actorId": "pixano_annotator1",
+                        //     "atorType": "annotator"
+                        // }
+                        var isBlurred = false;
+                        if (labelsJson.annotations.length) {
+                            if (labelsJson.annotations[0].category === 'blurred') isBlurred = true;
+                        };
+                        const labelsJson_confiance = {
+                            id_data: labelsJson.data_id,
+                            value: {
+                                value: isBlurred,
+                                name: 'blurred'
+                            },
+                            actorId: 'pixano_annotator1',
+                            atorType: 'annotator'
+                        };
+                        console.log("labelsJson_confiance=",JSON.stringify( labelsJson_confiance ));
+                        // CONFIANCE: recompose url in order to use the same identifier then in elastic (enabling versionning)
+                        //     Exemple : PUT https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/_doc/190923-1805_2934305_ - C101_OK.jpgImage blurred totoPixano/
+                        //     data.id: 190923-1805_2934305_ - C101_OK.jpgImage
+                        //     state.name: Blurred
+                        //     annotation.actorId: totoPixano
+                        const url_confiance = url + '/' + labelsJson_confiance.id_data + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
+                        console.log("url_confiance=",url_confiance);
+                        url = url_confiance;
+                        labelsJson = labelsJson_confiance;
+                    } else if (spec.plugin_name==='smart-rectangle') {// CONFIANCE specific: adapt Body to temporary and publish separately each annotation
+                        // wanted output:
+                        // {
+                        //     "id_data": "Nom_image0.zve5sdgj9hfImage",
+                        //     "value": {
+                        //         "value": {
+                        //             "geometry": {
+                        //                 "vertices": [
+                        //                     0.4166666666666667,
+                        //                     0.5740740740740741,
+                        //                     0.503125,
+                        //                     0.6944444444444444
+                        //                 ],
+                        //                 "type": "rectangle"
+                        //             },
+                        //             "category": "class3"
+                        //         },
+                        //         "name": "detection"
+                        //     },
+                        //     "actorId": "pixano_annotator1",
+                        //     "atorType": "Annotator"
+                        // }
+                        console.log("labelsJson.annotations=",labelsJson.annotations);
+                        for (const annotation of labelsJson.annotations) {
+                            const labelsJson_confiance = {
+                                id_data: labelsJson.data_id+annotation.id+'Image',
+                                value: {
+                                    value: annotation,
+                                    name: 'detection'
+                                },
+                                actorId: 'pixano_annotator1',
+                                atorType: 'annotator'
+                            };
+                            console.log("labelsJson_confiance=",JSON.stringify( labelsJson_confiance ));
+                            // CONFIANCE: recompose url in order to use the same identifier then in elastic (enabling versionning)
+                            //     Exemple : PUT https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v4_valeo_test/_doc/Nom_image0.zve5sdgj9hfImage detection pixano_annotator1/
+                            //     data.id: Nom_image0.zve5sdgj9hfImage
+                            //     state.name: detection
+                            //     annotation.actorId: pixano_annotator1
+                            const url_confiance = url + '/' + labelsJson_confiance.id_data + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
+                            console.log("url_confiance=",url_confiance);
+                            // CONFIANCE: exception, publish separately each annotation
+                            await fetch(url_confiance, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify( labelsJson_confiance )
+                            })// send POST request
+                            .then(res => {
+                                if (res.ok) return res.json();
+                                else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+                            }).catch((e) => { err += e; });
+                            if (err) console.log(`Could not write annotation ${annotation.id}`);
+                        }
+                        if (err) {
+                            return res.status(400).json({
+                                error: 'cannot_write',
+                                message: `Cannot write json file '${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
+                            });
+                        }
+                        continue;//we already published the annotations
+                    }
 
-					await fetch(url_confiance, {
+					await fetch(url, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify( labelsJson_confiance )
+						body: JSON.stringify( labelsJson )
 					})// send POST request
 					.then(res => {
 						if (res.ok) return res.json();

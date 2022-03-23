@@ -342,8 +342,8 @@ export const snapshotProject = () => {
  * @param {Boolean} isURL if the destination is an URL instead of a local path
  */
 export const exportTasks = (path, isURL) => (dispatch) => {
-	if (isURL) return POST('/api/v1/tasks/export', {url: path});
-	else return POST('/api/v1/tasks/export', {path: path});
+	if (isURL) return POST('/api/v1/tasks/export', {url: path}, dispatch);
+	else return POST('/api/v1/tasks/export', {path: path}, dispatch);
 }
 
 /**
