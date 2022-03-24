@@ -199,7 +199,7 @@ async function import_tasks(req, res) {
         //  dataset: { path: string, data_type: string }
         // }
         const importedTasks = [];
-        for await (const jsonf of taskJsonFiles) {
+        for await (const jsonf of taskJsonFiles) {
             const taskData = utils.readJSON(path.join(importPath, jsonf));
 			let version = taskData.version;
 			// check annotation format version
@@ -246,7 +246,7 @@ async function import_tasks(req, res) {
             //    annotations: any[],
             //    data: { type: string, path: string | string[], children: array<{path, timestamp}>}
             // }
-            for await (const jsonFile of annJsonFiles) {
+            for await (const jsonFile of annJsonFiles) {
                 // Create data
                 const fullPath = path.join(importPath, taskFolder, jsonFile);
                 const ann = utils.readJSON(fullPath);
@@ -289,6 +289,11 @@ async function import_tasks(req, res) {
                 };
 
                 await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels});
+				if (ann.data.status) {//if existing, get status back
+					resultData = await db.get(dbkeys.keyForResult(newTask.name, newLabels.data_id));//get the status for this data
+					resultData.status = ann.data.status;//add the status
+					await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, newLabels.data_id), value: resultData});
+				}
 
                 // Mark result as done
                 // const resultData = await db.get(dbkeys.keyForResult(newTask.name, dataId));
@@ -408,10 +413,12 @@ async function export_tasks(req, res) {
 			// Write annotations
 			const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
 			for await (const labels of streamLabels) {
+				resultData = await db.get(dbkeys.keyForResult(task.name, labels.data_id));//get the status for this data
 				const data = await getDataDetails(datasetId, labels.data_id, true);
 				delete data.id;
 				delete data.dataset_id;
 				delete data.thumbnail;
+				data.status = resultData.status;//add the status
 				let path = data.path;
 				path = Array.isArray(path) ? path[0] : path;
 				path = path.replace(dataset.path, '')
