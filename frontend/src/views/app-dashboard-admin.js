@@ -473,7 +473,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   /**
    * Display table row
-   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch | Search Similar
+   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Search Similar
    */
   listitem(item) {
     const v = this.statusMap.get(item.status);
@@ -489,8 +489,7 @@ class AppDashboardAdmin extends TemplatePage {
         <p>${item.validator}</p>
         <p>${this.assignedMap.get(item.in_progress.toString())}</p>
         <p>${format(item.cumulated_time)}</p>
-		<p><img src="data:image/jpg;base64,${item.thumbnail}" ></p>
-        <p><mwc-icon-button icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
+		<p><img src="data:image/jpg;base64,${item.thumbnail}" @click=${(evt) => this.onExplore(evt, item.data_id)}></p>
         <p><mwc-icon-button icon="search_off" @click=${() => this.onSearchSimilar(item.task_name, item.data_id)}></mwc-icon-button></p>
       </div>
     </mwc-check-list-item>
@@ -556,7 +555,6 @@ class AppDashboardAdmin extends TemplatePage {
       <div>
         <mwc-textfield label="Preview" icon="filter_list"></mwc-textfield>
       </div>
-      <div id="time-header">View</div>
       <div style="flexDirection: 'column'">
 	    Similarity Level
         <div style="display: flex; align-items: center; flexDirection: 'row'">
