@@ -105,10 +105,10 @@ async function import_tasks_from_kafka(req, res) {
 		console.log("kafkaSelection=",kafkaSelection);
 		console.log('##### Create a new task');
 		const task = req.body;
-        if (kafkaSelection.project_name==='ARGHAFAIRE') {// special case : change default plugin
+        if (kafkaSelection.project_name==='Valeo') {// special case : change default plugin
             task.spec.plugin_name = 'smart-rectangle';
-            task.spec.label_schema = defaultLabelValues(task.spec.plugin_name);
-            task.spec.settings = defaultSettings(task.spec.plugin_name);
+            // task.spec.label_schema = defaultLabelValues(task.spec.plugin_name);
+            // task.spec.settings = defaultSettings(task.spec.plugin_name);
         }
 		const spec = await getOrcreateSpec(task.spec);
 		const name = kafkaSelection.selection_name;
@@ -121,7 +121,7 @@ async function import_tasks_from_kafka(req, res) {
 
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) getPathFromIds');
-		task.dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name).catch((e) => {
+		task.dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name, kafkaSelection.project_name).catch((e) => {
 			console.error();
 			res.status(404).json({ message: 'Error in Minio import\n'+e });
 		});

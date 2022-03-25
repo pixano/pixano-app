@@ -16,7 +16,7 @@ function waitFor(conditionFunction) {//rajouter un timeout
  * @return ["url1","url2",...]: returns the list of the corresponding URLs
  * @doc https://docs.min.io/docs/javascript-client-api-reference
  */
-const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
+const downloadFilesFromMinio = async (listIds,workspace,selection_name,project_name) => {
 	console.log("downloadFilesFromMinio (",selection_name,"):",listIds);
 
 	const pixano_local_save_image_directory = workspace+'/minio_saved_images/'+'importedFromKafka/'+selection_name+'/';//... TODO
@@ -85,6 +85,7 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name) => {
 	});
 
 	// check if bucket exists/can be accessed
+	if (project_name==='Valeo') CONFIG.bucket_name = 'pixanovaleousecase';// special case : different bucket
 	var exists = await minioClient.bucketExists(CONFIG.bucket_name).catch((e) => {throw "Minio: Bucket does not exist\n"+e;});
 	if (!exists) throw "Minio: Bucket does not exist";
 	console.log('Bucket exists.')

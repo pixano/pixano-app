@@ -66,7 +66,7 @@ const getSelectionFromKafka = async () => {
 	kafkaConsumer.run({
 		eachMessage: async ({ message }) => {
 			console.log("message=",message.value.toString());
-			const val = JSON.parse(message.value.toString());
+			const val = JSON.parse(message.value.toString().split("\'").join("\""));//replace ' by " (can happen in kafka messages, not interpreted by JSON.parse)
 			sample_ids = val.sample_ids;
 			project_name = val.project_name;
 			selection_name = val.selection_name;

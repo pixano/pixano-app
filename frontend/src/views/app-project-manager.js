@@ -25,6 +25,7 @@ import '@trystan2k/fleshy-jsoneditor/fleshy-jsoneditor.js';
 import { defaultLabelValues, pluginsList, getDataType, defaultSettings } from '../plugins/index';
 
 import {
+  updateTask,
   updateTaskName,
   snapshotProject,
   exportTasks,
@@ -133,6 +134,13 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 			// update local copy of Redux
 			this.tasks = getState('application').tasks;
 			this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
+			if (newtask.plugin_name!=plugin_name) {//plugin has been changed on server side => we have to adapt specs
+				// adapt specs
+				newtask.spec.label_schema = defaultLabelValues(newtask.plugin_name);
+				newtask.spec.settings = defaultSettings(newtask.plugin_name);
+				this.updateDisplayedSettings();//change display
+				this.SaveOrCreateTask();//save changes (export to server and store in redux)
+			}
 		}).catch((error) => this.errorPopup(error.message));
 	}
 

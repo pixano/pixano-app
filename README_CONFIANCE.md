@@ -87,19 +87,19 @@ node server/server.js /mlops/pixdata/
 # s'assurer que le code est bien construit
 npm run build
 # lancer la construction
-sudo docker build -t pixano/pixano-app:confiance-v1.5 -f Dockerfile-local .
+sudo docker build -t pixano/pixano-app:confiance-v1.5.1 -f Dockerfile-local .
 # tester le bon fonctionnement (pas de volumes dans confiance)
-sudo docker run -it --rm -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance-v1.5
+sudo docker run -it --rm -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance-v1.5.1
 # le cas échéant en faire une sauvegarde locale
-sudo docker save -o /data/pixano-confiance-v1.5.tar pixano/pixano-app:confiance-v1.5
+sudo docker save -o /data/pixano-confiance-v1.5.1.tar pixano/pixano-app:confiance-v1.5.1
 ```
 ### pousser sur dockerhub
 ```
 # si l'image venait d'ailleurs, commencer par la charger
 sudo docker load -i /data/pixano-confiance.tar
 # modifier le tag et pousser
-sudo docker tag pixano/pixano-app:confiance-v1.5 pixano/pixano-dev:confiance-v1.5
-sudo docker push pixano/pixano-dev:confiance-v1.5
+sudo docker tag pixano/pixano-app:confiance-v1.5.1 pixano/pixano-dev:confiance-v1.5.1
+sudo docker push pixano/pixano-dev:confiance-v1.5.1
 ```
 ### connexion
 ```
@@ -109,13 +109,13 @@ k login
 ### importer l'image sur kubernetes et la lancer (sans déploiement, pour test)
 ```
 # création du pod :
-k run pixano-v1-5 -n ec5-dev --image pixano/pixano-dev:confiance-v1.5
+k run pixano-v1-5-1 -n ec5-dev --image pixano/pixano-dev:confiance-v1.5.1
 # vérification (au départ, il faut le temps qu'il télécharge l'image depuis dockerhub) :
 k get pods
 # en cas de problème, on peut avoir plus de détails
-k describe pod pixano-v1-5
+k describe pod pixano-v1-5-1
 # forwarder les ports pour pouvoir accéder à Pixano
-k port-forward pixano-v1-5 3012:3000 &
+k port-forward pixano-v1-5-1 3012:3000 &
 ## accès à pixano via http://localhost:3012
 
 ###... port à valider : DebiAI utilise a priori le même, d'autres peut-être aussi, on pourra éventuellement le rediriger sur un autre port du genre : 3001:3000
