@@ -107,8 +107,6 @@ async function import_tasks_from_kafka(req, res) {
 		const task = req.body;
         if (kafkaSelection.project_name==='Valeo') {// special case : change default plugin
             task.spec.plugin_name = 'smart-rectangle';
-            // task.spec.label_schema = defaultLabelValues(task.spec.plugin_name);
-            // task.spec.settings = defaultSettings(task.spec.plugin_name);
         }
 		const spec = await getOrcreateSpec(task.spec);
 		const name = kafkaSelection.selection_name;
@@ -494,7 +492,7 @@ async function export_tasks(req, res) {
                     } else if (spec.plugin_name==='smart-rectangle') {// CONFIANCE specific: adapt Body to temporary and publish separately each annotation
                         // wanted output:
                         // {
-                        //     "id_data": "Nom_image0.zve5sdgj9hfImage",
+                        //     "id_data": "Nom_imageImage",
                         //     "value": {
                         //         "value": {
                         //             "geometry": {
@@ -516,7 +514,7 @@ async function export_tasks(req, res) {
                         console.log("labelsJson.annotations=",labelsJson.annotations);
                         for (const annotation of labelsJson.annotations) {
                             const labelsJson_confiance = {
-                                id_data: labelsJson.data_id+annotation.id+'Image',
+                                id_data: labelsJson.data_id+'Image',
                                 value: {
                                     value: annotation,
                                     name: 'detection'

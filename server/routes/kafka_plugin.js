@@ -16,7 +16,8 @@ const getSelectionFromKafka = async () => {
 
 	if (JSON.parse(CONFIG.fake)) {
 		sample_ids = [{id:"191120-0954_1597536_ - C65_OK.jpgImage"},{id:"191003-2237_6318756_ - C10_OK.jpgImage"},{id:"191003-2237_2953236_ - C101_OK.jpgImage"},{id:"191120-0954_3034415_ - C34_OK.jpgImage"}];
-		project_name = "my project";
+		// project_name = "my project";
+		project_name = 'Valeo';
 		if (num<=3) selection_name = num.toString();
 		else selection_name = "my selection";
 		num++;
