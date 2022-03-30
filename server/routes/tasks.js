@@ -508,6 +508,7 @@ async function export_tasks(req, res) {
                         //         },
                         //         "name": "detection"
                         //     },
+						//     "selectionName": 'nom_selection_kafka',
                         //     "actorId": "pixano_annotator1",
                         //     "atorType": "Annotator"
                         // }
@@ -519,6 +520,7 @@ async function export_tasks(req, res) {
                                     value: annotation,
                                     name: 'detection'
                                 },
+								selectionName: task.name,
                                 actorId: 'pixano_annotator1',
                                 atorType: 'annotator'
                             };
@@ -528,7 +530,7 @@ async function export_tasks(req, res) {
                             //     data.id: Nom_image0.zve5sdgj9hfImage
                             //     state.name: detection
                             //     annotation.actorId: pixano_annotator1
-                            const url_confiance = url + '/' + labelsJson_confiance.id_data + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
+                            const url_confiance = url + '/' + labelsJson.data_id+annotation.id+'Image' + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
                             console.log("url_confiance=",url_confiance);
                             // CONFIANCE: exception, publish separately each annotation
                             await fetch(url_confiance, {
