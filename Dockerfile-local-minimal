@@ -1,0 +1,60 @@
+FROM ubuntu:20.04
+
+# Install Node.js
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update
+RUN apt-get install -y nodejs
+RUN node --version
+#RUN apt-get install -y npm
+#RUN npm --version
+#RUN npm install -g npm@6.10.0
+#RUN npm --version
+
+
+###### Élise (this image can only be created into the CEA network) (version WITH_MYSQL=NO)
+
+# prérequis
+RUN apt-get install -y libpoco-dev libopencv-dev libatlas-base-dev
+RUN apt-get install libssh2-1
+# définition des variables d'environnement
+ENV ELISE_BASE=$pwd/ELISE
+ENV ELISE_EXTERNALS=$ELISE_BASE/elise_ext
+ENV OPENCV_DIST=$ELISE_EXTERNALS
+ENV JULIET_DIST=$ELISE_EXTERNALS
+ENV OPENCV_DIST=$ELISE_EXTERNALS
+ENV ELISE_DIST=$ELISE_EXTERNALS
+ENV ELISE_CONFIG=$ELISE_BASE/elise/
+ENV LD_LIBRARY_PATH=$ELISE_DIST/lib
+# préparation / copy libs
+RUN mkdir -p $ELISE_BASE $ELISE_EXTERNALS $ELISE_CONFIG $ELISE_DIST/lib
+COPY ELISE/eliseCfg $ELISE_BASE/eliseCfg
+COPY ELISE/elise_ext/bin $ELISE_EXTERNALS/bin
+COPY ELISE/elise_ext/lib $ELISE_EXTERNALS/lib
+RUN mkdir -p $ELISE_EXTERNALS/data/idx/
+
+EXPOSE 8081
+###### fin Élise
+
+
+# Copy bundled frontend and backend dependencies
+COPY build build
+COPY node_modules node_modules
+
+# Copy files for the backend
+COPY package.json package.json
+COPY server server
+COPY .logo-ascii .logo-ascii
+
+EXPOSE 3000
+
+
+# default files and folders (usefull when no volume can be mounted with this image)
+COPY config config
+RUN mkdir -p /data
+COPY data-test /data/data-test
+
+# ENTRYPOINT ["node", "server/server.js"]
+# RUN echo 'cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh
+RUN echo 'bash -c "$ELISE_DIST/bin/run_search_server --param=$ELISE_BASE/eliseCfg/elise_search_FSF_config.xml -tSEARCHER_FSF &" && bash -c "$ELISE_DIST/bin/run_elise_server --param=$ELISE_BASE/eliseCfg/elise_server_config_sqlite.xml &" && cat .logo-ascii && node server/server.js "$@" > pixano_logs 2>&1' > entrypoint.sh
+ENTRYPOINT ["sh", "entrypoint.sh"]
+CMD []
