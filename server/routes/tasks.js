@@ -422,7 +422,7 @@ async function export_tasks(req, res) {
 				path = path.replace(dataset.path, '')
 				const filename = utils.pathToFilename(path);
 
-				const labelsJson = { ...labels, data };
+				let labelsJson = { ...labels, data };
 
 				// EXPORT task json
 				if (req.body.path) {//export to local file system
@@ -436,7 +436,7 @@ async function export_tasks(req, res) {
 				} else {//export to destination URL
 					var err = '';
 					console.log("labelsJson=",labelsJson);
-                    const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
+                    let url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
 
                     console.log("spec.plugin_name=",spec.plugin_name);
                     if (spec.plugin_name==='classification') {// CONFIANCE specific: adapt Body to temporary
@@ -552,7 +552,7 @@ async function export_tasks(req, res) {
                         }
                         continue;//we already published the annotations
                     }
-
+					console.log("labelsJson=",labelsJson);
 					await fetch(url, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },

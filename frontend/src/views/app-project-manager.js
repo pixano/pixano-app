@@ -130,11 +130,10 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		};
 
 		store.dispatch(importTaskFromKafka(task)).then((newtask) => {
-			console.log("newtask=",newtask);
 			// update local copy of Redux
 			this.tasks = getState('application').tasks;
 			this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
-			if (newtask.plugin_name!=plugin_name) {//plugin has been changed on server side => we have to adapt specs
+			if (newtask.spec.plugin_name!==plugin_name) {//plugin has been changed on server side => we have to adapt specs
 				// adapt specs
 				newtask.spec.label_schema = defaultLabelValues(newtask.plugin_name);
 				newtask.spec.settings = defaultSettings(newtask.plugin_name);
