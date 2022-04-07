@@ -6,16 +6,15 @@
 
 import { html } from 'lit-element';
 import '@pixano/graphics-2d/lib/pxn-segmentation';
+import '@pixano/core/lib/attribute-picker';
 import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
-import { colorToRGBA } from '@pixano/core/lib/utils';
+import { colorToRGBA, commonJson } from '@pixano/core/lib/utils';
 import { store, getState } from '../store';
-import '../helpers/attribute-picker';
 import { subtract, union } from '../my-icons';
 import { setAnnotations } from '../actions/annotations';
 import { TemplatePluginInstance } from '../templates/template-plugin-instance';
-import { commonJson } from '../helpers/utils';
 
 const EditionMode = {
 	ADD_TO_INSTANCE: 'add_to_instance',

@@ -9,10 +9,10 @@ import { html } from 'lit-element';
 import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
-import { commonJson } from '../helpers/utils';
+import { commonJson } from '@pixano/core/lib/utils';
 import { store } from '../store';
 import { setAnnotations } from '../actions/annotations';
-import '../helpers/attribute-picker';
+import '@pixano/core/lib/attribute-picker';
 import { TemplatePlugin } from './template-plugin';
 
 export class TemplatePluginInstance extends TemplatePlugin  {
@@ -127,7 +127,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    */
   get propertyPanel() {
     return html`
-        <attribute-picker ?showDetail=${this.selectedIds.length === 0}
+        <attribute-picker ?showDetail=${this.selectedIds.length}
                             @update=${this.onAttributeChanged}></attribute-picker>
     `
   }

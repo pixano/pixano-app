@@ -37,7 +37,7 @@ class AppLogin extends LitElement {
     goHome() {
       const user = getState('user');
       const page = user.currentUser.role === 'admin' ? '/#dashboard-admin': '/#dashboard-user';
-      window.history.pushState({}, '', page);
+      window.history.pushState({}, '', encodeURI(page));
       store.dispatch(navigate(page));
     }
 
