@@ -29,7 +29,7 @@ const _requestHelper = (method, url = "/api/v1/", body = undefined, dispatch = n
     dispatch(updateWaiting(true));
   }
   return new Promise((resolve, reject) => {
-    return fetch(url, messageContent).then((response) => {
+    return fetch(encodeURI(url), messageContent).then((response) => {
       if (dispatch) {
         dispatch(updateWaiting(false)); 
       }
