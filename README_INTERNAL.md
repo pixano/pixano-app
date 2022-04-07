@@ -68,8 +68,8 @@ master  <------push------  github <--merge-- master <--merge--> p2
 
 ## Publication
 ### 0) prepare gitlab version
-	LAST_VERSION=0.4.9
-	VERSION=0.5.0
+	LAST_VERSION=0.5.0
+	VERSION=0.6.0
 	git fetch
 	git checkout master
 	git pull origin master
@@ -77,7 +77,7 @@ master  <------push------  github <--merge-- master <--merge--> p2
 	gedit package.json frontend/package.json
 	## change version to $VERSION
 	## in frontend : if necessary, change version of elements
-	git add package.json frontend/package.json
+	git add README_INTERNAL.md package.json frontend/package.json
 	git commit -m "release $VERSION"
 ### 1) Prepate the publication
 1. On github : Update your fork
