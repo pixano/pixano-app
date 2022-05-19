@@ -90,9 +90,9 @@ function updateTokenIfAlmostDead(token, decoded) {
  */
  function checkWhoGoogle(req, res, next) {
   // UNCOMMENT FOR LOCAL DEV
-  // let info = { email : "tom.keldenich@valeo.com"};
-  // req.username = info.email;
-  // next();
+  /* let info = { email : "tom.keldenich@valeo.com"};
+  req.username = info.email;
+  next(); */
  
   // UNCOMMENT FOR PROD
   const assertion = req.header('X-Goog-IAP-JWT-Assertion');

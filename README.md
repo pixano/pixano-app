@@ -27,18 +27,34 @@ const auth = middleware.checkWhoGoogle;
 # remove the snapshot button in frontend/src/views/app-project-manager.js
 <mwc-button @click="${() => snapshotProject()}">Snapshot</mwc-button>
 ```
-In order to bypass cross-origin issues, a temporary fix is to use the following command to open chrome:
+For Cloud Deployment :
+
 ```bash
-For Linux :
-chromium --disable-site-isolation-trials --disable-web-security --user-data-dir="~/tmp"
+git clone https://github.com/camilledupont/pixano-app.git
+git checkout gcp
+# Add app.yaml to folder
+# Add firebaseServiceAccount.json to server/config/
+npm i
+cd frontend
+npm i
+npm run build
+gcloud app deploy
+``` 
 
-For Windows :
-#1. Open the start menu
-#2. Type windows+R or open "Run"
-#3. Execute the following command:
-chrome.exe --user-data-dir="C://Chrome dev session" --disable-web-security
+Need to add each use by hand in the dashboard-user tab
 
+*If deployment problem, try first to clear chache and reload the tab.
 
+For Local Use :
+
+```bash
+git clone https://github.com/camilledupont/pixano-app.git
+git checkout gcp
+# Uncomment line at function checkWhoGoogle in the middleware.js file
+npm i
+cd frontend
+npm i
+npm run build
 ``` 
 
 Pixano App

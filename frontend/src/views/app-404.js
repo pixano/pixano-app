@@ -9,13 +9,20 @@ import { LitElement, html, css } from 'lit-element';
 
 class App404 extends LitElement {
 
-    render() {
-      return html`
+  render() {
+    return html`
+      <div style="display: flex; align-items: center; justify-content: center;">
         <div>
-          Something went wrong or you don't have an access yet.
-          Please contact tom.keldenich@valeo.com
-        <div>
-        `;
-    }
+          <h1>
+            Error 404
+          </h1>
+          <h3>
+            Something went wrong or you don't have an access yet.
+          </h3>
+          <p>Please contact tom.keldenich@valeo.com</p>
+        </div>
+      </div>
+      `;
+  }
 }
 customElements.define('app-404', App404);

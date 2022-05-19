@@ -149,6 +149,7 @@ class MyApp extends connect(store)(LitElement)  {
         <app-project-manager class="page" ?active="${this._page === 'project-manager'}"></app-project-manager>
         <app-label class="page" ?active="${this._page === 'label'}"></app-label>
         <app-explore class="page" ?active="${this._page === 'explore'}"></app-explore>
+        <app-kpi class="page" ?active="${this._page === 'kpi'}"></app-kpi>
         <app-404 class="page" ?active="${this._page === 'view404'}"></app-404>
         <mwc-circular-progress-four-color indeterminate ?closed=${!this.waiting} style="display: ${this.waiting ? "block" : "none"}"></mwc-circular-progress-four-color>
       `;

@@ -9,7 +9,7 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
-    "start": "node server/server.js PIXANO-DB4",
+    "start": "node server/server.js PIXANO-DB6",
     "deps": "rm -f package-lock.json && npm i && cd frontend && rm -f package-lock.json && npm i",
     "build": "cd frontend && npm run build",
     "installLocalElements": "cd frontend && npm run installLocalElements"

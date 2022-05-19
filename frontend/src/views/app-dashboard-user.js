@@ -23,10 +23,12 @@ class AppDashboardUser extends TemplatePage {
     super();
     this.globalCounter = 0;
     this.doneCounter = 0;
+    this.toValidateCounter = 0;
   }
   static get properties() {
     return {
       doneCounter: { type: Number },
+      toValidateCounter: { type: Number },
       globalCounter: { type: Number }
     };
   }
@@ -36,6 +38,7 @@ class AppDashboardUser extends TemplatePage {
       const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
       this.globalCounter = data.globalCounter;
       this.doneCounter = data.doneCounter;
+      this.toValidateCounter = data.toValidateCounter
       return data.results;
     } catch (err) {
       return [];
@@ -116,9 +119,9 @@ class AppDashboardUser extends TemplatePage {
                   @click="${this.getResults.bind(this)}"
                   title="Refresh">
       </mwc-icon-button>
-      <mwc-linear-progress progress="${this.doneCounter/this.globalCounter}"></mwc-linear-progress>
+      <mwc-linear-progress progress="${this.toValidateCounter/this.globalCounter}"></mwc-linear-progress>
       <div style="margin: auto;">
-        <p>${this.doneCounter}</p>
+        <p>${this.toValidateCounter}</p>
         <p>-</p>
         <p>${this.globalCounter}</p>
       </div>

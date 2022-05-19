@@ -352,7 +352,6 @@ async function get_task(req, res) {
 function delete_task(req, res) {
     checkAdmin(req, async () => {
         const taskName = req.params.task_name;
-        console.log('Removing ', taskName);
         await remove_task(taskName);
         return res.status(204).json({});
     });

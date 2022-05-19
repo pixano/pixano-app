@@ -181,6 +181,10 @@ class AppDashboardAdmin extends TemplatePage {
     const taskName = getState('application').taskName;
     this.gotoPage(`/#explore/${taskName}/${id}`);
   }
+
+  gotoKPI() {
+    this.gotoPage('/#kpi');
+  }
   
   gotoProjectManager() {
     this.gotoPage('/#project-manager');
@@ -445,12 +449,16 @@ class AppDashboardAdmin extends TemplatePage {
   }
 
   get headerContent() {
+    const numTasks = getState('application').tasks.length;
+    const kpi = html`<mwc-button theme="primary" class="dark" @click=${() => this.gotoKPI()}>KPI</mwc-button>`
+    const nokpi = html`<mwc-button theme="primary" class="dark" disabled=true >KPI</mwc-button>`
     return html`
       <h1 class="display-4">Dashboard Admin</h1>
       <mwc-button theme="primary" class="dark" @click=${() => this.startValidating()}>Start Validating</mwc-button>
       <mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}>Start Annotating</mwc-button>
       
       <div class="right-header-content">
+        ${ numTasks ? kpi : nokpi }
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoProjectManager()}>Tasks</mwc-button>
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoUserManager()}>Users</mwc-button>
         <div class="unselectable" style="margin: 10px;">${this.username}</div>
