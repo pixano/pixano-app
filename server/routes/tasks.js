@@ -13,6 +13,8 @@ const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
 
+const annotation_format_version = "0.9";
+
 /**
  * @api {get} /tasks Get list of tasks details
  * @apiName GetTasks
@@ -49,7 +51,8 @@ async function post_tasks(req, res) {
     checkAdmin(req, async () => {
         const task = req.body;
         const spec = await getOrcreateSpec(task.spec);
-        const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type});
+        const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
+
         try {
             await db.get(dbkeys.keyForTask(task.name));
             return res.status(400).json({message: 'Taskname already existing'});
@@ -86,6 +89,12 @@ async function post_tasks(req, res) {
  */
 async function import_tasks(req, res) {
     checkAdmin(req, async () => {
+		if (req.body.url) {
+			return res.status(400).json({
+				error: 'url_not_implemented',
+				message: 'Import tasks from URL is not yet implemented.'
+			});
+		}
         if (!req.body.path) {
             return res.status(400).json({
                 error: 'wrong_path',
@@ -114,7 +123,8 @@ async function import_tasks(req, res) {
         const bm = new batchManager.BatchManager(db);
         for await (const [taskFile, annFiles] of Object.entries(taskFiles)) {
             const taskData = await storage.readJson(taskFile);
-            const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type});
+
+            const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type}, workspace);
             const spec = await getOrcreateSpec(taskData.spec);
 
             let newTaskName = taskData.name;
@@ -186,6 +196,11 @@ async function import_tasks(req, res) {
                 };
 
                 await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels});
+				if (ann.data.status) {//if existing, get status back
+					resultData = await db.get(dbkeys.keyForResult(newTask.name, newLabels.data_id));//get the status for this data
+					resultData.status = ann.data.status;//add the status
+					await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, newLabels.data_id), value: resultData});
+				}
 
                 // Mark result as done
                 // const resultData = await db.get(dbkeys.keyForResult(newTask.name, dataId));
@@ -212,7 +227,7 @@ async function import_tasks(req, res) {
  * @apiGroup Tasks
  * @apiPermission admin
  * 
- * @apiParam {string} [path] Relative path to tasks folder
+ * @apiParam {string} [path] Relative path to tasks folder OR [url] destination URL for online export
  * 
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
@@ -221,53 +236,55 @@ async function import_tasks(req, res) {
  *     HTTP/1.1 400 Failed to create export folder
  */
 async function export_tasks(req, res) {
-    checkAdmin(req, async () => {
-        if (!req.body.path) {
-            return res.status(400).json({
-                error: 'wrong_path',
-                message: 'Invalid path.'
-            });
-        }
-        const exportPath = req.body.path;
-        const streamTask = db.stream(dbkeys.keyForTask(), false, true);
-        for await (const it of streamTask) {
-            const task = it.value;
-            const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
-            delete spec.id;
-            const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
-            const datasetId = dataset.id; 
-            delete dataset.id;
-            const taskJson = {name: task.name, spec, dataset};
-            // Write task json
-            const err = storage.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
-            if (err) {
-                return;
-            }
-            
-            // Write annotations for each task in a specific folder
-            const taskFolder = `${exportPath}/${task.name}`;
+	checkAdmin(req, async () => {
+		if (!req.body.path && !req.body.url) {
+			return res.status(400).json({
+				error: 'wrong_path',
+				message: 'Invalid path.'
+			});
+		}
+		const exportPath = req.body.path;
+		const streamTask = db.stream(dbkeys.keyForTask(), false, true);
+		for await (const it of streamTask) {
+			const task = it.value;
+			const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
+			delete spec.id;
+			const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
+			const datasetId = dataset.id;
+			delete dataset.id;
+			const taskJson = {name: task.name, spec, dataset};
+			// Write task json
+			const err = storage.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
+			if (err) {
+				return;
+			}
+			
+			// Write annotations for each task in a specific folder
+			const taskFolder = `${exportPath}/${task.name}`;
 
-            // Write annotations
-            const streamLabels = db.stream(dbkeys.keyForLabels(task.name), false, true);
-            for await (const {value} of streamLabels) {
-                const data = await getDataDetails(datasetId, value.data_id, true);
-                delete data.id;
-                delete data.dataset_id;
-                let path = data.path;
-                path = Array.isArray(path) ? path[0] : path;
-                path = path.replace(dataset.path, '')
-                const filename = utils.pathToFilename(path);
+			// Write annotations
+			const streamLabels = db.stream(dbkeys.keyForLabels(task.name), false, true);
+			for await (const {value} of streamLabels) {
+				const data = await getDataDetails(datasetId, value.data_id, true);
+				delete data.id;
+				delete data.dataset_id;
+				delete data.thumbnail;
+				data.status = resultData.status;//add the status
+				let path = data.path;
+				path = Array.isArray(path) ? path[0] : path;
+				path = path.replace(dataset.path, '')
+				const filename = utils.pathToFilename(path);
 
-                const labelsJson = {...value, data};
-                delete labelsJson.data_id;
-                const err = storage.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
-                if (err) {
-                    return;
-                }
-            }
-        }
-        res.send();
-    });
+				const labelsJson = {...value, data};
+				delete labelsJson.data_id;
+				const err = storage.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
+				if (err) {
+					return;
+				}
+			}
+		}
+		res.send();
+	});
 }
 
 /**

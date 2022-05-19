@@ -47,12 +47,13 @@ async function get_next_job(req, res) {
         const assignedJob = user.curr_assigned_jobs[oKey];
         if (assignedJob) {
             let job, result;
+            var error=false;
             try {
                 job = await db.get(dbkeys.keyForJob(taskName, assignedJob));
                 result = await db.get(dbkeys.keyForResult(taskName, job.data_id));
             }
-            catch (err) { console.log('\tjob no longer exist', err);}
-            if (isJobValid(job, result) && await isJobAvailableForUser(job, user)) {
+            catch (err) { error=true; console.log('\tjob no longer exist', err);}
+            if (!error && isJobValid(job, result) && await isJobAvailableForUser(job, user)) {
                 await _assignJob(job, user);
                 return res.send({...job, annotator: result.annotator, validator: result.validator});
             }
@@ -68,12 +69,13 @@ async function get_next_job(req, res) {
         if (queuedJobs.length) {
             for (const q of queuedJobs) {
                 let job, result;
+                var error=false;
                 try {
                     job = await db.get(dbkeys.keyForJob(taskName, q));
                     result = await db.get(dbkeys.keyForResult(taskName, job.data_id));
                 }
-                catch (err) { console.log('\tjob no longer exist', err); }
-                if (isJobValid(job, result) && await isJobAvailableForUser(job, user)) {
+                catch (err) { error=true; console.log('\tjob no longer exist', err); }
+                if (!error && isJobValid(job, result) && await isJobAvailableForUser(job, user)) {
                     await _assignJob(job, user);
                     return res.send({...job, annotator: result.annotator, validator: result.validator});
                 }
@@ -90,12 +92,12 @@ async function get_next_job(req, res) {
     for await(const {value} of streamA) {
         if (objectiveList.includes(value.status) && !value.in_progress) {
             let job;
-            try { job = await db.get(dbkeys.keyForJob(taskName, value.current_job_id)); }
-            catch (err) { console.log('\tjob no longer exist', err); }
-            if (isJobValid(job, value) && await isJobAvailableForUser(job, user)) {
-                console.log('found job')
+            var error=false;
+            try { job = await db.get(dbkeys.keyForJob(taskName, result.current_job_id)); }
+            catch (err) { error=true; console.log('\tjob no longer exist', err); }
+            if (!error && isJobValid(job, result) && await isJobAvailableForUser(job, user)) {
                 await _assignJob(job, user);
-                return res.send({...job, annotator: value.annotator, validator: value.validator});
+                return res.send({...job, annotator: result.annotator, validator: result.validator});
             }
         }
     }
@@ -104,9 +106,10 @@ async function get_next_job(req, res) {
     for await(const {value} of streamB) {
         if (objectiveList.includes(value.status) && !value.in_progress) {
             let job;
-            try { job = await db.get(dbkeys.keyForJob(taskName, value.current_job_id)); }
-            catch (err) { console.log('\tjob no longer exist', err); }
-            if (isJobValid(job, value) && await isJobAvailableForUser(job, user, true)) {
+            var error=false;
+            try { job = await db.get(dbkeys.keyForJob(taskName, result.current_job_id)); }
+            catch (err) { error=true; console.log('\tjob no longer exist', err); }
+            if (!error && isJobValid(job, result) && await isJobAvailableForUser(job, user, true)) {
                 await _assignJob(job, user);
                 return res.send({...job, annotator: value.annotator, validator: value.validator});
             }
@@ -207,17 +210,17 @@ async function put_job(req, res) {
 
     // Update result
     resultData.in_progress = false;
-    resultData.status = ['to_annotate', 'to_validate', 'to_correct', 'done'].includes(newObjective) ? newObjective : 'to_annotate';
+    resultData.status = ['to_annotate', 'to_validate', 'to_correct', 'discard', 'done'].includes(newObjective) ? newObjective : 'to_annotate';
     resultData.finished_job_ids.push(resultData.current_job_id);
 
-    if (newObjective === 'done') {
+    if (newObjective === 'done' || newObjective === 'discard') {
         resultData.current_job_id = '';
         ops.push({ type: 'put', key: dbkeys.keyForResult(taskName, jobData.data_id), value: resultData});
         await db.batch(ops);
         return res.status(204).json({});
     }
 
-    // Create new Job if not 'done'
+    // Create new Job if not 'done' or 'discard'
     const newJob = createJob(jobData.task_name, jobData.data_id, newObjective);
     resultData.current_job_id = newJob.id;
 

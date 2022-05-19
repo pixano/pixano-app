@@ -68,7 +68,7 @@ class MyApp extends connect(store)(LitElement)  {
   goHome() {
     const user = getState('user');
     const page = user.currentUser.role === 'admin' ? '/#dashboard-admin': '/#dashboard-user';
-    window.history.pushState({}, '', page);
+    window.history.pushState({}, '', encodeURI(page));
     store.dispatch(navigate(page));
   }
 
@@ -80,7 +80,7 @@ class MyApp extends connect(store)(LitElement)  {
 
   goLogin() {
     const page = '/#login';
-    window.history.pushState({}, '', page);
+    window.history.pushState({}, '', encodeURI(page));
     store.dispatch(navigate(page));
   }
   

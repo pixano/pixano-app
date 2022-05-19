@@ -5,7 +5,7 @@
 */
 
 import { html } from 'lit-element';
-import { settings } from '@pixano/graphics-2d/lib/pxn-graph';
+import { settings } from '@pixano/graphics-2d/lib/pxn-keypoints';
 import '@material/mwc-icon-button';
 import { colorNames, shuffle } from '@pixano/core/lib/utils'
 import { TemplatePluginInstance } from '../templates/template-plugin-instance';
@@ -160,13 +160,13 @@ export class PluginKeypointsBox extends TemplatePluginInstance {
   }
 
   get editor() {
-    return html`<pxn-graph id="main"
+    return html`<pxn-keypoints id="main"
                       enableOutsideDrawing
                       mode=${this.mode}
                       @create=${this.onCreate}
                       @update=${this.onUpdate}
                       @delete=${this.onDelete}
-                      @selection=${this.onSelection}></pxn-graph>`;
+                      @selection=${this.onSelection}></pxn-keypoints>`;
   }
 }
 customElements.define('plugin-keypoints-box', PluginKeypointsBox);
