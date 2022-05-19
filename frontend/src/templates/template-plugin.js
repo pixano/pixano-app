@@ -9,6 +9,9 @@
 import { LitElement, html } from 'lit-element';
 import { getState, getAnnotations } from '../store';
 import { PluginStyle } from './plugin-style';
+// add by Tom
+import { GET, PUT } from '../actions/requests';
+
 
 export class TemplatePlugin extends LitElement  {
 
@@ -38,19 +41,42 @@ export class TemplatePlugin extends LitElement  {
         this.initDisplay();
       }
       this.newData();
+      // add by Tom
+      this.startTime = window.performance.now();
+    }
+
+    onDesactivate() {
+      super.onDesactivate();
+      console.log("on Deactivate")
     }
 
   /**
    * Recompute labels to be displayed from
    * the redux store
    */
-  initDisplay() {
+  async initDisplay() {
     const tasks = getState('application').tasks;
     const taskName = getState('application').taskName;
     const task = tasks.find((t) => t.name === taskName);
     if (this.attributePicker && task) {
       this.attributePicker.reloadSchema(task.spec.label_schema);
     }
+    // add by Tom
+    const media = getState('media');
+
+    const data_id = media.info.id
+    const data_info = await GET(`/api/v1/tasks/${taskName}/results/${data_id}`);
+
+    this.element.addEventListener('load', async () => {
+      // add by Tom
+      var end = window.performance.now();
+      var time = end - this.startTime;
+
+      data_info.loading_time_cumulated += time;
+      await PUT(`/api/v1/tasks/${taskName}/results/${data_id}`, data_info);
+
+       this.refresh();
+     });
   }
 
   get info() {
@@ -67,16 +93,11 @@ export class TemplatePlugin extends LitElement  {
   /**
    * Handle new media to display
    */
-  newData() {
+   async newData() {
     const media = getState('media');
     const path = media.info.path;
     this.element.input = path;
-    
-    this.element.addEventListener('load', () => {
-      // refresh annoations on media loaded
-      this.refresh();
-    });
-  }
+   }
 
   // TODO: bundle attributes into an element
   _colorFor(cat) {
@@ -104,11 +125,13 @@ export class TemplatePlugin extends LitElement  {
     return this.shadowRoot.getElementById('main');
   }
 
+  // add by Tom : commentPanel
   render() {
     return html`
         <div class="drawer">${this.toolDrawer}</div>
         <div class="editor">${this.editor}</div>
         <div class="properties-panel">${this.propertyPanel}</div>
+        <div class="comment-panel">${this.commentPanel}</div>
     `;
   }
 }

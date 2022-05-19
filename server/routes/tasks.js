@@ -52,6 +52,14 @@ async function post_tasks(req, res) {
         const task = req.body;
         const spec = await getOrcreateSpec(task.spec);
         const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
+        // add by TOM
+        //task.spec.label_schema.category.forEach(x => console.log(x.name))
+        
+        //const task_category = []
+        //task.spec.label_schema.category.forEach(x => task_category.push(x.name))
+
+        const task_category = {}
+        task.spec.label_schema.category.forEach(x => task_category[x.name] = 0)
 
         try {
             await db.get(dbkeys.keyForTask(task.name));
@@ -63,10 +71,10 @@ async function post_tasks(req, res) {
         await db.put(dbkeys.keyForTask(newTask.name), newTask);
         
         // Generate first job list
-        await generateJobResultAndLabelsLists(newTask);
+        await generateJobResultAndLabelsLists(newTask, task_category);
 
         const taskDetail = await getTaskDetails(newTask.name);
-        console.log('Task created', taskDetail.name)
+        console.log('Task created '+taskDetail.name);
         res.status(201).json(taskDetail);
     });
 }
@@ -85,7 +93,6 @@ async function post_tasks(req, res) {
  * 
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 400 Import error
- *     HTTP/1.1 401 Unauthorized
  */
 async function import_tasks(req, res) {
     checkAdmin(req, async () => {
@@ -312,7 +319,7 @@ async function export_tasks(req, res) {
 }
 
 /**
- * @api {put} /tasks/:task_name Update task details (for now : only task details can be changed, the name, dataset and annotation type have to remain the same)
+ * @api {put} /tasks/:task_name Update task details
  * @apiName PutTask
  * @apiGroup Tasks
  * @apiPermission admin
@@ -441,7 +448,7 @@ const getTaskDetails = async (taskName) => {
  * @param {Level} db 
  * @param {Object} task 
  */
-async function generateJobResultAndLabelsLists(task) {
+async function generateJobResultAndLabelsLists(task, task_category) {
     const dataIdList = await getAllDataFromDataset(task.dataset_id);
     const bm = new batchManager.BatchManager(db);
     const bar = new cliProgress.SingleBar({
@@ -455,8 +462,9 @@ async function generateJobResultAndLabelsLists(task) {
         // Get data path
         const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
         const path = populator.toRelative(dataData.path);
+
         // Generate result associated with each data
-        const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path);
+        const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path, task_category);
 
         // Generate empty labels associated with each data
         const newLabels = {
@@ -481,7 +489,7 @@ async function generateJobResultAndLabelsLists(task) {
  * @param {string} currJobId 
  * @param {string} currStatus 
  */
-function createResult(taskName, dataId, currJobId, currStatus, path) {
+function createResult(taskName, dataId, currJobId, currStatus, path, task_category) {
     return {
         task_name: taskName,
         data_id: dataId, 
@@ -492,6 +500,10 @@ function createResult(taskName, dataId, currJobId, currStatus, path) {
         cumulated_time: 0,
         annotator: '',
         validator: '',
+        // add by Tom
+        loading_time_cumulated: 0,
+        annotation_time_cumulated: 0,
+        category_annotation_time : task_category,
         path
     };
 }

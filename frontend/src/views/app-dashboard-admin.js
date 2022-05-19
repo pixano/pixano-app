@@ -83,19 +83,19 @@ class AppDashboardAdmin extends TemplatePage {
 
   onActivate() {
     this.stateChanged(getState());
-    if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
+    this.refreshGrid();
   }
 
   /**
    * Refresh the grid from the database
    * state.
    */
-  async refreshGrid() {
+  refreshGrid() {
     this.table.items.forEach((e) => e.selected = false);
     this.tableCheckbox.checked = false;
     this.nbSelectedJobs = 0;
     this.table.layout();
-    await this.getResults().then((res) => {
+    this.getResults().then((res) => {
       this.items = res;
     });
   }
@@ -109,13 +109,13 @@ class AppDashboardAdmin extends TemplatePage {
    * @param {String} key 
    * @param {String} value 
    */
-  async updateFilter(key, value) {
+  updateFilter(key, value) {
     const oldFilters = getState('application').filters
     if (oldFilters[key] !== value){
       const newFilters = {...oldFilters, [key]: value};
       store.dispatch(updateFilters(newFilters));
-      await this.refreshGrid();
-    }
+      this.refreshGrid();
+    }    
   }
 
   /**
@@ -180,6 +180,11 @@ class AppDashboardAdmin extends TemplatePage {
   explore(id) {
     const taskName = getState('application').taskName;
     this.gotoPage(`/#explore/${taskName}/${id}`);
+  }
+
+  //add by Tom
+  gotoKPI() {
+    this.gotoPage('/#kpi');
   }
   
   gotoProjectManager() {
@@ -445,12 +450,14 @@ class AppDashboardAdmin extends TemplatePage {
   }
 
   get headerContent() {
+    // KPI add by Tom
     return html`
       <h1 class="display-4">Dashboard Admin</h1>
       <mwc-button theme="primary" class="dark" @click=${() => this.startValidating()}>Start Validating</mwc-button>
       <mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}>Start Annotating</mwc-button>
       
       <div class="right-header-content">
+        <mwc-button theme="primary" class="dark" @click=${() => this.gotoKPI()}>KPI</mwc-button>
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoProjectManager()}>Tasks</mwc-button>
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoUserManager()}>Users</mwc-button>
         <div class="unselectable" style="margin: 10px;">${this.username}</div>
