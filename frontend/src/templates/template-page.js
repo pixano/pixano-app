@@ -88,7 +88,7 @@ export default class TemplatePage extends LitElement {
    * @param {string} page e.g. /#dashboard-admin or /
    */
   gotoPage(page) {
-    window.history.pushState({}, '', page);
+    window.history.pushState({}, '', encodeURI(page));
     store.dispatch(navigate(page));
   }
 
@@ -107,7 +107,7 @@ export default class TemplatePage extends LitElement {
     } else {
       return;
     }
-    window.history.pushState({}, '', page);
+    window.history.pushState({}, '', encodeURI(page));
     store.dispatch(navigate(page));
   }
 

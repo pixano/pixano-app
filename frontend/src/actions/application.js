@@ -86,7 +86,7 @@ export const navigate = (path) => (dispatch, getState) => {
             path = '/#login';
         }
     }
-    let page = path.slice(2).split('/')[0];
+    const page = path.slice(2).split('/')[0];
     switch(page) {
       case 'login':
           import('../views/app-login.js').then(() => {
@@ -190,7 +190,6 @@ const _fetchNextResult = (forward=true) => (dispatch, getState) => {
             }
         }
         return GET(url, dispatch).then((result) => {
-            console.log('get next', result)
             if (result.data_id) {
                 return dispatch(updateResult(result));
             }

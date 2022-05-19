@@ -115,7 +115,6 @@ class AppUserManager extends connect(store)(TemplatePage) {
     this.users = [];
     setTimeout(() => {
       this.users = JSON.parse(JSON.stringify(getState('user').users));
-      console.log('this.users', this.users)
     }, 0)
   }
 
@@ -259,6 +258,7 @@ class AppUserManager extends connect(store)(TemplatePage) {
 		</div>
 		`;
 	}
+
 
   get userSection() {
     return html`
