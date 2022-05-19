@@ -58,8 +58,8 @@ class AppDashboardAdmin extends TemplatePage {
                               ['to_annotate', ['to annotate', 'create', 'blue']], 
                               ['to_validate', ['to validate', 'youtube_searched_for', 'orange']],
                               ['to_correct', ['to correct', 'thumb_down', 'red']], 
+                              ['discard', ['do NOT annotate', 'highlight_off', 'red']],
                               ['done', ['done', 'done', 'green']]]);
-
     this.assignedMap = new Map([['', ''], 
                                 ['true', 'in progress'], 
                                 ['false', 'idle']]);
@@ -83,19 +83,19 @@ class AppDashboardAdmin extends TemplatePage {
 
   onActivate() {
     this.stateChanged(getState());
-    this.refreshGrid();
+    if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
   }
 
   /**
    * Refresh the grid from the database
    * state.
    */
-  refreshGrid() {
+  async refreshGrid() {
     this.table.items.forEach((e) => e.selected = false);
     this.tableCheckbox.checked = false;
     this.nbSelectedJobs = 0;
     this.table.layout();
-    this.getResults().then((res) => {
+    await this.getResults().then((res) => {
       this.items = res;
     });
   }
@@ -109,13 +109,13 @@ class AppDashboardAdmin extends TemplatePage {
    * @param {String} key 
    * @param {String} value 
    */
-  updateFilter(key, value) {
+  async updateFilter(key, value) {
     const oldFilters = getState('application').filters
     if (oldFilters[key] !== value){
       const newFilters = {...oldFilters, [key]: value};
       store.dispatch(updateFilters(newFilters));
-      this.refreshGrid();
-    }    
+      await this.refreshGrid();
+    }
   }
 
   /**
@@ -474,7 +474,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   /**
    * Display table row
-   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch
+   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail
    */
   listitem(item) {
     const v = this.statusMap.get(item.status);
@@ -490,8 +490,8 @@ class AppDashboardAdmin extends TemplatePage {
         <p>${item.validator}</p>
         <p>${this.assignedMap.get(item.in_progress.toString())}</p>
         <p>${format(item.cumulated_time)}</p>
-		<p><img src="data:image/jpg;base64,${item.thumbnail}" ></p>
-        <p><mwc-icon-button class="launch" icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
+		<p><img src="data:image/jpg;base64,${item.thumbnail}" @click=${(evt) => this.onExplore(evt, item.data_id)}></p>
+		<p></p>
       </div>
     </mwc-check-list-item>
     <li divider role="separator"></li>

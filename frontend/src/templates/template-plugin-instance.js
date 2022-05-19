@@ -9,10 +9,10 @@ import { html } from 'lit-element';
 import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
-import { commonJson } from '../helpers/utils';
+import { commonJson } from '@pixano/core/lib/utils';
 import { store } from '../store';
 import { setAnnotations } from '../actions/annotations';
-import '../helpers/attribute-picker';
+import '@pixano/core/lib/attribute-picker';
 import { TemplatePlugin } from './template-plugin';
 // add by Tom
 import { GET, PUT } from '../actions/requests';
@@ -87,12 +87,12 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    * Display in the property panel
    * the labels of the selected instances.
    */
-   updateDisplayOfSelectedProperties() {
-    if (this.selectedIds && this.selectedIds.length) {  
+  updateDisplayOfSelectedProperties() {
+    if (this.selectedIds && this.selectedIds.length) {
       const shapes = this.annotations.filter((s) => this.selectedIds.includes(s.id));
       const common = commonJson(shapes);
       this.attributePicker.setAttributes(common);
-    }    
+    }
   }
 
   /**
@@ -156,7 +156,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    */
   get propertyPanel() {
     return html`
-        <attribute-picker ?showDetail=${this.selectedIds.length === 0}
+        <attribute-picker ?showDetail=${this.selectedIds.length}
                             @update=${this.onAttributeChanged}></attribute-picker>
     `
   }
@@ -171,7 +171,7 @@ export class TemplatePluginInstance extends TemplatePlugin  {
    * Default implementation of tool drawer
    */
   get toolDrawer() {
-    return html`
+      return html`
           <mwc-icon-button ?selected=${this.mode === 'edit'}
                             title="Select/Edit shape"
                             icon="navigation"

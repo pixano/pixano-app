@@ -15,6 +15,8 @@ const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
 
+const annotation_format_version = "0.9";
+
 /**
  * @api {get} /tasks Get list of tasks details
  * @apiName GetTasks
@@ -74,7 +76,7 @@ async function post_tasks(req, res) {
         await generateJobResultAndLabelsLists(newTask, task_category);
 
         const taskDetail = await getTaskDetails(newTask.name);
-        console.log('Task created '+taskDetail.name);
+        console.log('Task created', taskDetail.name)
         res.status(201).json(taskDetail);
     });
 }
@@ -93,9 +95,16 @@ async function post_tasks(req, res) {
  * 
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 400 Import error
+ *     HTTP/1.1 401 Unauthorized
  */
 async function import_tasks(req, res) {
     checkAdmin(req, async () => {
+		if (req.body.url) {
+			return res.status(400).json({
+				error: 'url_not_implemented',
+				message: 'Import tasks from URL is not yet implemented.'
+			});
+		}
         if (!req.body.path) {
             return res.status(400).json({
                 error: 'wrong_path',
@@ -131,8 +140,17 @@ async function import_tasks(req, res) {
         //  dataset: { path: string, data_type: string }
         // }
         const importedTasks = [];
-        for await (const jsonf of taskJsonFiles) {
+        for await (const jsonf of taskJsonFiles) {
             const taskData = utils.readJSON(path.join(importPath, jsonf));
+			let version = taskData.version;
+			// check annotation format version
+			if (!version) version = "0.9";//0.9 is the first versioned format
+			if (parseFloat(version) < parseFloat(annotation_format_version)) {
+				// TO BE DETERMINED when new version will arrise: solve compatibility issues
+			}
+			console.info("Annotation format version:",annotation_format_version);
+			
+
             const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type}, workspace);
             const spec = await getOrcreateSpec(taskData.spec);
 
@@ -169,7 +187,7 @@ async function import_tasks(req, res) {
             //    annotations: any[],
             //    data: { type: string, path: string | string[], children: array<{path, timestamp}>}
             // }
-            for await (const jsonFile of annJsonFiles) {
+            for await (const jsonFile of annJsonFiles) {
                 // Create data
                 const fullPath = path.join(importPath, taskFolder, jsonFile);
                 const ann = utils.readJSON(fullPath);
@@ -212,6 +230,11 @@ async function import_tasks(req, res) {
                 };
 
                 await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels});
+				if (ann.data.status) {//if existing, get status back
+					resultData = await db.get(dbkeys.keyForResult(newTask.name, newLabels.data_id));//get the status for this data
+					resultData.status = ann.data.status;//add the status
+					await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, newLabels.data_id), value: resultData});
+				}
 
                 // Mark result as done
                 // const resultData = await db.get(dbkeys.keyForResult(newTask.name, dataId));
@@ -238,7 +261,7 @@ async function import_tasks(req, res) {
  * @apiGroup Tasks
  * @apiPermission admin
  * 
- * @apiParam {string} [path] Relative path to tasks folder
+ * @apiParam {string} [path] Relative path to tasks folder OR [url] destination URL for online export
  * 
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
@@ -247,79 +270,139 @@ async function import_tasks(req, res) {
  *     HTTP/1.1 400 Failed to create export folder
  */
 async function export_tasks(req, res) {
-    checkAdmin(req, async () => {
-        if (!req.body.path) {
-            return res.status(400).json({
-                error: 'wrong_path',
-                message: 'Invalid path.'
-            });
-        }
-        const exportPath = path.join(workspace, req.body.path);
-        console.log('##### Exporting to ', exportPath);
-        if(!utils.isSubFolder(workspace, exportPath)) {
-            return res.status(400).json({
-                error: 'wrong_folder',
-                message: 'Export folder should be a sub folder of the working space.'
-            });
-        }      
-        // If path does not exist create it
-        if (!fs.existsSync(exportPath)) {
-            fs.mkdirSync(exportPath, {recursive: true});
-        }
+	checkAdmin(req, async () => {
+		if (!req.body.path && !req.body.url) {
+			return res.status(400).json({
+				error: 'wrong_path',
+				message: 'Invalid path.'
+			});
+		}
+		if (req.body.path) {//export to local file system
+			var exportPath = path.join(workspace, req.body.path);
+			console.log('##### Exporting to ', exportPath);
+			if (!utils.isSubFolder(workspace, exportPath)) {
+				return res.status(400).json({
+					error: 'wrong_folder',
+					message: 'Export folder should be a sub folder of the working space.'
+				});
+			}
+			// If path does not exist create it
+			if (!fs.existsSync(exportPath)) {
+				fs.mkdirSync(exportPath, { recursive: true });
+			}
+		}
 
-        const streamTask = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
-        for await (const task of streamTask) {
-            const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
-            delete spec.id;
-            const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
-            const datasetId = dataset.id; 
-            delete dataset.id;
-            const taskJson = {name: task.name, spec, dataset};
+		const streamTask = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+		for await (const task of streamTask) {
+			const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
+			delete spec.id;
+			const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
+			const datasetId = dataset.id;
+			delete dataset.id;
+			const taskJson = { name: task.name, version: annotation_format_version, spec, dataset };
+			
+			// EXPORT task json
+			if (req.body.path) {//export to local file system
+				const err = utils.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
+				if (err) {
+					return res.status(400).json({
+						error: 'cannot_write',
+						message: `Cannot write json file ${exportPath}/${task.name}.json`
+					});
+				}
+			} else {//export to destination URL
+                /// TODO: the task is not exported in Confiance
+				// var err = '';
+                // const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
+				// await fetch(url+`/_doc`, {
+				// 	method: 'post',
+				// 	headers: { 'Content-Type': 'application/json' },
+				// 	body: JSON.stringify( taskJson )
+				// })// send POST request
+				// .then(res => {
+				// 	if (res.statusText=='OK') return res.json();
+				// 	else console.log("KO :\n",res);
+				// })
+				// .then(res => { console.log(res);
+				// }).catch((e) => { err = e; });
+				// if (err) {
+				// 	return res.status(400).json({
+				// 		error: 'cannot_write',
+				// 		message: `Cannot write json file '${task.name}.json'.\n\nERROR while calling ELASTIC:${err}`
+				// 	});
+				// }
+			}
 
-            // Write task json
-            const err = utils.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
-            if (err) {
-                return;
-            }
-            
-            // Write annotations for each task in a specific folder
-            const taskFolder = `${exportPath}/${task.name}`;
-            // Remove existing folder
-            utils.removeDir(taskFolder);
-            // Recreate it
-            fs.mkdirSync(taskFolder, function(err){
-                if(err){
-                console.log(err);
-                response.send(`ERROR! Can't create directory ${taskFolder}`);
-                }
-            });
+			if (req.body.path) {
+				// Write annotations for each task in a specific folder
+				var taskFolder = `${exportPath}/${task.name}`;
+				// Remove existing folder
+				utils.removeDir(taskFolder);
+				// Recreate it
+				fs.mkdirSync(taskFolder, function (err) {
+					if (err) {
+						console.log(err);
+						return res.status(400).json({
+							error: 'cannot_create',
+							message: `ERROR! Can't create directory ${taskFolder}`
+						});
+					}
+				});
+			}
 
-            // Write annotations
-            const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
-            for await (const labels of streamLabels) {
-                const data = await getDataDetails(datasetId, labels.data_id, true);
-                delete data.id;
-                delete data.dataset_id;
-                let path = data.path;
-                path = Array.isArray(path) ? path[0] : path;
-                path = path.replace(dataset.path, '')
-                const filename = utils.pathToFilename(path);
+			// Write annotations
+			const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
+			for await (const labels of streamLabels) {
+				resultData = await db.get(dbkeys.keyForResult(task.name, labels.data_id));//get the status for this data
+				const data = await getDataDetails(datasetId, labels.data_id, true);
+				delete data.id;
+				delete data.dataset_id;
+				delete data.thumbnail;
+				data.status = resultData.status;//add the status
+				let path = data.path;
+				path = Array.isArray(path) ? path[0] : path;
+				path = path.replace(dataset.path, '')
+				const filename = utils.pathToFilename(path);
 
-                const labelsJson = {...labels, data};
-                delete labelsJson.data_id;
+				const labelsJson = { ...labels, data };
 
-                const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
-                if (err) {
-                return;
-                }
-            }
-        }
-        res.send();
-    });
+				// EXPORT task json
+				if (req.body.path) {//export to local file system
+					const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
+					if (err) {
+						return res.status(400).json({
+							error: 'cannot_write',
+							message: `Cannot write json file ${taskFolder}/${filename}.json`
+						});
+					}
+				} else {//export to destination URL
+					var err = '';
+					const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
+
+					await fetch(url, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify( labelsJson )
+					})// send POST request
+					.then(res => {
+						if (res.ok) return res.json();
+						else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+					}).catch((e) => { err = e; });
+					if (err) {
+						return res.status(400).json({
+							error: 'cannot_write',
+							message: `Cannot write json file '${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
+						});
+					}
+				}
+			}
+		}
+		res.send();
+	});
 }
 
 /**
- * @api {put} /tasks/:task_name Update task details
+ * @api {put} /tasks/:task_name Update task details (for now : only task details can be changed, the name, dataset and annotation type have to remain the same)
  * @apiName PutTask
  * @apiGroup Tasks
  * @apiPermission admin
@@ -462,7 +545,6 @@ async function generateJobResultAndLabelsLists(task, task_category) {
         // Get data path
         const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
         const path = populator.toRelative(dataData.path);
-
         // Generate result associated with each data
         const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path, task_category);
 
