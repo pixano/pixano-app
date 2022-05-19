@@ -115,6 +115,30 @@ async function get_result(req, res) {
     }
 }
 
+/**
+ * @api {put} /tasks/:task_name/results/:data_id Get result for given data and task
+ * @apiName GetResult
+ * @apiGroup Results
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Invalid id
+ */
+ async function put_result(req, res) {
+    const taskName = req.params.task_name;
+    const dataId = req.params.data_id;
+    const result = req.body;
+    try {
+        await db.put(dbkeys.keyForResult(taskName, dataId), result);
+        return res.send({});
+    } catch (err) {
+        return res.status(400).json({
+            message: `Unknown result ${taskName} ${dataId}`
+        });
+    }
+}
+
 
 /**
  * @api {get} /tasks/:task_name/results/:data_id/previous Get previous result from a given result id
@@ -287,6 +311,7 @@ async function put_results(req,res) {
 module.exports = {
     get_results,
     get_result,
+    put_result,
     get_previous_result,
     get_next_result,
     put_results

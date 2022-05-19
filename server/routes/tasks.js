@@ -1,7 +1,8 @@
+const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
-const storage = require('../config/storage-bucket');
-const db = require('../config/db-firestore');
+const { db,
+    workspace } = require('../config/db');
 const dbkeys = require('../config/db-keys');
 const batchManager = require('../helpers/batch-manager');
 const utils = require('../helpers/utils');
@@ -9,6 +10,7 @@ const { checkAdmin } = require('./users');
 const { getOrcreateSpec } = require('./specs');
 const { getOrcreateDataset } = require('./datasets');
 const { createJob } = require('./jobs');
+const populator = require('../helpers/data-populator');
 const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
@@ -51,7 +53,16 @@ async function post_tasks(req, res) {
     checkAdmin(req, async () => {
         const task = req.body;
         const spec = await getOrcreateSpec(task.spec);
-        const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type});
+        const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
+        // add by TOM
+        //task.spec.label_schema.category.forEach(x => console.log(x.name))
+        
+        //const task_category = []
+        //task.spec.label_schema.category.forEach(x => task_category.push(x.name))
+
+        const task_category = {}
+        task.spec.label_schema.category.forEach(x => task_category[x.name] = 0)
+
         try {
             await db.get(dbkeys.keyForTask(task.name));
             return res.status(400).json({message: 'Taskname already existing'});
@@ -62,7 +73,7 @@ async function post_tasks(req, res) {
         await db.put(dbkeys.keyForTask(newTask.name), newTask);
         
         // Generate first job list
-        await generateJobResultAndLabelsLists(newTask);
+        await generateJobResultAndLabelsLists(newTask, task_category);
 
         const taskDetail = await getTaskDetails(newTask.name);
         console.log('Task created', taskDetail.name)
@@ -435,7 +446,6 @@ async function get_task(req, res) {
 function delete_task(req, res) {
     checkAdmin(req, async () => {
         const taskName = req.params.task_name;
-        console.log('Removing ', taskName);
         await remove_task(taskName);
         return res.status(204).json({});
     });
@@ -484,7 +494,7 @@ const getTaskDetails = async (taskName) => {
  * @param {Level} db 
  * @param {Object} task 
  */
-async function generateJobResultAndLabelsLists(task) {
+async function generateJobResultAndLabelsLists(task, task_category) {
     const dataIdList = await getAllDataFromDataset(task.dataset_id);
     const bm = new batchManager.BatchManager(db);
     const bar = new cliProgress.SingleBar({
@@ -499,7 +509,7 @@ async function generateJobResultAndLabelsLists(task) {
         const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
         const path = storage.toRelativePath(dataData.path);
         // Generate result associated with each data
-        const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path);
+        const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path, task_category);
 
         // Generate empty labels associated with each data
         const newLabels = {
@@ -524,7 +534,7 @@ async function generateJobResultAndLabelsLists(task) {
  * @param {string} currJobId 
  * @param {string} currStatus 
  */
-function createResult(taskName, dataId, currJobId, currStatus, path) {
+function createResult(taskName, dataId, currJobId, currStatus, path, task_category) {
     return {
         task_name: taskName,
         data_id: dataId, 
@@ -535,6 +545,10 @@ function createResult(taskName, dataId, currJobId, currStatus, path) {
         cumulated_time: 0,
         annotator: '',
         validator: '',
+        // add by Tom
+        loading_time_cumulated: 0,
+        annotation_time_cumulated: 0,
+        category_annotation_time : task_category,
         path
     };
 }

@@ -39,6 +39,7 @@ const { get_tasks,
 const { snapshot_project } = require('./routes/project');
 const { get_results,
         get_result,
+        put_result,
         get_previous_result,
         get_next_result,
         put_results } = require('./routes/results');
@@ -96,6 +97,7 @@ router.put('/tasks/:task_name/jobs/:job_id', auth, put_job);
 // For explore
 router.get('/tasks/:task_name/results', auth, get_results);
 router.get('/tasks/:task_name/results/:data_id', auth, get_result);
+router.put('/tasks/:task_name/results/:data_id', middleware.checkToken, put_result);
 router.get('/tasks/:task_name/results/:data_id/previous', auth, get_previous_result);
 router.get('/tasks/:task_name/results/:data_id/next', auth, get_next_result);
 router.put('/tasks/:task_name/results', auth, put_results);
