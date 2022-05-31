@@ -477,9 +477,10 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 											this.pathOrURL = 'Path';
 											break;
 										case 1://URL
-											if (pluginName==='classification') this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/";
-                      else if (pluginName==='smart-rectangle') this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v4_valeo_test/";
-                      else this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/";
+											// if (pluginName==='classification') this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/";
+											// else if (pluginName==='smart-rectangle') this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v4_valeo_test/";
+											// else this.default_path = "https://elasticsearch-ec5.confiance.irtsystemx.org/";
+											this.default_path = "https://opensearch-ec5.confiance.irtsystemx.org/annotation_v1/";
 											this.pathOrURL = 'URL';
 											break;
 									}
