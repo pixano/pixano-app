@@ -2,6 +2,8 @@ const level = require('level');
 const path = require('path');
 const dbkeys = require('./db-keys');
 const dbConverter = require('../config/db-converter');
+const fs = require('fs');
+
 
 let db = null;
 let workspace = '';
@@ -57,7 +59,7 @@ function print(_, res) {
     }).on('end', () => {
         console.log('=============================');
     });
-    res.send({});
+    if (res) res.send({});
 }
 
 /**
