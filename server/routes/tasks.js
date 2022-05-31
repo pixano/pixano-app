@@ -1,8 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
-const { db,
-    workspace } = require('../config/db');
+const { db, workspace, print } = require('../config/db');
 const dbkeys = require('../config/db-keys');
 const batchManager = require('../helpers/batch-manager');
 const utils = require('../helpers/utils');
@@ -490,6 +489,7 @@ function delete_task(req, res) {
 const getAllTasksDetails = async () => {
     let tasks = [];
     const stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+//    print();
     for await (const t of stream) {
       const spec = await db.get(dbkeys.keyForSpec(t.spec_id));
       const dataset = await db.get(dbkeys.keyForDataset(t.dataset_id));
@@ -614,24 +614,40 @@ async function remove_task(taskName) {
         await bm.add({ type: 'put', key: dbkeys.keyForUser(user.username), value: user})
     }
 
-    // [temporary] if associated dataset is no longer associated
-    // to any other task, remove it as well
+	// delete associated spec (if not used by any other task)
     let foundAssociation = false;
-    const stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+    let stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
     for await (const t of stream) {
-        console.log('task', t);
-        if (t.id != taskData.id && t.dataset_id == taskData.dataset_id) {
+        if (t.name !== taskData.name && t.spec_id === taskData.spec_id) {
             foundAssociation = true;
             break; 
         }
     }
     if (!foundAssociation) {
+        await bm.add({ type: 'del', key: dbkeys.keyForSpec(taskData.spec_id)});
+    }
+
+    // [temporary] if associated dataset is no longer associated
+    // to any other task, remove it as well
+    foundAssociation = false;
+    stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+    for await (const t of stream) {
+        // console.log('task', t);
+        if (t.name !== taskData.name && t.dataset_id === taskData.dataset_id) {
+            foundAssociation = true;
+            break; 
+        }
+    }
+    if (!foundAssociation) {
+		// console.log("del dataset",taskData.dataset_id);
         await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id)});
         const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
         for await(const dkey of stream) {
-            await bm.add({ type: 'del', key: dbkeys.keyForData(taskData.dataset_id, dkey)});
+            await bm.add({ type: 'del', key: dkey});
         }
-    }
+    } else {
+		console.log("Dataset used by other task, nothing to delete.");
+	}
     await bm.flush();
 }
 
