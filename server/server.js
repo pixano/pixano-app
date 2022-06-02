@@ -15,16 +15,11 @@ const interfaces = os.networkInterfaces();
 const chalk = require('chalk');
 const boxen = require('boxen');
 const fs = require('fs');
-const arg = require('arg');
-const pkg = require('../package');
-
-// TODO: port starting with 443 should have https
-let port = process.env.PORT || 3000;
 
 const getNetworkAddress = () => {
 	for (const name of Object.keys(interfaces)) {
-		for (const interface of interfaces[name]) {
-			const {address, family, internal} = interface;
+		for (const i of interfaces[name]) {
+			const {address, family, internal} = i;
 			if (family === 'IPv4' && !internal) {
 				return address;
 			}
@@ -32,116 +27,71 @@ const getNetworkAddress = () => {
 	}
 };
 
-const getHelp = () => chalk`
-  {bold.cyan pixano} - Annotation Application server
-  {bold USAGE}
-      {bold $} {cyan pixano} --help
-      {bold $} {cyan pixano} --version
-      {bold $} {cyan pixano} --port 3001
-      {bold $} {cyan pixano} workspace_path
-  {bold OPTIONS}
-      --help                              Shows this help message
-      -v, --version                       Displays the current version of serve
-      -d, --debug                         Show debugging information
-`;
+// implement a user friendly CLI
+export function serve(workspace, port) {
 
-let args = null;
-try {
-  args = arg({
-    '--help': Boolean,
-    '--version': Boolean,
-    '--debug': Boolean,
-    '--port': Number,
-    '-h': '--help',
-    '-v': '--version',
-    '-d': '--debug',
-    '-p': '--port'
-  });
-} catch (err) {
-  console.error(err.message);
-  process.exit(1);
-}
+	if (!fs.existsSync(workspace)) {
+		console.error('Please enter a valid path for workspace (\"',workspace,'\" does not exist).');
+		return;
+	}
 
-if (args['--version']) {
-  console.log(pkg.version);
-  return;
-}
+	// support json encoded bodies
+	// and set maximal entity request size (default is 100Kb)
+	app.use(express.json({limit: '50mb', extended: true}));
+	app.use(express.urlencoded({limit: '50mb', extended: true}));
+	app.use('/data/', express.static(workspace));
+	app.use('/data/', express.static(path.resolve('server/'), { maxAge: '1d' }));
+	app.use(cookieParser());
 
-if (args['--help']) {
-  console.log(getHelp());
-  return;
-}
+	// initialize database
+	initLevel(workspace).then(() => {
+	app.use(serveStatic(__dirname + '/../build/'));
+	// must be imported after leveldb is initialized
+	// otherwise imported db value is not consistent with
+	// exported db value.
+	const router = require(__dirname + '/router');
 
-if (args['--port']) {
-  port = args['--port'];
-}
+	// Mount the router at /api/v1 so all its routes start with /api/v1
+	app.use('/api/v1', router);
 
+	function displayNetworkInfo(server, protocol="http") {
+		const details = server.address();
+		let localAddress = null;
+			let networkAddress = null;
 
-const entry = args._.length > 0 ? path.resolve(args._[0]) : '/data/';
+			if (typeof details === 'string') {
+				localAddress = details;
+			} else if (typeof details === 'object' && details.port) {
+				const address = details.address === '::' ? 'localhost' : details.address;
+				const ip = getNetworkAddress();
 
-// support json encoded bodies
-// and set maximal entity request size (default is 100Kb)
-app.use(express.json({limit: '50mb', extended: true}));
-app.use(express.urlencoded({limit: '50mb', extended: true}));
-app.use('/data/', express.static(entry));
-app.use('/data/', express.static(path.resolve('server/'), { maxAge: '1d' }));
-app.use(cookieParser());
+				localAddress = `${protocol}://${address}:${details.port}`;
+		networkAddress = `${protocol}://${ip}:${details.port}`;
+		
+		let message = chalk.green('Serving', workspace);
 
-if (!fs.existsSync(entry)) {
-  console.error('Please enter a valid path for workspace:');
-  console.log(getHelp());
-  return;
-}
+				if (localAddress) {
+					const prefix = networkAddress ? '- ' : '';
+					const space = networkAddress ? '            ' : '  ';
 
-// initialize database
-initLevel(entry).then(() => {
-  app.use(serveStatic(__dirname + '/../build/'));
-  // must be imported after leveldb is initialized
-  // otherwise imported db value is not consistent with
-  // exported db value.
-  const router = require(__dirname + '/router');
+					message += `\n\n${chalk.bold(`${prefix}Local:`)}${space}${localAddress}`;
+				}
 
-  // Mount the router at /api/v1 so all its routes start with /api/v1
-  app.use('/api/v1', router);
+				if (networkAddress) {
+					message += `\n${chalk.bold('- On Your Network:')}  ${networkAddress}`;
+				}
 
-  function displayNetworkInfo(server, protocol="http") {
-    const details = server.address();
-    let localAddress = null;
-		let networkAddress = null;
-
-		if (typeof details === 'string') {
-			localAddress = details;
-		} else if (typeof details === 'object' && details.port) {
-			const address = details.address === '::' ? 'localhost' : details.address;
-			const ip = getNetworkAddress();
-
-			localAddress = `${protocol}://${address}:${details.port}`;
-      networkAddress = `${protocol}://${ip}:${details.port}`;
-      
-      let message = chalk.green('Serving', entry);
-
-			if (localAddress) {
-				const prefix = networkAddress ? '- ' : '';
-				const space = networkAddress ? '            ' : '  ';
-
-				message += `\n\n${chalk.bold(`${prefix}Local:`)}${space}${localAddress}`;
+		console.log(boxen(message, {
+					padding: 1,
+					borderColor: 'green',
+					margin: 1
+		}));
 			}
+	}
 
-			if (networkAddress) {
-				message += `\n${chalk.bold('- On Your Network:')}  ${networkAddress}`;
-			}
-
-      console.log(boxen(message, {
-				padding: 1,
-				borderColor: 'green',
-				margin: 1
-      }));
-		}
-  }
-
-  // const makeCert = require('make-cert');
-  // const {key, cert} = makeCert('localhost');
-  // const server = https.createServer({ key, cert }, app).listen(44301, async () => displayNetworkInfo(server, "https"))
-  const server = app.listen(port, async () => displayNetworkInfo(server));
-});
-
+	// const makeCert = require('make-cert');
+	// const {key, cert} = makeCert('localhost');
+	// const server = https.createServer({ key, cert }, app).listen(44301, async () => displayNetworkInfo(server, "https"))
+	const server = app.listen(port, async () => displayNetworkInfo(server));
+	});
+}

@@ -106,9 +106,11 @@ npm run build
 
 #### Run the application
 
-In the command prompt, type in `node server/server.js /path/to/your/workspace` from the root folder and hit enter.
+In the command prompt, type in `pixano /path/to/your/workspace` from the root folder and hit enter. (or alternatively : `node cli/pixano /path/to/your/workspace`)
 
 *NB: Make sure when typing this command that the workspace (`/path/to/your/workspace`) contains all of the data you want to use.*
+
+Type in `pixano --help` to get the options available in your current version of Pixano.
 
 
 ## 2. Usage
