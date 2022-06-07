@@ -16,7 +16,7 @@ cd /data/PIXANOws && python /home/bburger/CEA/PIXANO2021/doc/python-server-with-
 ```
 node server/server.js /data/PIXANOws/
 # OU
-sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 pixano/pixano-app:confiance-v1.7.0
+sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 --network=host pixano/pixano-app:confiance-v1.7.0 --elise-ip 127.0.0.1
 ```
 
 -----------------
