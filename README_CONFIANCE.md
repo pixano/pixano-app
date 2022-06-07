@@ -3,20 +3,9 @@ Process utilisateur confiance / cas d'usages
 
 ## Démo en local :
 Aller dans le dossier pixano-app
-### nettoyage préventif
-```
-rm -rf ELISE/elise/repository.db ELISE/Elise_sqlite/ ELISE/elise_ext/data/idx/*
-rm -rf /data/PIXANOws/db.ldb
-```
 ### démarrage d'Élise
 ```
-export ELISE_BASE="$(pwd)/ELISE"
-export ELISE_DIST=$ELISE_BASE/elise_ext
-export LD_LIBRARY_PATH=$ELISE_DIST/lib
-# 1) lancer un searcher, il continue à tourner en tâche de fond
-$ELISE_DIST/bin/run_search_server --param=$ELISE_BASE/eliseCfg/elise_search_FSF_config.xml -tSEARCHER_FSF &
-# 2) lancement du serveur Élise
-$ELISE_DIST/bin/run_elise_server --param=$ELISE_BASE/eliseCfg/elise_server_config_sqlite.xml &
+sudo docker run -it --rm -p 8081:8081 pixano/elise:confiance-v0.1.0
 ```
 ### démarrage de l'émulateur minio
 ```
@@ -26,6 +15,8 @@ cd /data/PIXANOws && python /home/bburger/CEA/PIXANO2021/doc/python-server-with-
 ### lancement de pixano
 ```
 node server/server.js /data/PIXANOws/
+# OU
+sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 pixano/pixano-app:confiance-v1.7.0
 ```
 
 -----------------
@@ -35,6 +26,7 @@ node server/server.js /data/PIXANOws/
 ### [MINIO](https://minio-ec5.confiance.irtsystemx.org/buckets/pixanoimagesselection/)
 ### [ELASTIC](https://elasticsearch-ec5.confiance.irtsystemx.org/)
 ### [KIBANA](https://kibana-ec5.confiance.irtsystemx.org/)
+### [ELISE](https://elise-ec5.confiance.irtsystemx.org/)
 
 -----------------
 ## Démo dans l'environnement ec5-dev avec code dans conteneur démo (dvc-pod-2)
@@ -48,21 +40,6 @@ k exec -ti dvc-pod-2 -- bash
 ```
 #root@dvc-pod-2:/mlops
 cd /mlops/code/pixano-app
-```
-### nettoyage préventif
-```
-rm -rf ELISE/elise/repository.db ELISE/Elise_sqlite/ ELISE/elise_ext/data/idx/*
-rm -rf /mlops/pixdata/db.ldb
-```
-### démarrage d'Élise
-```
-export ELISE_BASE="$(pwd)/ELISE"
-export ELISE_DIST=$ELISE_BASE/elise_ext
-export LD_LIBRARY_PATH=$ELISE_DIST/lib
-# 1) lancer un searcher, il continue à tourner en tâche de fond
-$ELISE_DIST/bin/run_search_server --param=$ELISE_BASE/eliseCfg/elise_search_FSF_config.xml -tSEARCHER_FSF &
-# 2) lancement du serveur Élise
-$ELISE_DIST/bin/run_elise_server --param=$ELISE_BASE/eliseCfg/elise_server_config_sqlite.xml &
 ```
 ### lancement de pixano
 ```
@@ -87,19 +64,19 @@ node server/server.js /mlops/pixdata/
 # s'assurer que le code est bien construit
 npm run build
 # lancer la construction
-sudo docker build -t pixano/pixano-app:confiance-v1.5.1 -f Dockerfile-local .
+sudo docker build -t pixano/pixano-app:confiance-v1.7.0 -f Dockerfile-local .
 # tester le bon fonctionnement (pas de volumes dans confiance)
-sudo docker run -it --rm -p 3000:3000 -p 8081:8081 pixano/pixano-app:confiance-v1.5.1
+sudo docker run -it --rm -p 3000:3000 pixano/pixano-app:confiance-v1.7.0
 # le cas échéant en faire une sauvegarde locale
-sudo docker save -o /data/pixano-confiance-v1.5.1.tar pixano/pixano-app:confiance-v1.5.1
+sudo docker save -o /data/pixano-confiance-v1.7.0.tar pixano/pixano-app:confiance-v1.7.0
 ```
 ### pousser sur dockerhub
 ```
 # si l'image venait d'ailleurs, commencer par la charger
 sudo docker load -i /data/pixano-confiance.tar
 # modifier le tag et pousser
-sudo docker tag pixano/pixano-app:confiance-v1.5.1 pixano/pixano-dev:confiance-v1.5.1
-sudo docker push pixano/pixano-dev:confiance-v1.5.1
+sudo docker tag pixano/pixano-app:confiance-v1.7.0 pixano/pixano-dev:confiance-v1.7.0
+sudo docker push pixano/pixano-dev:confiance-v1.7.0
 ```
 ### connexion
 ```
@@ -109,13 +86,13 @@ k login
 ### importer l'image sur kubernetes et la lancer (sans déploiement, pour test)
 ```
 # création du pod :
-k run pixano-v1-5-1 -n ec5-dev --image pixano/pixano-dev:confiance-v1.5.1
+k run pixano-v1-7-0 -n ec5-dev --image pixano/pixano-dev:confiance-v1.7.0
 # vérification (au départ, il faut le temps qu'il télécharge l'image depuis dockerhub) :
 k get pods
 # en cas de problème, on peut avoir plus de détails
-k describe pod pixano-v1-5-1
+k describe pod pixano-v1-7-0
 # forwarder les ports pour pouvoir accéder à Pixano
-k port-forward pixano-v1-5-1 3012:3000 &
+k port-forward pixano-v1-7-0 3012:3000 &
 ## accès à pixano via http://localhost:3012
 
 ###... port à valider : DebiAI utilise a priori le même, d'autres peut-être aussi, on pourra éventuellement le rediriger sur un autre port du genre : 3001:3000

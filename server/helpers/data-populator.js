@@ -67,6 +67,7 @@ async function sequence_pcl_image(db, mediaRelativePath, hostWorkspacePath, data
 async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
+	const eliseIp = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseIp });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = { urlList };
@@ -88,7 +89,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 				// compute a thumbnail for this image
 				value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 }).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
 				// ELISE : index this image
-				let urlElise = 'http://localhost:8081'
+				let urlElise = 'http://'+eliseIp+':8081'
 				let formData = new FormData();// create the form to send to Elise
 				formData.append('action', 'index');
 				const response = await fetch(url);
@@ -128,6 +129,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
+	const eliseIp = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseIp });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = {urlList};
@@ -153,7 +155,7 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
           // compute a thumbnail for this image
           value.thumbnail = await imageThumbnail(f, {responseType: 'base64', height: 100}).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
           // ELISE : index this image
-          let urlElise = 'http://localhost:8081'
+          let urlElise = 'http://'+eliseIp+':8081'
           let formData = new FormData();// create the form to send to Elise
           formData.append('action', 'index');
           formData.append('image', fs.readFileSync(f), url);

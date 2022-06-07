@@ -1,8 +1,4 @@
 node_modules/
 build/
 package-lock.json
-elise/
-eliseCfg/
-fastsearch/
-juliet/
 .vscode/

@@ -31,6 +31,7 @@ async function elise_search_similar_images(req, res) {
 
     const similarity_level = req.params.similarity_level;
     const dataId = req.params.data_id;
+	const eliseIp = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseIp });
 
 	// ... TODO : no linked task for now (has to change for a more realistic use = with multiple datasets)
 	
@@ -61,7 +62,7 @@ async function elise_search_similar_images(req, res) {
 		exportPath = path.join(workspace, relUrl);
 	}
 	// define the message
-	let urlElise = 'http://localhost:8081'
+	let urlElise = 'http://'+eliseIp+':8081'
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'search');
 	if (dataData.path.includes('http:')) formData.append('image', buffer, relUrl);
