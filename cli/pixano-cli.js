@@ -33,7 +33,7 @@ export function cli(argv) {
 //		.option('debug', 'Show debugging information')//TODO
 		.option('port', 'The port on which the app will be running', process.env.PORT || 3000)
 		.option('workspace', 'Your workspace: it must contain all of the data you want to use', '/data/')
-		.option('elise-ip', 'IP address of elise server', '127.0.0.1')
+		.option('elise-url', 'Full address of elise server', 'http://localhost:8081')
 		.example('pixano /path/to/workspace','The most common way to use Pixano:')
 		.example('pixano --workspace /path/to/workspace --port 5001','Run on a specific port:')
 
@@ -50,6 +50,6 @@ export function cli(argv) {
 	
 	// 2) launch the server
 	console.log(logo);
-	serve(flags.workspace, flags.port, { eliseIp: flags.eliseIp });
+	serve(flags.workspace, flags.port, { eliseUrl: flags.eliseUrl });
 }
 

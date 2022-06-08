@@ -67,7 +67,7 @@ async function sequence_pcl_image(db, mediaRelativePath, hostWorkspacePath, data
 async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
-	const eliseIp = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseIp });
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseUrl });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = { urlList };
@@ -89,7 +89,6 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 				// compute a thumbnail for this image
 				value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 }).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
 				// ELISE : index this image
-				let urlElise = 'http://'+eliseIp+':8081'
 				let formData = new FormData();// create the form to send to Elise
 				formData.append('action', 'index');
 				const response = await fetch(url);
@@ -100,7 +99,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 				formData.append('externalid', id);
 				formData.append('title', url);
 				formData.append('externalurl', "elise.cea.fr"+url);
-				await fetch(urlElise, { method: 'post', body: formData })// send POST request
+				await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
 					.then(res => {
 					if (res.statusText=='OK') return res.json();
 					else console.log("KO :\n",res);
@@ -129,7 +128,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
-	const eliseIp = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseIp });
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseUrl });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = {urlList};
@@ -155,14 +154,13 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
           // compute a thumbnail for this image
           value.thumbnail = await imageThumbnail(f, {responseType: 'base64', height: 100}).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
           // ELISE : index this image
-          let urlElise = 'http://'+eliseIp+':8081'
           let formData = new FormData();// create the form to send to Elise
           formData.append('action', 'index');
           formData.append('image', fs.readFileSync(f), url);
           formData.append('externalid', id);
           formData.append('title', url);
           formData.append('externalurl', "elise.cea.fr"+url);
-          await fetch(urlElise, { method: 'post', body: formData })// send POST request
+          await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
           	.then(res => {
               if (res.statusText=='OK') return res.json();
               else console.log("KO :\n",res);

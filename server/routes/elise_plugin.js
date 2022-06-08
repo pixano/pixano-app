@@ -8,6 +8,16 @@ const populator = require('../helpers/data-populator');
 
 
 /**
+ * Test connection to elise server
+ */
+ async function elise_test(eliseUrl) {//TODO: when we will be using node>=16, we will be able to use AbortSignal to timeout fetch
+	// send and wait for answer
+	await fetch(eliseUrl, { method: 'get' })// send a simple get and wait for an answer
+		.then(() => console.log("Elise is running on ", eliseUrl))
+		.catch(() => console.error("ERROR while calling ELISE => ELISE is not responding on ",eliseUrl));
+}
+
+/**
  * @api {get} /tasks/:task_name/results Request list of results with given contraints
  * (page, pageCount, filter, sort, ...)
  * @apiName GetResults
@@ -31,7 +41,7 @@ async function elise_search_similar_images(req, res) {
 
     const similarity_level = req.params.similarity_level;
     const dataId = req.params.data_id;
-	const eliseIp = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseIp });
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseUrl });
 
 	// ... TODO : no linked task for now (has to change for a more realistic use = with multiple datasets)
 	
@@ -62,14 +72,14 @@ async function elise_search_similar_images(req, res) {
 		exportPath = path.join(workspace, relUrl);
 	}
 	// define the message
-	let urlElise = 'http://'+eliseIp+':8081'
+	console.log("eliseUrl=",eliseUrl)
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'search');
 	if (dataData.path.includes('http:')) formData.append('image', buffer, relUrl);
 	else formData.append('image', fs.readFileSync(exportPath), relUrl);
 	formData.append('save', '0');
 	// send and wait for answer
-	await fetch(urlElise, { method: 'post', body: formData })// send POST request
+	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request //TODO : add shorter timeout
 		.then(res => {
 			if (res.statusText == 'OK') return res.json();
 			else console.log("KO :\n", res);
@@ -98,5 +108,6 @@ async function elise_search_similar_images(req, res) {
 }
 
 module.exports = {
+	elise_test,
 	elise_search_similar_images
 }
