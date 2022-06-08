@@ -339,17 +339,21 @@ export const snapshotProject = () => {
 /**
  * Export all database annotations.
  * @param {String} path destination path
+ * @param {Boolean} isURL if the destination is an URL instead of a local path
  */
-export const exportTasks = (path) => (dispatch) => {
-    return POST('/api/v1/tasks/export', {path}); 
+export const exportTasks = (path, isURL) => (dispatch) => {
+	if (isURL) return POST('/api/v1/tasks/export', {url: path});
+	else return POST('/api/v1/tasks/export', {path: path});
 }
 
 /**
  * Import file annotations to database.
  * @param {String} path origin path
+ * @param {Boolean} isURL if the destination is an URL instead of a local path
  */
-export const importTasks = (path) => (dispatch) => {
-    return POST('/api/v1/tasks/import', {path}, dispatch);
+export const importTasks = (path, isURL) => (dispatch) => {
+	if (isURL) return POST('/api/v1/tasks/import', {url: path}, dispatch);
+	else return POST('/api/v1/tasks/import', {path: path}, dispatch);
 }
 
 /**

@@ -48,6 +48,10 @@ const keyForLabels = (task_name, data_id = '') => {
   return 'l:' + task_name + ':' + data_id;
 }
 
+const keyForCliOptions = () => {
+	return 'o:';
+}
+
 
 
 module.exports = {
@@ -61,4 +65,5 @@ module.exports = {
   keyForAllResults,
   keyForResult,
   keyForLabels,
+  keyForCliOptions
 }
