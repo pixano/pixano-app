@@ -14,9 +14,9 @@ cd /data/PIXANOws && python /home/bburger/CEA/PIXANO2021/doc/python-server-with-
 ```
 ### lancement de pixano
 ```
-pixano -w /data/PIXANOws/ --elise-url="http://127.0.0.1:8081"
+pixano -w /data/PIXANOws/ --elise-url=http://127.0.0.1:8081
 # OU
-sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 --network=host pixano/pixano-app:confiance-v1.7.0 --elise-url="http://127.0.0.1:8081"
+sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 --network=host pixano/pixano-app:confiance-v1.7.0 --elise-url=http://127.0.0.1:8081
 ```
 
 -----------------

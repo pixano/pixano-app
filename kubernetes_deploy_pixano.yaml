@@ -1,3 +1,5 @@
+# Pixano deployment file for the EC5-dev env
+
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -16,7 +18,9 @@ spec:
     spec:
       containers:
       - name: "pixano"
-        image: "pixano/pixano-dev:confiance-v1.2"
+        image: "pixano/pixano-dev:confiance-v1.7.0"
+        args:
+          - "--elise-url=https://elise-ec5.confiance.irtsystemx.org"
         imagePullPolicy: Always
         ports:
         - name: web
@@ -39,6 +43,7 @@ spec:
     app: "pixano"
   type: ClusterIP
   sessionAffinity: None
+  
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
