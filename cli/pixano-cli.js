@@ -1,6 +1,5 @@
 const args = require('args')
-//import serve from '../server/server';
-const { bidule, serve } = require('../server/server');
+const { serve } = require('../server/server');
 
 const logo =
 `
@@ -43,12 +42,6 @@ export function cli(argv) {
 	
 	// 2) launch the server
 	console.log(logo);
-	serve(flags.workspace, flags.port);
+	serve(flags.workspace, flags.port, flags);
 }
-
-//function aCommand (name, sub, options) {
-//	console.log("ac",name); // The name of the command
-//	console.log("ac",sub); // The output of .sub
-//	console.log("ac",options); // An object containing the options that have been used
-//}
 
