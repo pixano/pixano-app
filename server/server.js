@@ -49,7 +49,7 @@ export function serve(workspace, port, cliOptions) {
 		.then(() => {
 			// 1) store cli options
 			const { db } = require(__dirname + '/config/db');
-			db.put(dbkeys.keyForCliOptions, cliOptions)
+			db.put(dbkeys.keyForCliOptions, cliOptions);
 
 			// 2) start server
 			app.use(serveStatic(__dirname + '/../build/'));

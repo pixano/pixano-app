@@ -13,7 +13,7 @@ COPY node_modules node_modules
 # Copy files for the backend
 COPY package.json package.json
 COPY server server
-COPY .logo-ascii .logo-ascii
+COPY cli cli
 
 EXPOSE 3000
 
@@ -22,6 +22,7 @@ RUN mkdir -p /data
 COPY data-test /data/data-test
 
 # ENTRYPOINT ["node", "server/server.js"]
-RUN echo 'cat .logo-ascii && node server/server.js "$@"' > entrypoint.sh
+RUN echo 'node cli/pixano "$@"' > entrypoint.sh
+#RUN echo 'node cli/pixano "$@" > pixano_logs 2>&1' > entrypoint.sh
 ENTRYPOINT ["sh", "entrypoint.sh" ]
 CMD []

@@ -1,6 +1,5 @@
 const args = require('args')
-//import serve from '../server/server';
-const { bidule, serve } = require('../server/server');
+const { serve } = require('../server/server');
 
 const logo =
 `
@@ -16,6 +15,13 @@ const logo =
 ██  ▒▓▓▒▒     ▒   ▒      ▒▓▒                                         ▓
 ██                         █▓                                        ▓
 `
+//const logo =`
+//_____________                            
+//___  __ \\__(_)___  _______ _____________ 
+//__  /_/ /_  /__  |/_/  __ \`/_  __ \\  __ \\ 
+//_  ____/_  / __>  < / /_/ /_  / / / /_/ /
+///_/     /_/  /_/|_| \\__,_/ /_/ /_/\\____/                                      
+//`
 
 // implement a user friendly CLI
 export function cli(argv) {
@@ -36,19 +42,13 @@ export function cli(argv) {
 	if (args.sub.length) {
 		if (flags.workspace === '/data/') flags.workspace = args.sub[0];
 		else {
-			console.error("ERROR: Only one worspace can be specified.");
+			console.error("ERROR: Only one workspace can be specified.");
 			args.showHelp();
 		}
 	}
 	
 	// 2) launch the server
 	console.log(logo);
-	serve(flags.workspace, flags.port);
+	serve(flags.workspace, flags.port, flags);
 }
-
-//function aCommand (name, sub, options) {
-//	console.log("ac",name); // The name of the command
-//	console.log("ac",sub); // The output of .sub
-//	console.log("ac",options); // An object containing the options that have been used
-//}
 
