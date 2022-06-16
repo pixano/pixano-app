@@ -16,6 +16,7 @@ const interfaces = os.networkInterfaces();
 const chalk = require('chalk');
 const boxen = require('boxen');
 const fs = require('fs');
+var git = require('git-rev-sync');
 
 const getNetworkAddress = () => {
 	for (const name of Object.keys(interfaces)) {
@@ -30,6 +31,16 @@ const getNetworkAddress = () => {
 
 // implement a user friendly CLI
 export function serve(workspace, port, cliOptions) {
+
+	//print release/revision
+	if (git.isTagDirty()) {
+		if (git.isDirty()) console.log("Using Pixano-app rev",git.short(),"on branch",git.branch(), "(uncommited changes).");
+		else console.log("Using Pixano-app rev",git.short(),"on branch",git.branch());
+		console.log("Last tag was",git.tag());
+	} else {
+		if (git.isDirty()) console.log("Using Pixano-app release",git.tag(), "(uncommited changes).");
+		else console.log("Using Pixano-app release",git.tag());
+	}
 
 	if (!fs.existsSync(workspace)) {
 		console.error('Please enter a valid path for workspace (\"', workspace, '\" does not exist).');
