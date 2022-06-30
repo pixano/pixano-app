@@ -49,7 +49,12 @@ export class TemplatePlugin extends LitElement {
 		const taskName = getState('application').taskName;
 		const task = tasks.find((t) => t.name === taskName);
 		if (this.attributePicker && task) {
-			this.attributePicker.reloadSchema(task.spec.label_schema);
+			const schema = task.spec.label_schema;
+			if (schema.default) {//verify if default exists
+				const targetClass = schema.category.find((c) => c.name === schema.default);
+				if (!targetClass) throw("Default category \""+schema.default+"\" does not exists.\nPlease modify task definition.");
+			}
+			this.attributePicker.reloadSchema(schema);
 		}
 	}
 
