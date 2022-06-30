@@ -32,7 +32,7 @@ sudo docker run -it --rm -v "$PWD":/data -p 3000:3000 --network=host pixano/pixa
 ## Démo dans l'environnement ec5-dev avec code dans conteneur démo (dvc-pod-2)
 ### connexion
 ```
-sudo swanctl --initiate --ike ikev1-psk-xauth-aggressive --child ikev1-psk-xauth-aggressive
+sudo ipsec up IRT_Client
 k login
 k port-forward dvc-pod-2 3000:3000 &
 k exec -ti dvc-pod-2 -- bash
@@ -80,7 +80,7 @@ sudo docker push pixano/pixano-dev:confiance-v1.7.0
 ```
 ### connexion
 ```
-sudo swanctl --initiate --ike ikev1-psk-xauth-aggressive --child ikev1-psk-xauth-aggressive
+sudo ipsec up IRT_Client
 k login
 ```
 ### importer l'image sur kubernetes et la lancer (sans déploiement, pour test)
@@ -94,17 +94,71 @@ k describe pod pixano-v1-7-0
 # forwarder les ports pour pouvoir accéder à Pixano
 k port-forward pixano-v1-7-0 3012:3000 &
 ## accès à pixano via http://localhost:3012
-
-###... port à valider : DebiAI utilise a priori le même, d'autres peut-être aussi, on pourra éventuellement le rediriger sur un autre port du genre : 3001:3000
-###... si on veut rendre Élise accessible, il suffira également de forwarder les ports : 8081:8081
 ```
 ### déploiement réel :
 ```
-## commencer par adapter la version de l'image docker dans pixano-app/kubernetes_deploy_pixano.yaml
-k apply -f kubernetes_deploy_pixano.yaml
+git clone git@git.irt-systemx.fr:confianceai/ec_5/ec5_as2/deployment-configurations.git
+cd deployment-configurations
+k apply -f pixano_deployment-dev.yaml
 ## attendre un peu : l'image va être téléchargée en tâche de fond
 ## accès à pixano via https://pixano-ec5.confiance.irtsystemx.org/#/
 ```
 
+
+-----------------
+## Démo dans l'environnement ec5-integration
+
+### connexion au cluster
+#### première fois :
+```
+git clone git@git.irt-systemx.fr:confianceai/ec_1/fa2_infrastructure/kubectl-config.git
+cd kubectl-config/
+./install_and_config_kubectl.sh
+k login public-v2
+k config set-context --current --namespace=ec5-integration
+k get pods
+```
+#### à chaque fois :
+```
+k login public-v2
+k get pods
+```
+### déploiement :
+```
+git clone git@git.irt-systemx.fr:confianceai/ec_5/ec5_as2/deployment-configurations.git
+cd deployment-configurations
+k apply -f elise_deployment.yaml
+k apply -f pixano_deployment.yaml
+```
+#### vérifs
+```
+# vérifier le déploiement
+k get pods
+# vérifier le log de Pixano
+k logs pixano-69766cb5d8-zfjqz
+```
+#### supprimer un déploiement
+```
+k delete all -l app=pixano
+```
+### [accès réseau](https://pixano-ec5.apps.confianceai-public.irtsysx.fr/)
+
+
+
+-----------------
+## tests de connexion - communication
+#### Élise
+```
+curl https://elise-ec5.confiance.irtsystemx.org -F action=search -F save=0
+curl localhost:8081 -F action=search -F image=@/home/bburger/data/video/01.png
+```
+#### ElasticSearch/Opensearch
+```
+## nettoyer (=supprimer et recréer) un index elastic :
+curl -X DELETE https://opensearch-ec5.confiance.irtsystemx.org/pixano_export_data/
+curl -X PUT https://opensearch-ec5.confiance.irtsystemx.org/pixano_export_data/
+### voir le contenu :
+curl -X GET https://opensearch-ec5.confiance.irtsystemx.org/pixano_export_data/_search?size=10000&pretty=true&q=*:*
+```
 
 
