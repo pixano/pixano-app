@@ -33,9 +33,11 @@ export function cli(argv) {
 //		.option('debug', 'Show debugging information')//TODO
 		.option('port', 'The port on which the app will be running', process.env.PORT || 3000)
 		.option('workspace', 'Your workspace: it must contain all of the data you want to use', '/data/')
-		.option('elise-url', 'Full address of elise server', 'http://localhost:8081')
+		.option('elise', 'Full address of elise server', 'http://localhost:8081')
+		.option('kafka', 'Kafka brocker', 'kafka.ec5-dev.svc.cluster.local:9092')
 		.example('pixano /path/to/workspace','The most common way to use Pixano:')
 		.example('pixano --workspace /path/to/workspace --port 5001','Run on a specific port:')
+		.example('pixano --elise=htth://specifiurl --kafka=kafka_brocker','Launch in confiance environment:')
 
 	const flags = args.parse(argv);
 	
@@ -50,6 +52,6 @@ export function cli(argv) {
 	
 	// 2) launch the server
 	console.log(logo);
-	serve(flags.workspace, flags.port, { eliseUrl: flags.eliseUrl });
+	serve(flags.workspace, flags.port, flags);
 }
 

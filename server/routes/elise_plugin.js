@@ -41,7 +41,7 @@ async function elise_search_similar_images(req, res) {
 
     const similarity_level = req.params.similarity_level;
     const dataId = req.params.data_id;
-	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseUrl });
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 
 	// ... TODO : no linked task for now (has to change for a more realistic use = with multiple datasets)
 	

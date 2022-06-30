@@ -1,5 +1,7 @@
 const { Kafka } = require('kafkajs')
 var CONFIG = require('../../config/kafka.json');
+const { db } = require('../config/db');
+const dbkeys = require('../config/db-keys');
 var num = 1;// TODO: temporary, only used for fake kafka
 /**
  * Get list of ids to be loaded, from KAFKA
@@ -43,11 +45,11 @@ const getSelectionFromKafka = async () => {
 	//		... 
 	//	]
 	// }
-
+	const kafkaBrocker = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.kafka });
 	// 1) initialisation
 	const kafka = new Kafka({
 		clientId: CONFIG.clientId,
-		brokers: CONFIG.brokers,
+		brokers: [kafkaBrocker],
 		retry: {
 			retries: 3,
 			restartOnFailure: false

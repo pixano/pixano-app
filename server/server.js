@@ -52,7 +52,7 @@ export function serve(workspace, port, cliOptions) {
 			db.put(dbkeys.keyForCliOptions, cliOptions);
 			console.log("cli options: ",cliOptions);
 			const { elise_test } = require(__dirname + '/routes/elise_plugin.js');
-			elise_test(cliOptions.eliseUrl);//not fatal if it doesn't work: elise could be turned on afterwards
+			elise_test(cliOptions.elise);//not fatal if it doesn't work: elise could be turned on afterwards
 
 			// 2) start server
 			app.use(serveStatic(__dirname + '/../build/'));

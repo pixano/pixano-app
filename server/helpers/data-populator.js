@@ -67,7 +67,7 @@ async function sequence_pcl_image(db, mediaRelativePath, hostWorkspacePath, data
 async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
-	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseUrl });
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = { urlList };
@@ -128,7 +128,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
-	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.eliseUrl });
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = {urlList};
