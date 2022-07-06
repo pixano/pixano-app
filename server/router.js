@@ -45,7 +45,7 @@ const { get_results,
         put_results } = require('./routes/results');
 const { print,
         dump } = require('./config/db');
-const { elise_search_similar_images } = require('./routes/elise_plugin');	
+const { elise_isRunning, elise_search_similar_images, elise_semantic_search } = require('./routes/elise_plugin');	
 
 /**
  * Router handling the HTTP requests
@@ -107,7 +107,9 @@ router.get('/tasks/:task_name/labels/:data_id', middleware.checkToken, get_label
 router.put('/tasks/:task_name/labels/:data_id', middleware.checkToken, put_labels);
 
 // For ELISE
+router.get('/elise/isrunning', middleware.checkToken, elise_isRunning);
 router.get('/elise/tasks/:task_name/similarity/:data_id/level/:similarity_level', middleware.checkToken, elise_search_similar_images);
+router.get('/elise/tasks/:task_name/semanticsearch/:keywords', middleware.checkToken, elise_semantic_search);
 
 
 module.exports = router;

@@ -97,7 +97,7 @@ async function import_tasks_from_kafka(req, res) {
 	checkAdmin(req, async () => {// only admin can modify tasks and datasets
 		console.log('##### Importing from KAFKA');
 		var kafkaSelection = await getSelectionFromKafka().catch((e) => {
-			console.error();
+			console.error('Error in Kafka import\n'+e);
 			res.status(404).json({ message: 'Error in Kafka import\n'+e });
 		});
 		if ((!kafkaSelection) || (!kafkaSelection.sample_ids.length===0)) return;// if kafka failed, nothing else to do
@@ -119,7 +119,7 @@ async function import_tasks_from_kafka(req, res) {
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) getPathFromIds');
 		task.dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name, kafkaSelection.project_name).catch((e) => {
-			console.error();
+			console.error('Error in Minio import\n'+e);
 			res.status(404).json({ message: 'Error in Minio import\n'+e });
 		});
 		if (!task.dataset.urlList) return;// if minio failed, nothing else to do

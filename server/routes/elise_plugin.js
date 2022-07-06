@@ -10,47 +10,43 @@ const populator = require('../helpers/data-populator');
 /**
  * Test connection to elise server
  */
- async function elise_test(eliseUrl) {//TODO: when we will be using node>=16, we will be able to use AbortSignal to timeout fetch
+async function elise_test(eliseUrl) {//TODO: when we will be using node>=16, we will be able to use AbortSignal to timeout fetch
 	// send and wait for answer
 	await fetch(eliseUrl, { method: 'get' })// send a simple get and wait for an answer
 		.then(() => console.log("Elise is running on ", eliseUrl))
 		.catch(() => console.error("ERROR while calling ELISE => ELISE is not responding on ",eliseUrl));
 }
+async function elise_isRunning(req, res) {
+	// send and wait for answer
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
+	const isRunning = await fetch(eliseUrl, { method: 'get' })// send a simple get and wait for an answer
+		.then(() => { return true; })
+		.catch(() => { return false; });
+	return res.send(isRunning);
+}
 
 /**
- * @api {get} /tasks/:task_name/results Request list of results with given contraints
- * (page, pageCount, filter, sort, ...)
+ * @api {get} /elise/tasks/:task_name/similarity/:data_id/level/:similarity_level Request list of results similar to given image
  * @apiName GetResults
  * @apiGroup Results
  * 
- * @queryParam {number} page
- * @queryParam {number} count
- * @queryParam {string} <any> (filter result any keys with value inclusion)
+ * @queryParam {number} params.similarity_level
+ * @queryParam {number} params.data_id
  * 
- * @apiSuccessExample Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *      results: DbResult[],
- *      counter: number, // number of included results
- *      globalCounter: number, // number of all results
- *      doneCounter: number, // number of all done results
- *      toValidateCounter: number // number of all to_validate results
- *     }
+ * @apiSuccessExample Success-Response: list of ids
  */
 async function elise_search_similar_images(req, res) {
-
-    const similarity_level = req.params.similarity_level;
-    const dataId = req.params.data_id;
-	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
-
 	// ... TODO : no linked task for now (has to change for a more realistic use = with multiple datasets)
 	
 	// 1) initialisation
+	const similarity_level = req.params.similarity_level;
+	const dataId = req.params.data_id;
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	const taskName = req.params.task_name;
 	const task = await db.get(dbkeys.keyForTask(taskName));
-	const queries = req.query;
-	delete queries.page;
-	delete queries.count;
+	// const queries = req.query;
+	// delete queries.page;
+	// delete queries.count;
 	let resultIds = [];
 
 	// 2) call Elise
@@ -66,7 +62,6 @@ async function elise_search_similar_images(req, res) {
 		const blob = await response.blob();
 		const arrayBuffer = await blob.arrayBuffer();
 		buffer = Buffer.from(arrayBuffer);
-
 	} else {
 		relUrl = path.normalize(dataData.path.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
 		exportPath = path.join(workspace, relUrl);
@@ -107,7 +102,62 @@ async function elise_search_similar_images(req, res) {
 	return res.send(resultIds);
 }
 
+/**
+ * @api {get} /elise/tasks/:task_name/similarity/:data_id/level/:similarity_level Request list of results similar to given image
+ * @apiName GetResults
+ * @apiGroup Results
+ * 
+ * @queryParam {number} params.similarity_level
+ * @queryParam {number} params.data_id
+ * 
+ * @apiSuccessExample Success-Response: list of ids
+ */
+ async function elise_semantic_search(req, res) {
+	// console.log(req);
+	// console.log(res);
+
+	// // ... TODO : no linked task for now (has to change for a more realistic use = with multiple datasets)
+	
+	// 1) initialisation
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
+	const keywords = req.params.keywords;
+	const taskName = req.params.task_name;
+	const task = await db.get(dbkeys.keyForTask(taskName));
+	let resultIds = [];
+
+	// 2) call Elise
+	// define the message
+	console.log("eliseUrl=",eliseUrl)
+	let formData = new FormData();// create the form to send to Elise
+	formData.append('action', 'txtsearch');
+	formData.append('query', keywords);
+	formData.append('save', '0');
+	// send and wait for answer
+	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request //TODO : add shorter timeout
+		.then(res => {
+			if (res.statusText == 'OK') return res.json();
+			else console.log("KO :\n", res);
+		})
+		.then(res => {
+			const resultat=JSON.parse(JSON.stringify(res));
+			// console.log("resultat=",resultat);
+			// if (resultat.searchresults.error) console.log("erreur : ",resultat.searchresults.error);
+			// else console.log("searchresults.imagesinfo.imageinfo=",resultat.searchresults.imagesinfo.imageinfo);
+			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
+				console.log("found=",idscore);
+				resultIds.push(idscore.externalid);
+			}
+		}).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
+	return res.send(resultIds);
+}
+
+// curl localhost:8081 -F action=search -F image=@/adress/of/the/search/image.jpg -F save=0
+// curl localhost:8081 -F action=txtsearch -F query="car truck" -F save=0
+
+
 module.exports = {
 	elise_test,
-	elise_search_similar_images
+	elise_isRunning,
+	elise_search_similar_images,
+	elise_semantic_search
 }

@@ -5,6 +5,7 @@
 */
 
 import { html, css } from 'lit-element';
+import { until } from '../../node_modules/lit-html/directives/until.js';
 import TemplatePage from '../templates/template-page';
 import { store, getState } from '../store';
 import { GET } from '../actions/requests';
@@ -274,6 +275,50 @@ class AppDashboardAdmin extends TemplatePage {
     this.refreshGrid();
   }
 
+ 	/********** Elise calls *************/
+	async isEliseRunning() {// ELISE : test if running
+		return GET(`/api/v1/elise/isrunning`);
+	}
+
+	async onSearchSimilar(task_name, data_id) {
+		// ELISE : search for similar images
+		const resultIds = await GET(`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`);
+		// we get the resulting list
+		// first check
+		if (resultIds.length===0) {// impossible in the case of similarity => inconsistant database
+			this.errorPopup("inconsistant database");
+			return;// nothing else to do
+		}
+		// update filters according to this list
+		await this.updateFilter('data_id', resultIds.join(';'));
+		// last check
+		if (this.items.length===0) {// error 431 Request Header Fields Too Large (=resultIds.length too big)
+			this.errorPopup("Too much matching images, no filter applied.");// ... TODO : use something else then GET to handle this problem and show the real answer OR show a message to the user
+			this.updateFilter('data_id', '');// reinit filters for data_id
+		}
+	}
+
+	async onSemanticSearch(task_name, keywords) {
+		// ELISE : semantic search
+		// console.log("task_name=",task_name);
+		// console.log("keywords=",keywords);
+		const resultIds = await GET(`/api/v1/elise/tasks/${task_name}/semanticsearch/${keywords}`);
+		// we get the resulting list
+		// first check
+		if (resultIds.length===0) {
+			this.errorPopup("Nothing was found.\nDid you use existing keywords ?");
+			return;// nothing else to do
+		}
+		// update filters according to this list
+		await this.updateFilter('data_id', resultIds.join(';'));
+		// last check
+		if (this.items.length===0) {// error 431 Request Header Fields Too Large (=resultIds.length too big)
+			this.errorPopup("Too much matching images, no filter applied.");// ... TODO : use something else then GET to handle this problem and show the real answer OR show a message to the user
+			this.updateFilter('data_id', '');// reinit filters for data_id
+		}
+	}
+	/********** end of Elise calls *************/
+
   static get styles() {
     return [super.styles, css`
       progress {
@@ -476,7 +521,7 @@ class AppDashboardAdmin extends TemplatePage {
    * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Search Similar
    */
   listitem(item) {
-    const v = this.statusMap.get(item.status);
+	const v = this.statusMap.get(item.status);
     return html`
     <mwc-check-list-item left id=${item.data_id}>
       <div class="list-item">
@@ -490,30 +535,14 @@ class AppDashboardAdmin extends TemplatePage {
         <p>${this.assignedMap.get(item.in_progress.toString())}</p>
         <p>${format(item.cumulated_time)}</p>
 		<p><img src="data:image/jpg;base64,${item.thumbnail}" @click=${(evt) => this.onExplore(evt, item.data_id)}></p>
-        <p><mwc-icon-button icon="search_off" @click=${() => this.onSearchSimilar(item.task_name, item.data_id)}></mwc-icon-button></p>
+		${until(this.isEliseRunning().then(isRunning => isRunning
+			? html`<p><mwc-icon-button icon="search_off" @click=${() => this.onSearchSimilar(item.task_name, item.data_id)}></mwc-icon-button></p>`
+			: html``), html``)}
       </div>
     </mwc-check-list-item>
     <li divider role="separator"></li>
     `;
   }
-
-	async onSearchSimilar(task_name, data_id) {
-		// ELISE : search for similar images
-		const resultIds = await GET(`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`);
-		// we get the resulting list
-		// first check
-		if (resultIds.length===0) {// impossible in the case of similarity => inconsistant database
-			console.warn("inconsistant database");// ... TODO : show a message to the user
-			return;// nothing else to do
-		}
-		// update filters according to this list
-		await this.updateFilter('data_id', resultIds.join(';'));
-		// last check
-		if (this.items.length===0) {// error 431 Request Header Fields Too Large (=resultIds.length too big)
-			console.warn("too much matching images");// ... TODO : use something else then GET to handle this problem and show the real answer OR show a message to the user
-			this.updateFilter('data_id', '');// reinit filters for data_id
-		}
-	}
 
   get tableHeader() {
     const filters = getState('application').filters;
@@ -555,15 +584,18 @@ class AppDashboardAdmin extends TemplatePage {
       <div>
         <mwc-textfield label="Preview" icon="filter_list"></mwc-textfield>
       </div>
-      <div style="flexDirection: 'column'">
-	    Similarity Level
-        <div style="display: flex; align-items: center; flexDirection: 'row'">
-          0
-          <mwc-slider value=${this.similarityLevel} min="0" max="100" @input=${(evt) => this.similarityLevel=evt.detail.value}></mwc-slider>
-          100%
-        </div>
-		${this.similarityLevel.toFixed(2)}%
-      </div>
+	  ${until(this.isEliseRunning().then(isRunning => isRunning
+		? html`
+		<div style="flexDirection: 'column'">
+			Similarity Level
+			<div style="display: flex; align-items: center; flexDirection: 'row'">
+			0
+			<mwc-slider value=${this.similarityLevel} min="0" max="100" @input=${(evt) => this.similarityLevel=evt.detail.value}></mwc-slider>
+			100%
+			</div>
+			${this.similarityLevel.toFixed(2)}%
+		</div>`
+		: html``), html``)}
     </div>
     `;
   }
@@ -681,6 +713,14 @@ class AppDashboardAdmin extends TemplatePage {
                             @click=${() => this.onDeallocate()}>
           </mwc-icon-button>
         </div>
+		${until(this.isEliseRunning().then(isRunning => isRunning
+			? html`
+			<div style="text-align: right; "flexDirection: 'row'">
+				<label for="eliseinput">Filter by content :</label><input type="search" id="eliseinput" name="q" placeholder="contained classe(s)" title="Use keywords 'AND','OR','<','>' to separate classes">
+				<mwc-icon-button icon="filter_list_alt" title="filter based on input keywords" @click=${() => this.onSemanticSearch(this.items.at(0).task_name,this.shadowRoot.getElementById("eliseinput").value)}></mwc-icon-button>
+				<mwc-icon-button icon="delete" title="empty filter" @click=${() => this.updateFilter('data_id', '')}></mwc-icon-button>
+			</div>`
+			: html``), html``)}
       </div>
       ${this.tableHeader}
       <mwc-list id="table" multi @selected=${this.onItemSelected.bind(this)} style="height: 55vh; overflow-y: auto;">
@@ -691,6 +731,7 @@ class AppDashboardAdmin extends TemplatePage {
     </div>
     `;
   }
+
 
   get body() {
     const numTasks = getState('application').tasks.length;
