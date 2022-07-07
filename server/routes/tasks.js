@@ -9,7 +9,6 @@ const { checkAdmin } = require('./users');
 const { getOrcreateSpec } = require('./specs');
 const { getOrcreateDataset } = require('./datasets');
 const { createJob } = require('./jobs');
-const populator = require('../helpers/data-populator');
 const { getAllDataFromDataset,
         getAllPathsFromDataset,
         getDataDetails } = require('./datasets');
@@ -791,7 +790,7 @@ async function generateJobResultAndLabelsLists(task) {
 
         // Get data path
         const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
-        const path = populator.toRelative(dataData.path);
+        const path = utils.toRelative(dataData.path);
         // Generate result associated with each data
         const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path);
 

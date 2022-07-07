@@ -9,21 +9,11 @@ const fs = require('fs');
 const cliProgress = require('cli-progress');
 const path = require('path');
 const batchManager = require('./batch-manager');
-const { generateKey } = require('../helpers/utils');
+const { generateKey, toRelative, workspaceToMount, MOUNTED_WORKSPACE_PATH } = require('../helpers/utils');
 const dbkeys = require('../config/db-keys');
-const MOUNTED_WORKSPACE_PATH = '/data/';
 const imageThumbnail = require('image-thumbnail');
-// ELISE
-const fetch = require("node-fetch");
-var FormData=new require('form-data');
+const { elise_index_image } = require('../routes/elise_plugin.js');// ELISE
 
-const toRelative = (url) => {
-  if (Array.isArray(url)) {
-    return url.map((u) => u.replace(MOUNTED_WORKSPACE_PATH, ''));
-  } else {
-    return url.replace(MOUNTED_WORKSPACE_PATH, '');
-  }
-}
 
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
@@ -67,7 +57,6 @@ async function sequence_pcl_image(db, mediaRelativePath, hostWorkspacePath, data
 async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
-	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = { urlList };
@@ -88,25 +77,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 			if (dataType=='image') {
 				// compute a thumbnail for this image
 				value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 }).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
-				// ELISE : index this image
-				let formData = new FormData();// create the form to send to Elise
-				formData.append('action', 'index');
-				const response = await fetch(url);
-				const blob = await response.blob();
-				const arrayBuffer = await blob.arrayBuffer();
-				const buffer = Buffer.from(arrayBuffer);
-				formData.append('image', buffer, url);
-				formData.append('externalid', id);
-				formData.append('title', url);
-				formData.append('externalurl', "elise.cea.fr"+url);
-				await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
-					.then(res => {
-					if (res.statusText=='OK') return res.json();
-					else console.log("KO :\n",res);
-				  })
-				  .then(res => {
-					console.log(res);
-				  }).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
+				await elise_index_image(url,id);// ELISE : index this image
 			}
 			await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value });
 			bar1.increment();
@@ -128,7 +99,6 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ext = ['jpg', 'png'], dataType = 'image', urlList = '') {
 	var total = 0;
 	var folders = {};
-	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	if (urlList) {//if we get a list of urls instead of a full directory
 		total = urlList.length;
 		folders = {urlList};
@@ -148,26 +118,12 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
     for await (const fi of files) {
       const id = fi.id ? fi.id : generateKey();//if ids are given or generated
       const f = fi.url ? fi.url : fi;// only used when urlList is given as input in combination with ids
-      const url = workspaceToMount(hostWorkspacePath, f);
+	  const url = workspaceToMount(hostWorkspacePath, f);
       let value = { id, dataset_id: datasetId, type: dataType, path: url, children: ''};
       if (dataType=='image') {
           // compute a thumbnail for this image
           value.thumbnail = await imageThumbnail(f, {responseType: 'base64', height: 100}).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
-          // ELISE : index this image
-          let formData = new FormData();// create the form to send to Elise
-          formData.append('action', 'index');
-          formData.append('image', fs.readFileSync(f), url);
-          formData.append('externalid', id);
-          formData.append('title', url);
-          formData.append('externalurl', "elise.cea.fr"+url);
-          await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
-          	.then(res => {
-              if (res.statusText=='OK') return res.json();
-              else console.log("KO :\n",res);
-            })
-            .then(res => {
-              console.log(res);
-            }).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
+		  await elise_index_image(url,id,f);// ELISE : index this image
       }
       await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value});
       bar1.increment();
@@ -289,10 +245,6 @@ async function populateSequence(db, mediaRelativePath, hostWorkspacePath, datase
   }
   bar1.stop();
   await bm.flush();
-}
-
-const workspaceToMount = (hostWorkspacePath, f) => {
-  return path.normalize(f.replace(hostWorkspacePath, MOUNTED_WORKSPACE_PATH));
 }
 
 /**

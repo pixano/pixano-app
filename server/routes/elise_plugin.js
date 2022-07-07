@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 var FormData=new require('form-data');
 const fs = require('fs');
 const path = require('path');
-const populator = require('../helpers/data-populator');
+const { workspaceToMount, MOUNTED_WORKSPACE_PATH } = require('../helpers/utils');
 
 
 /**
@@ -25,6 +25,38 @@ async function elise_isRunning(req, res) {
 	return res.send(isRunning);
 }
 
+
+// no linked task for now (has to change for a more realistic use = with multiple datasets)
+/**
+ * Index a new image
+ * @param url: url of this image (either a remote address or the relative path to the image)
+ * @param id: Pixano's id of this image => will be the externalid in Elise
+ * @param f: not used if url is a remote address, the absolute path to the image otherwise
+ */
+async function elise_index_image(url,id,f) {
+
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
+	let formData = new FormData();// create the form to send to Elise
+	formData.append('action', 'index');
+	if (url.includes('http:')) {
+		const response = await fetch(url);
+		const blob = await response.blob();
+		const arrayBuffer = await blob.arrayBuffer();
+		var buffer = Buffer.from(arrayBuffer);
+		formData.append('image', buffer, url);
+	} else formData.append('image', fs.readFileSync(f), url);
+	formData.append('externalid', id);
+	formData.append('title', url);
+	formData.append('externalurl', "elise.cea.fr"+url);
+	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
+		.then(res => {
+			if (res.statusText=='OK') return res.json();
+			else console.log("KO :\n",res);
+		})
+		.then(res => console.log(res))
+		.catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
+}
+
 /**
  * @api {get} /elise/tasks/:task_name/similarity/:data_id/level/:similarity_level Request list of results similar to given image
  * @apiName GetResults
@@ -36,8 +68,6 @@ async function elise_isRunning(req, res) {
  * @apiSuccessExample Success-Response: list of ids
  */
 async function elise_search_similar_images(req, res) {
-	// ... TODO : no linked task for now (has to change for a more realistic use = with multiple datasets)
-	
 	// 1) initialisation
 	const similarity_level = req.params.similarity_level;
 	const dataId = req.params.data_id;
@@ -63,7 +93,7 @@ async function elise_search_similar_images(req, res) {
 		const arrayBuffer = await blob.arrayBuffer();
 		buffer = Buffer.from(arrayBuffer);
 	} else {
-		relUrl = path.normalize(dataData.path.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
+		relUrl = path.normalize(dataData.path.replace(MOUNTED_WORKSPACE_PATH, ''));
 		exportPath = path.join(workspace, relUrl);
 	}
 	// define the message
@@ -113,11 +143,6 @@ async function elise_search_similar_images(req, res) {
  * @apiSuccessExample Success-Response: list of ids
  */
  async function elise_semantic_search(req, res) {
-	// console.log(req);
-	// console.log(res);
-
-	// // ... TODO : no linked task for now (has to change for a more realistic use = with multiple datasets)
-	
 	// 1) initialisation
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	const keywords = req.params.keywords;
@@ -151,13 +176,11 @@ async function elise_search_similar_images(req, res) {
 	return res.send(resultIds);
 }
 
-// curl localhost:8081 -F action=search -F image=@/adress/of/the/search/image.jpg -F save=0
-// curl localhost:8081 -F action=txtsearch -F query="car truck" -F save=0
-
 
 module.exports = {
 	elise_test,
 	elise_isRunning,
+	elise_index_image,
 	elise_search_similar_images,
 	elise_semantic_search
 }

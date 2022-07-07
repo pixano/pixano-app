@@ -9,7 +9,7 @@ const path = require('path');
 const semver = require('semver');
 const dbkeys = require('./db-keys');
 const utils = require('../helpers/utils');
-const { toRelative } = require('../helpers/data-populator');
+const { toRelative } = require('../helpers/utils');
 const pkg = require('../../package');
 
 const REFERENCE_DB_VERSION = ['0.2.0', '0.1.0', '0.0.0'];

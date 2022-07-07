@@ -181,9 +181,9 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
     let path = dataData.path;
     let children = dataData.children;
     if (relative) {
-      path = populator.toRelative(path);
+      path = utils.toRelative(path);
       if (children) {
-        children = children.map((d) => ({...d, path: populator.toRelative(d.path)}));
+        children = children.map((d) => ({...d, path: utils.toRelative(d.path)}));
       }
     }
     const output = {
@@ -268,7 +268,7 @@ function getAllPathsFromDataset(dataset_id) {
   return new Promise((resolve) => {
     stream.on('data', (value) => { 
       const p = Array.isArray(value.path) ? value.path[0] : value.path;
-      const relUrl = path.normalize(p.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
+      const relUrl = path.normalize(p.replace(utils.MOUNTED_WORKSPACE_PATH, ''));
       // console.log('relUrl', relUrl);
       dataMap[relUrl] = value.id;
     }).on('end', () => {
