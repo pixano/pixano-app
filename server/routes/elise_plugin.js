@@ -26,14 +26,14 @@ async function elise_isRunning(req, res) {
 }
 
 
-// no linked task for now (has to change for a more realistic use = with multiple datasets)
 /**
  * Index a new image
  * @param url: url of this image (either a remote address or the relative path to the image)
  * @param id: Pixano's id of this image => will be the externalid in Elise
+ * @param datasetId: id of dataset being indexed
  * @param f: not used if url is a remote address, the absolute path to the image otherwise
  */
-async function elise_index_image(url,id,f) {
+async function elise_index_image(url,id,datasetId,f) {
 
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	let formData = new FormData();// create the form to send to Elise
@@ -45,7 +45,7 @@ async function elise_index_image(url,id,f) {
 		var buffer = Buffer.from(arrayBuffer);
 		formData.append('image', buffer, url);
 	} else formData.append('image', fs.readFileSync(f), url);
-	formData.append('externalid', id);
+	formData.append('externalid', datasetId+'_'+id);
 	formData.append('title', url);
 	formData.append('externalurl', "elise.cea.fr"+url);
 	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
@@ -124,8 +124,11 @@ async function elise_search_similar_images(req, res) {
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
 				if (idscore.score/maxscore <= sim) {
 					// console.log("idscore=",idscore);
-					// console.log("norm idscore=",idscore.score/maxscore);
-					resultIds.push(idscore.externalid);
+					const datasetid_id = idscore.externalid.split('_');
+					//verify datasetid
+					if (datasetid_id[0] != datasetId) continue;// don't return ids from other datasets
+					// console.log("add id",datasetid_id[1]);
+					resultIds.push(datasetid_id[1]);
 				}
 			}
 		}).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
@@ -145,9 +148,10 @@ async function elise_search_similar_images(req, res) {
  async function elise_semantic_search(req, res) {
 	// 1) initialisation
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
-	const keywords = req.params.keywords;
 	const taskName = req.params.task_name;
 	const task = await db.get(dbkeys.keyForTask(taskName));
+	const datasetId = task.dataset_id;
+	const keywords = req.params.keywords;
 	let resultIds = [];
 
 	// 2) call Elise
@@ -168,9 +172,14 @@ async function elise_search_similar_images(req, res) {
 			// console.log("resultat=",resultat);
 			// if (resultat.searchresults.error) console.log("erreur : ",resultat.searchresults.error);
 			// else console.log("searchresults.imagesinfo.imageinfo=",resultat.searchresults.imagesinfo.imageinfo);
+			//extract list of ids (externalid) that correspond to the current dataset
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
 				console.log("found=",idscore);
-				resultIds.push(idscore.externalid);
+				const datasetid_id = idscore.externalid.split('_');
+				//verify datasetid
+				if (datasetid_id[0] != datasetId) continue;// don't return ids from other datasets
+				console.log("add id",datasetid_id[1]);
+				resultIds.push(datasetid_id[1]);
 			}
 		}).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
 	return res.send(resultIds);

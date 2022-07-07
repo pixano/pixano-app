@@ -77,7 +77,7 @@ async function populateRemoteSimple(db, mediaRelativePath, hostWorkspacePath, da
 			if (dataType=='image') {
 				// compute a thumbnail for this image
 				value.thumbnail = await imageThumbnail({ uri: url }, { responseType: 'base64', height: 100 }).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
-				await elise_index_image(url,id);// ELISE : index this image
+				await elise_index_image(url,id,datasetId);// ELISE : index this image
 			}
 			await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value });
 			bar1.increment();
@@ -123,7 +123,7 @@ async function populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetI
       if (dataType=='image') {
           // compute a thumbnail for this image
           value.thumbnail = await imageThumbnail(f, {responseType: 'base64', height: 100}).catch((err) => console.error("ERROR in imageThumbnail creation:",err));
-		  await elise_index_image(url,id,f);// ELISE : index this image
+		  await elise_index_image(url,id,datasetId,f);// ELISE : index this image
       }
       await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, id), value: value});
       bar1.increment();
