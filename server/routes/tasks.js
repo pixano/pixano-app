@@ -15,6 +15,7 @@ const { getAllDataFromDataset,
 const { getSelectionFromKafka } = require('./kafka_plugin');
 const { downloadFilesFromMinio } = require('./minio_plugin');
 const fetch = require("node-fetch");
+const { elise_remove_image } = require('../routes/elise_plugin.js');// ELISE
 
 const annotation_format_version = "0.9";
 
@@ -898,6 +899,8 @@ async function remove_task(taskName) {
         const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
         for await(const dkey of stream) {
             await bm.add({ type: 'del', key: dkey});
+			console.log("dkey=",dkey);// 'd:' + dataset_id + ':' + data_id;
+			elise_remove_image(dkey);
         }
     } else {
 		console.log("Dataset used by other task, nothing to delete.");

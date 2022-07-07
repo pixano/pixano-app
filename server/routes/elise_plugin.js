@@ -29,12 +29,11 @@ async function elise_isRunning(req, res) {
 /**
  * Index a new image
  * @param url: url of this image (either a remote address or the relative path to the image)
- * @param id: Pixano's id of this image => will be the externalid in Elise
+ * @param id: Pixano's id of this image
  * @param datasetId: id of dataset being indexed
  * @param f: not used if url is a remote address, the absolute path to the image otherwise
  */
 async function elise_index_image(url,id,datasetId,f) {
-
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'index');
@@ -45,9 +44,27 @@ async function elise_index_image(url,id,datasetId,f) {
 		var buffer = Buffer.from(arrayBuffer);
 		formData.append('image', buffer, url);
 	} else formData.append('image', fs.readFileSync(f), url);
-	formData.append('externalid', datasetId+'_'+id);
+	formData.append('externalid', dbkeys.keyForData(datasetId, id));
 	formData.append('title', url);
 	formData.append('externalurl', "elise.cea.fr"+url);
+	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
+		.then(res => {
+			if (res.statusText=='OK') return res.json();
+			else console.log("KO :\n",res);
+		})
+		.then(res => console.log(res))
+		.catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
+}
+
+/**
+ * Remove an indexed image
+ * @param datakey: key for data to be removed
+ */
+ async function elise_remove_image(datakey) {
+	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
+	let formData = new FormData();// create the form to send to Elise
+	formData.append('action', 'remove');
+	formData.append('externalid', datakey);
 	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
 		.then(res => {
 			if (res.statusText=='OK') return res.json();
@@ -124,11 +141,11 @@ async function elise_search_similar_images(req, res) {
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
 				if (idscore.score/maxscore <= sim) {
 					// console.log("idscore=",idscore);
-					const datasetid_id = idscore.externalid.split('_');
+					const datasetid_id = idscore.externalid.split(':');//'d:' + dataset_id + ':' + data_id;
 					//verify datasetid
-					if (datasetid_id[0] != datasetId) continue;// don't return ids from other datasets
-					// console.log("add id",datasetid_id[1]);
-					resultIds.push(datasetid_id[1]);
+					if (datasetid_id[1] != datasetId) continue;// don't return ids from other datasets
+					// console.log("add id",datasetid_id[2]);
+					resultIds.push(datasetid_id[2]);
 				}
 			}
 		}).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
@@ -175,11 +192,11 @@ async function elise_search_similar_images(req, res) {
 			//extract list of ids (externalid) that correspond to the current dataset
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
 				console.log("found=",idscore);
-				const datasetid_id = idscore.externalid.split('_');
+				const datasetid_id = idscore.externalid.split(':');//'d:' + dataset_id + ':' + data_id;
 				//verify datasetid
-				if (datasetid_id[0] != datasetId) continue;// don't return ids from other datasets
-				console.log("add id",datasetid_id[1]);
-				resultIds.push(datasetid_id[1]);
+				if (datasetid_id[1] != datasetId) continue;// don't return ids from other datasets
+				// console.log("add id",datasetid_id[2]);
+				resultIds.push(datasetid_id[2]);
 			}
 		}).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
 	return res.send(resultIds);
@@ -190,6 +207,7 @@ module.exports = {
 	elise_test,
 	elise_isRunning,
 	elise_index_image,
+	elise_remove_image,
 	elise_search_similar_images,
 	elise_semantic_search
 }
