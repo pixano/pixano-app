@@ -79,11 +79,24 @@ function dump(_, res) {
 	res.send();
 }
 
+/**
+ * Get current version of pixano
+ * @param {Request} _ 
+ * @param {Response} res 
+ */
+async function get_pixano_version(_, res) {
+	try {
+		const pixanoVersion = await db.get(dbkeys.keyForPixanoVersion);
+		res.send(pixanoVersion);
+	} catch (err) { err => res.send(err) }
+}
+
 module.exports = {
 	initLevel,
 	checkDatabaseIntegrity,
 	print,
 	dump,
+	get_pixano_version,
 	db,
 	workspace
 }

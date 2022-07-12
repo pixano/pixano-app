@@ -337,6 +337,15 @@ export const snapshotProject = () => {
 }
 
 /**
+ * Get current version of pixano
+ */
+export const getPixanoVersion = () => {
+	return GET('/api/v1/pixanoappversion')
+		.then((data) => Promise.resolve(data))
+		.catch((err) => Promise.resolve(err));
+}
+
+/**
  * Export all database annotations.
  * @param {String} path destination path
  * @param {Boolean} isURL if the destination is an URL instead of a local path

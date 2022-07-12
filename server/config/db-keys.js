@@ -12,6 +12,10 @@ const keyForVersion = () => {
 	return 'v';
 }
 
+const keyForPixanoVersion = () => {
+	return 'pv:';
+}
+
 const keyForUser = (username = '') => {
 	return 'u:' + username;
 }
@@ -65,5 +69,6 @@ module.exports = {
 	keyForAllResults,
 	keyForResult,
 	keyForLabels,
-	keyForCliOptions
+	keyForCliOptions,
+	keyForPixanoVersion
 }

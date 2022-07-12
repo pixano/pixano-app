@@ -43,7 +43,8 @@ const { get_results,
 	get_next_result,
 	put_results } = require('./routes/results');
 const { print,
-	dump } = require('./config/db');
+	dump,
+	get_pixano_version } = require('./config/db');
 
 /**
  * Router handling the HTTP requests
@@ -54,6 +55,7 @@ const { print,
 const router = express.Router();
 router.get('/print', print);
 router.get('/dump', dump);
+router.get('/pixanoappversion', get_pixano_version);
 
 router.post('/project/snapshot', middleware.checkToken, snapshot_project);
 

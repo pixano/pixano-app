@@ -10,8 +10,9 @@
 */
 
 import { LitElement, html, css } from 'lit-element';
-import { navigate } from '../actions/application';
+import { navigate, getPixanoVersion } from '../actions/application';
 import { store, getState } from '../store';
+import { until } from 'lit-html/directives/until.js';
 
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
@@ -319,18 +320,21 @@ export default class TemplatePage extends LitElement {
 	 */
 	render() {
 		return html`
-      <div class="main ${this.theme}">
-        <div class="header">
-          <div class="logo">
-            <img id="logo-im" src="images/pixano-mono-grad.svg" alt="Pixano"  @click=${() => this.goHome()}>
-          </div>
-          <div class="header-menu">
-            ${this.headerContent}
-          </div>
-        </div>
-        ${this.body}        
-      </div>
-      <pop-up></pop-up>
+			<div class="main ${this.theme}">
+				<div class="header">
+					<div class="logo">
+					${until(getPixanoVersion()
+						.then(v => html`<img id="logo-im" src="images/pixano-mono-grad.svg" alt="Pixano" title="${v.app}" @click=${() => this.goHome()}>`)
+						,html`<img id="logo-im" src="images/pixano-mono-grad.svg" alt="Pixano" @click=${() => this.goHome()}>`
+					)}
+					</div>
+					<div class="header-menu">
+						${this.headerContent}
+					</div>
+				</div>
+				${this.body}        
+			</div>
+			<pop-up></pop-up>
     `;
 	}
 }
