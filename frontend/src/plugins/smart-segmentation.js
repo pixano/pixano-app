@@ -19,17 +19,17 @@ import { getState } from '../store';
  */
 export class PluginSmartSegmentation extends PluginSegmentation {
 
-  initDisplay() {
-    super.initDisplay();
-    const taskName = getState('application').taskName;
-    const task = getState('application').tasks.find((t) => t.name === taskName);
-    if (task.spec.settings && task.spec.settings.model) {
-      this.element.model = task.spec.settings.model;
-    }
-  }
+	initDisplay() {
+		super.initDisplay();
+		const taskName = getState('application').taskName;
+		const task = getState('application').tasks.find((t) => t.name === taskName);
+		if (task.spec.settings && task.spec.settings.model) {
+			this.element.model = task.spec.settings.model;
+		}
+	}
 
-  get toolDrawer() {
-    return html`
+	get toolDrawer() {
+		return html`
         ${super.toolDrawer}
         <mwc-icon-button ?selected=${this.mode === 'smart-create'}
                          icon="add_circle_outline"
@@ -37,17 +37,17 @@ export class PluginSmartSegmentation extends PluginSegmentation {
                          @click="${() => this.mode = 'smart-create'}">
                          </mwc-icon-button>
     `
-  }
+	}
 
-  get editor() {
-    return html`<pxn-smart-segmentation id="main"
+	get editor() {
+		return html`<pxn-smart-segmentation id="main"
                             mode=${this.mode}
                             maskVisuMode=${this.maskVisuMode}
                             @update=${this.onUpdate}
                             @selection=${this.onSelection}
                             @delete=${this.onDelete}
                             @mode=${this.onModeChange}></pxn-smart-segmentation>`;//onCreate never really called for segmentation : the mask is updated
-  }
+	}
 
 }
 customElements.define('plugin-smart-segmentation', PluginSmartSegmentation);

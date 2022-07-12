@@ -12,42 +12,42 @@
 */
 
 import {
-  createStore,
-  compose,
-  applyMiddleware,
-  combineReducers
+	createStore,
+	compose,
+	applyMiddleware,
+	combineReducers
 } from 'redux';
 import thunk from 'redux-thunk';
 import { lazyReducerEnhancer } from 'pwa-helpers/lazy-reducer-enhancer';
-import {staticReducers} from './reducers/reducer';
+import { staticReducers } from './reducers/reducer';
 
 // Sets up a Chrome extension for time travel debugging.
 // See https://github.com/zalmoxisus/redux-devtools-extension for more information.
 const devCompose = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
-export const getState = (substate='') => {
-  if(substate === '') {
-    return store.getState()
-  } else {
-    const labels = store.getState()[substate]
-    if (labels.present !== undefined) {
-      return labels.present
-    } else {
-      return labels
-    }
-  }
+export const getState = (substate = '') => {
+	if (substate === '') {
+		return store.getState()
+	} else {
+		const labels = store.getState()[substate]
+		if (labels.present !== undefined) {
+			return labels.present
+		} else {
+			return labels
+		}
+	}
 }
 
 export const getAnnotations = () => {
-  return JSON.parse(JSON.stringify(getState('annotations')));
+	return JSON.parse(JSON.stringify(getState('annotations')));
 }
 
 export const getApplication = () => {
-  return getState('application');
+	return getState('application');
 }
 
 export const store = createStore(combineReducers(staticReducers),
-                                  devCompose(
-                                    lazyReducerEnhancer(combineReducers),
-                                    applyMiddleware(thunk))
-                                  );
+	devCompose(
+		lazyReducerEnhancer(combineReducers),
+		applyMiddleware(thunk))
+);

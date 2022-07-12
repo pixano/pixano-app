@@ -8,42 +8,42 @@ const express = require('express');
 const middleware = require('./config/middleware');
 
 const { post_login,
-        get_logout,
-        post_users,
-        get_users,
-        put_user,
-        delete_user,
-        get_profile } = require('./routes/users');
+	get_logout,
+	post_users,
+	get_users,
+	put_user,
+	delete_user,
+	get_profile } = require('./routes/users');
 const { get_datasets,
-        post_datasets,
-        get_dataset,
-        delete_dataset,
-        get_data,
-        get_datas } = require('./routes/datasets');
+	post_datasets,
+	get_dataset,
+	delete_dataset,
+	get_data,
+	get_datas } = require('./routes/datasets');
 const { get_specs,
-        post_specs,
-        get_spec,
-        put_spec,
-        delete_spec } = require('./routes/specs');
+	post_specs,
+	get_spec,
+	put_spec,
+	delete_spec } = require('./routes/specs');
 const { get_next_job,
-        put_job } = require('./routes/jobs');
+	put_job } = require('./routes/jobs');
 const { get_labels,
-        put_labels } = require('./routes/labels');
+	put_labels } = require('./routes/labels');
 const { get_tasks,
-        post_tasks,
-        get_task,
-        put_task,
-        delete_task,
-        import_tasks,
-        export_tasks } = require('./routes/tasks');
+	post_tasks,
+	get_task,
+	put_task,
+	delete_task,
+	import_tasks,
+	export_tasks } = require('./routes/tasks');
 const { snapshot_project } = require('./routes/project');
 const { get_results,
-        get_result,
-        get_previous_result,
-        get_next_result,
-        put_results } = require('./routes/results');
+	get_result,
+	get_previous_result,
+	get_next_result,
+	put_results } = require('./routes/results');
 const { print,
-        dump } = require('./config/db');
+	dump } = require('./config/db');
 
 /**
  * Router handling the HTTP requests

@@ -7,10 +7,10 @@
 import { LitElement, html } from 'lit-element';
 
 class App404 extends LitElement {
-    render() {
-      return html`
+	render() {
+		return html`
         Not Found :(
         `;
-    }
+	}
 }
 customElements.define('app-404', App404);

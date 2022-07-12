@@ -8,12 +8,12 @@ import { html, css } from 'lit-element';
 import TemplatePage from '../templates/template-page';
 import { store, getState } from '../store';
 import {
-  updateTaskName,
-  updateFilters,
-  fetchRangeResults,
-  putResultStatus,
-  resetResultStatus
-  } from '../actions/application';
+	updateTaskName,
+	updateFilters,
+	fetchRangeResults,
+	putResultStatus,
+	resetResultStatus
+} from '../actions/application';
 import { logout } from '../actions/user';
 import { getValue, format } from '../helpers/utils';
 
@@ -27,250 +27,250 @@ import '@material/mwc-icon-button';
 import '@material/mwc-checkbox';
 
 class AppDashboardAdmin extends TemplatePage {
-  static get properties() {
-    return {
-      jobs: { type: Array },
-      nbSelectedJobs: { type: Number },
-      newStatus: { type: String },
-      page: { type: Number },
-      resultsLength: { type: Number },
-      pageSize: { type: Number },
-      items: { type: Array }
-    };
-  }
+	static get properties() {
+		return {
+			jobs: { type: Array },
+			nbSelectedJobs: { type: Number },
+			newStatus: { type: String },
+			page: { type: Number },
+			resultsLength: { type: Number },
+			pageSize: { type: Number },
+			items: { type: Array }
+		};
+	}
 
-  constructor() {
-    super();
-    this.nbSelectedJobs = 0;
-    this.selectedJobs = [];
-    
-    this.pageSize = 100;
-    this.page = 1;
-    this.resultsLength = 1;
-    this.sorts = [];
-    this.items = [];
-    this.pageSizes = [5, 100, 200];
-    this.globalCounter = 0;
-    this.doneCounter = 0;
-    this.toValidateCounter = 0;
+	constructor() {
+		super();
+		this.nbSelectedJobs = 0;
+		this.selectedJobs = [];
 
-    this.statusMap = new Map([['', ['', '', '']], 
-                              ['to_annotate', ['to annotate', 'create', 'blue']], 
-                              ['to_validate', ['to validate', 'youtube_searched_for', 'orange']],
-                              ['to_correct', ['to correct', 'thumb_down', 'red']], 
-                              ['discard', ['do NOT annotate', 'highlight_off', 'red']],
-                              ['skip', ['to annotate (skipped)', 'create', 'blue']],
-                              ['done', ['done', 'done', 'green']]]);
-    this.assignedMap = new Map([['', ''], 
-                                ['true', 'in progress'], 
-                                ['false', 'idle']]);
-  }
+		this.pageSize = 100;
+		this.page = 1;
+		this.resultsLength = 1;
+		this.sorts = [];
+		this.items = [];
+		this.pageSizes = [5, 100, 200];
+		this.globalCounter = 0;
+		this.doneCounter = 0;
+		this.toValidateCounter = 0;
 
-  /**
-   * Get all results from database with given task and filters.
-   */
-  async getResults() {
-    try {
-      const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
-      this.resultsLength = data.counter;
-      this.globalCounter = data.globalCounter;
-      this.doneCounter = data.doneCounter;
-      this.toValidateCounter = data.toValidateCounter;
-      return data.results;
-    } catch (err) {
-      return [];
-    } 
-  }
+		this.statusMap = new Map([['', ['', '', '']],
+		['to_annotate', ['to annotate', 'create', 'blue']],
+		['to_validate', ['to validate', 'youtube_searched_for', 'orange']],
+		['to_correct', ['to correct', 'thumb_down', 'red']],
+		['discard', ['do NOT annotate', 'highlight_off', 'red']],
+		['skip', ['to annotate (skipped)', 'create', 'blue']],
+		['done', ['done', 'done', 'green']]]);
+		this.assignedMap = new Map([['', ''],
+		['true', 'in progress'],
+		['false', 'idle']]);
+	}
 
-  onActivate() {
-    this.stateChanged(getState());
-    if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
-  }
+	/**
+	 * Get all results from database with given task and filters.
+	 */
+	async getResults() {
+		try {
+			const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
+			this.resultsLength = data.counter;
+			this.globalCounter = data.globalCounter;
+			this.doneCounter = data.doneCounter;
+			this.toValidateCounter = data.toValidateCounter;
+			return data.results;
+		} catch (err) {
+			return [];
+		}
+	}
 
-  /**
-   * Refresh the grid from the database
-   * state.
-   */
-  async refreshGrid() {
-    this.table.items.forEach((e) => e.selected = false);
-    this.tableCheckbox.checked = false;
-    this.nbSelectedJobs = 0;
-    this.table.layout();
-    await this.getResults().then((res) => {
-      this.items = res;
-    });
-  }
-  
-  stateChanged(state) {
-    this.username = state.user.currentUser.username;
-  }
+	onActivate() {
+		this.stateChanged(getState());
+		if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
+	}
 
-  /**
-   * Update redux filter states and refresh grid.
-   * @param {String} key 
-   * @param {String} value 
-   */
-  async updateFilter(key, value) {
-    const oldFilters = getState('application').filters
-    if (oldFilters[key] !== value){
-      const newFilters = {...oldFilters, [key]: value};
-      store.dispatch(updateFilters(newFilters));
-      await this.refreshGrid();
-    }
-  }
+	/**
+	 * Refresh the grid from the database
+	 * state.
+	 */
+	async refreshGrid() {
+		this.table.items.forEach((e) => e.selected = false);
+		this.tableCheckbox.checked = false;
+		this.nbSelectedJobs = 0;
+		this.table.layout();
+		await this.getResults().then((res) => {
+			this.items = res;
+		});
+	}
 
-  /**
-   * Update the new objective to be given
-   * to selected row items if the user
-   * confirms.
-   * @param {string} new_status 
-   */
-  onTagAs(new_status) {
-    this.newStatus = new_status;
-    this.shadowRoot.getElementById('dialog-change-jobs-status').open = true;    
-  }
+	stateChanged(state) {
+		this.username = state.user.currentUser.username;
+	}
 
-  /**
-   * Force objective update for selected
-   * row items.
-   */
-  async tagAs() {
-    const resultIds = this.table.items
-                            .filter((el) => el.selected)
-                            .map(el => el.id);
-    await store.dispatch(putResultStatus(resultIds, this.newStatus));
-    this.refreshGrid();
-  }
+	/**
+	 * Update redux filter states and refresh grid.
+	 * @param {String} key 
+	 * @param {String} value 
+	 */
+	async updateFilter(key, value) {
+		const oldFilters = getState('application').filters
+		if (oldFilters[key] !== value) {
+			const newFilters = { ...oldFilters, [key]: value };
+			store.dispatch(updateFilters(newFilters));
+			await this.refreshGrid();
+		}
+	}
 
-  /**
-   * Force annotator freeing of selected
-   * row items.
-   */
-  async onDeallocate() {
-    const resultIds = this.table.items
-                            .filter((el) => el.selected)
-                            .map(el => el.id);
-    await store.dispatch(resetResultStatus(resultIds));
-    this.refreshGrid();
-  }
+	/**
+	 * Update the new objective to be given
+	 * to selected row items if the user
+	 * confirms.
+	 * @param {string} new_status 
+	 */
+	onTagAs(new_status) {
+		this.newStatus = new_status;
+		this.shadowRoot.getElementById('dialog-change-jobs-status').open = true;
+	}
 
-  /**
-   * Start validating jobs.
-   */
-  startValidating() {
-    const taskName = getState('application').taskName;
-    if (taskName) {
-      this.gotoPage(`/#label/${taskName}/to_validate`);
-    }
-  }
+	/**
+	 * Force objective update for selected
+	 * row items.
+	 */
+	async tagAs() {
+		const resultIds = this.table.items
+			.filter((el) => el.selected)
+			.map(el => el.id);
+		await store.dispatch(putResultStatus(resultIds, this.newStatus));
+		this.refreshGrid();
+	}
 
-  /**
-   * Start annotating/correcting jobs.
-   */
-  startAnnotating() {
-    const taskName = getState('application').taskName;
-    if (taskName) {
-      this.gotoPage(`/#label/${taskName}/to_annotate`);
-    }
-  }
+	/**
+	 * Force annotator freeing of selected
+	 * row items.
+	 */
+	async onDeallocate() {
+		const resultIds = this.table.items
+			.filter((el) => el.selected)
+			.map(el => el.id);
+		await store.dispatch(resetResultStatus(resultIds));
+		this.refreshGrid();
+	}
 
-  /**
-   * Start exploring a data from a given data id.
-   * @param {string} id 
-   */
-  explore(id) {
-    const taskName = getState('application').taskName;
-    this.gotoPage(`/#explore/${taskName}/${id}`);
-  }
-  
-  gotoProjectManager() {
-    this.gotoPage('/#project-manager');
-  }
+	/**
+	 * Start validating jobs.
+	 */
+	startValidating() {
+		const taskName = getState('application').taskName;
+		if (taskName) {
+			this.gotoPage(`/#label/${taskName}/to_validate`);
+		}
+	}
 
-  gotoUserManager() {
-    this.gotoPage('/#user-manager');
-  }
+	/**
+	 * Start annotating/correcting jobs.
+	 */
+	startAnnotating() {
+		const taskName = getState('application').taskName;
+		if (taskName) {
+			this.gotoPage(`/#label/${taskName}/to_annotate`);
+		}
+	}
 
-  onExplore(evt, item) {
-    // prevent item selection
-    evt.stopPropagation();
-    this.explore(item);
-  }
+	/**
+	 * Start exploring a data from a given data id.
+	 * @param {string} id 
+	 */
+	explore(id) {
+		const taskName = getState('application').taskName;
+		this.gotoPage(`/#explore/${taskName}/${id}`);
+	}
 
-  /**
-   * Fired when a row is selected/unselected.
-   */
-  onItemSelected(evt) {
-    this.nbSelectedJobs = evt.detail.index.size;
-    const shouldIndeterminate = this.nbSelectedJobs > 0 && this.nbSelectedJobs < this.table.items.length;
-    this.tableCheckbox.indeterminate = shouldIndeterminate;
-    this.tableCheckbox.checked = shouldIndeterminate ? false : this.nbSelectedJobs > 0;
-  }
+	gotoProjectManager() {
+		this.gotoPage('/#project-manager');
+	}
 
-  get pageEnd() {
-    return Math.min(this.resultsLength, (this.page) * this.pageSize);
-  }
+	gotoUserManager() {
+		this.gotoPage('/#user-manager');
+	}
 
-  /**
-   * Invoked when global grid checkbox is updated.
-   */
-  onTableGlobalCheckboxChange() {
-    // set all items as selected
-    this.table.items.forEach((i) => i.selected = this.tableCheckbox.checked);
-    this.nbSelectedJobs = this.tableCheckbox.checked ? this.table.items.length : 0;
-    this.table.layout();
-  }
+	onExplore(evt, item) {
+		// prevent item selection
+		evt.stopPropagation();
+		this.explore(item);
+	}
 
-  /**
-   * Triggered when last page button is clicked.
-   */
-  onLastPage() {
-    if (this.pageEnd < this.resultsLength) {
-      this.page = Math.ceil(this.resultsLength / this.pageSize);
-      this.refreshGrid();
-    }
-  }
+	/**
+	 * Fired when a row is selected/unselected.
+	 */
+	onItemSelected(evt) {
+		this.nbSelectedJobs = evt.detail.index.size;
+		const shouldIndeterminate = this.nbSelectedJobs > 0 && this.nbSelectedJobs < this.table.items.length;
+		this.tableCheckbox.indeterminate = shouldIndeterminate;
+		this.tableCheckbox.checked = shouldIndeterminate ? false : this.nbSelectedJobs > 0;
+	}
 
-  /**
-   * Triggered when next page button is clicked.
-   */
-  onNextPage() {
-    if (this.pageEnd < this.resultsLength) {
-      this.page += 1;
-      this.refreshGrid();
-    }
-  }
+	get pageEnd() {
+		return Math.min(this.resultsLength, (this.page) * this.pageSize);
+	}
 
-  /**
-   * Triggered when previous page button is clicked.
-   */
-  onPreviousPage() {
-    if(this.page > 1) {
-      this.page -= 1;
-      this.refreshGrid();
-    }
-  }
+	/**
+	 * Invoked when global grid checkbox is updated.
+	 */
+	onTableGlobalCheckboxChange() {
+		// set all items as selected
+		this.table.items.forEach((i) => i.selected = this.tableCheckbox.checked);
+		this.nbSelectedJobs = this.tableCheckbox.checked ? this.table.items.length : 0;
+		this.table.layout();
+	}
 
-  /**
-   * Triggered when first page button is clicked.
-   */
-  onFirstPage() {
-    if (this.page > 1) {
-      this.page=1;
-      this.refreshGrid();
-    }
-  }
+	/**
+	 * Triggered when last page button is clicked.
+	 */
+	onLastPage() {
+		if (this.pageEnd < this.resultsLength) {
+			this.page = Math.ceil(this.resultsLength / this.pageSize);
+			this.refreshGrid();
+		}
+	}
 
-  /**
-   * Triggered when number per page is updated.
-   */
-  onPageSelection(evt) {
-    this.pageSize = this.pageSizes[evt.detail.index]
-    this.refreshGrid();
-  }
+	/**
+	 * Triggered when next page button is clicked.
+	 */
+	onNextPage() {
+		if (this.pageEnd < this.resultsLength) {
+			this.page += 1;
+			this.refreshGrid();
+		}
+	}
 
-  static get styles() {
-    return [super.styles, css`
+	/**
+	 * Triggered when previous page button is clicked.
+	 */
+	onPreviousPage() {
+		if (this.page > 1) {
+			this.page -= 1;
+			this.refreshGrid();
+		}
+	}
+
+	/**
+	 * Triggered when first page button is clicked.
+	 */
+	onFirstPage() {
+		if (this.page > 1) {
+			this.page = 1;
+			this.refreshGrid();
+		}
+	}
+
+	/**
+	 * Triggered when number per page is updated.
+	 */
+	onPageSelection(evt) {
+		this.pageSize = this.pageSizes[evt.detail.index]
+		this.refreshGrid();
+	}
+
+	static get styles() {
+		return [super.styles, css`
       progress {
         width: 75%;
         margin-left: 10px;
@@ -435,18 +435,18 @@ class AppDashboardAdmin extends TemplatePage {
         border-radius: 3px;
       }
     `]
-  }
+	}
 
-  get table() {
-    return this.shadowRoot.getElementById('table');
-  }
+	get table() {
+		return this.shadowRoot.getElementById('table');
+	}
 
-  get tableCheckbox() {
-    return this.shadowRoot.getElementById('table-checkbox');
-  }
+	get tableCheckbox() {
+		return this.shadowRoot.getElementById('table-checkbox');
+	}
 
-  get headerContent() {
-    return html`
+	get headerContent() {
+		return html`
       <h1 class="display-4">Dashboard Admin</h1>
       <mwc-button theme="primary" class="dark" @click=${() => this.startValidating()}>Start Validating</mwc-button>
       <mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}>Start Annotating</mwc-button>
@@ -460,19 +460,19 @@ class AppDashboardAdmin extends TemplatePage {
                        title="Log out"></mwc-icon-button>
       </div>
     `
-  }
+	}
 
-  styleMap(show) {
-    return show ? 'visibility: visible': 'visibility: hidden;';
-  }
+	styleMap(show) {
+		return show ? 'visibility: visible' : 'visibility: hidden;';
+	}
 
-  /**
-   * Display table row
-   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail
-   */
-  listitem(item) {
-    const v = this.statusMap.get(item.status);
-    return html`
+	/**
+	 * Display table row
+	 * Status | Data Id | Annotator | Validator | State | Time | Thumbnail
+	 */
+	listitem(item) {
+		const v = this.statusMap.get(item.status);
+		return html`
     <mwc-check-list-item left id=${item.data_id}>
       <div class="list-item">
         <p style="display: flex;">
@@ -490,13 +490,13 @@ class AppDashboardAdmin extends TemplatePage {
     </mwc-check-list-item>
     <li divider role="separator"></li>
     `;
-  }
+	}
 
-  get tableHeader() {
-    const filters = getState('application').filters;
-    const statusList = [...this.statusMap.entries()];
-    const assignedList = [...this.assignedMap.entries()];
-    return html`
+	get tableHeader() {
+		const filters = getState('application').filters;
+		const statusList = [...this.statusMap.entries()];
+		const assignedList = [...this.assignedMap.entries()];
+		return html`
     <div class="list-header">
       <mwc-checkbox id="table-checkbox" @change=${this.onTableGlobalCheckboxChange.bind(this)}></mwc-checkbox>
       <div style="display: flex; align-items: center;">
@@ -505,8 +505,8 @@ class AppDashboardAdmin extends TemplatePage {
                     icon="filter_list"
                     @selected=${(evt) => this.updateFilter('status', statusList[evt.detail.index][0])}>
           ${statusList.map(([k, v]) => {
-              return html`<mwc-list-item ?selected=${filters.status == k} value=${k}>${v[0]}</mwc-list-item>`;
-            })}
+			return html`<mwc-list-item ?selected=${filters.status == k} value=${k}>${v[0]}</mwc-list-item>`;
+		})}
         </mwc-select>
       </div>
       <div>
@@ -524,8 +524,8 @@ class AppDashboardAdmin extends TemplatePage {
                     style="position: absolute;"
                     @selected=${(evt) => this.updateFilter('in_progress', assignedList[evt.detail.index][0])}>
           ${assignedList.map((s) => {
-              return html`<mwc-list-item ?selected=${filters.in_progress === s[0]} value=${s[0]}>${s[1]}</mwc-list-item>`;
-            })}
+			return html`<mwc-list-item ?selected=${filters.in_progress === s[0]} value=${s[0]}>${s[1]}</mwc-list-item>`;
+		})}
         </mwc-select>
       </div>
       <div id="time-header">Time</div>
@@ -535,13 +535,13 @@ class AppDashboardAdmin extends TemplatePage {
       <div style="flex: 0.5"></div>
     </div>
     `;
-  }
+	}
 
-  /**
-   * Table pagination.
-   */
-  get pagination() {
-    return html`
+	/**
+	 * Table pagination.
+	 */
+	get pagination() {
+		return html`
     <div id="pages">
       <div>Rows per page:</div>
       <mwc-select id="page-size" outlined @selected=${this.onPageSelection.bind(this)}>
@@ -567,10 +567,10 @@ class AppDashboardAdmin extends TemplatePage {
                        @click="${this.onLastPage.bind(this)}"></mwc-icon-button>
     </div>
     `;
-  }
+	}
 
-  get dialog() {
-    return html`
+	get dialog() {
+		return html`
       <mwc-dialog heading="Change status" id="dialog-change-jobs-status">
         <div>Change status to '${this.newStatus}' for ${this.nbSelectedJobs} selected jobs? <br>
         </div>
@@ -587,39 +587,38 @@ class AppDashboardAdmin extends TemplatePage {
         </mwc-button>
       </mwc-dialog>
     `;
-  }
+	}
 
-  get topSection() {
-    const taskName = getState('application').taskName;
-    const tasks = getState('application').tasks;
-    return html`
+	get topSection() {
+		const taskName = getState('application').taskName;
+		const tasks = getState('application').tasks;
+		return html`
     <div id="overview" class="section">
       <h1 class="display-4" style="margin: auto;">Select a task: </h1>
       <mwc-select label='Task' @selected=${(e) => {
-        if (tasks[e.detail.index] && tasks[e.detail.index].name !== taskName) {
-          store.dispatch(updateTaskName(tasks[e.detail.index].name));
-          this.refreshGrid();
-        }
-      }}>
-        ${
-          tasks.map((p) => html`<mwc-list-item value=${p.name}
+				if (tasks[e.detail.index] && tasks[e.detail.index].name !== taskName) {
+					store.dispatch(updateTaskName(tasks[e.detail.index].name));
+					this.refreshGrid();
+				}
+			}}>
+        ${tasks.map((p) => html`<mwc-list-item value=${p.name}
                                                 ?selected=${taskName === p.name}>${p.name}</mwc-list-item>`)
-        }
+			}
       </mwc-select>
     </div>
     `;
-  }
+	}
 
-  get leftSection() {
-    return html`
-    <div id="left-panel" class="section" title="To annotate: ${this.globalCounter-this.toValidateCounter-this.doneCounter} \n To validate: ${this.toValidateCounter}\n Done: ${this.doneCounter}">
+	get leftSection() {
+		return html`
+    <div id="left-panel" class="section" title="To annotate: ${this.globalCounter - this.toValidateCounter - this.doneCounter} \n To validate: ${this.toValidateCounter}\n Done: ${this.doneCounter}">
       <mwc-icon-button icon="refresh"
                   style="margin-left: auto; margin-right: auto;"
                   @click="${() => this.refreshGrid()}"
                   title="Refresh">
       </mwc-icon-button>
-      <mwc-linear-progress progress="${this.doneCounter/this.globalCounter}"
-                           buffer="${(this.doneCounter+ this.toValidateCounter)/this.globalCounter}"></mwc-linear-progress>
+      <mwc-linear-progress progress="${this.doneCounter / this.globalCounter}"
+                           buffer="${(this.doneCounter + this.toValidateCounter) / this.globalCounter}"></mwc-linear-progress>
       <div style="margin: auto;">
         <p>${this.doneCounter}</p>
         <p>-</p>
@@ -627,24 +626,23 @@ class AppDashboardAdmin extends TemplatePage {
       </div>
     </div>
     `;
-  }
+	}
 
-  get mainSection() {
-    return html`
+	get mainSection() {
+		return html`
     <div class="section" style="flex: 1;">
       <h1 class="display-4">Label Status</h1>
       <div style="display: flex;">
         <div class="group_buttons" style=${this.styleMap(this.nbSelectedJobs > 0)}>
-          ${
-            [...this.statusMap.entries()].splice(1).map(([k, v]) => {
-              return html`
+          ${[...this.statusMap.entries()].splice(1).map(([k, v]) => {
+			return html`
                 <mwc-icon-button icon=${v[1]}
                               title="Tag as ${v[0]}"
                               @click=${() => this.onTagAs(k)}>
                 </mwc-icon-button>
               `
-            })
-          }
+		})
+			}
           <mwc-icon-button icon="settings_backup_restore"
                             title="Unassign job"
                             @click=${() => this.onDeallocate()}>
@@ -659,11 +657,11 @@ class AppDashboardAdmin extends TemplatePage {
       ${this.pagination}
     </div>
     `;
-  }
+	}
 
-  get body() {
-    const numTasks = getState('application').tasks.length;
-    return numTasks ? html`
+	get body() {
+		const numTasks = getState('application').tasks.length;
+		return numTasks ? html`
       <div class="body">
           ${this.topSection}
           ${this.leftSection}
@@ -678,6 +676,6 @@ class AppDashboardAdmin extends TemplatePage {
       <li>Start <p @click=${this.gotoUserManager}> Annotating </p></li>
     </ol>
     </div>`;
-  }
+	}
 }
 customElements.define('app-dashboard-admin', AppDashboardAdmin);

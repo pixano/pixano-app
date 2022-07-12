@@ -3,5 +3,5 @@
 // each new server, change this to a random
 // string
 module.exports = {
-    secret: 'pixanoisamazing'
-  };
+	secret: 'pixanoisamazing'
+};

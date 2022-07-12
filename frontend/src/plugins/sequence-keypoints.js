@@ -7,6 +7,6 @@
 import { PluginKeypoints } from './keypoints';
 import { sequence } from '../templates/sequence-mixin';
 
-export class PluginSequenceKeypoints extends sequence(PluginKeypoints) {}
+export class PluginSequenceKeypoints extends sequence(PluginKeypoints) { }
 
 customElements.define('plugin-sequence-keypoints', PluginSequenceKeypoints);

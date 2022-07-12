@@ -16,41 +16,41 @@ import '@material/mwc-button';
 
 class AppLogin extends LitElement {
 
-    /**
-     * Request login from given authentification
-     * information.
-     */
-    login() {
-      const username = this.usernameElement.value;
-      const password = this.passwordElement.value;
-      store.dispatch(loginRequest(username, password))
-      .then(() => {
-        this.goHome();
-        this.usernameElement.value = '';
-        this.passwordElement.value = '';
-      })
-      .catch(() => {
-        window.alert("Authentification failed.");
-      })
-    }
+	/**
+	 * Request login from given authentification
+	 * information.
+	 */
+	login() {
+		const username = this.usernameElement.value;
+		const password = this.passwordElement.value;
+		store.dispatch(loginRequest(username, password))
+			.then(() => {
+				this.goHome();
+				this.usernameElement.value = '';
+				this.passwordElement.value = '';
+			})
+			.catch(() => {
+				window.alert("Authentification failed.");
+			})
+	}
 
-    goHome() {
-      const user = getState('user');
-      const page = user.currentUser.role === 'admin' ? '/#dashboard-admin': '/#dashboard-user';
-      window.history.pushState({}, '', encodeURI(page));
-      store.dispatch(navigate(page));
-    }
+	goHome() {
+		const user = getState('user');
+		const page = user.currentUser.role === 'admin' ? '/#dashboard-admin' : '/#dashboard-user';
+		window.history.pushState({}, '', encodeURI(page));
+		store.dispatch(navigate(page));
+	}
 
-    get usernameElement() {
-      return this.shadowRoot.getElementById('username');
-    }
+	get usernameElement() {
+		return this.shadowRoot.getElementById('username');
+	}
 
-    get passwordElement() {
-      return this.shadowRoot.getElementById('password');
-    }
+	get passwordElement() {
+		return this.shadowRoot.getElementById('password');
+	}
 
-    static get styles() {
-      return css`
+	static get styles() {
+		return css`
       :host {
         height: 100%;
         overflow: auto;
@@ -100,10 +100,10 @@ class AppLogin extends LitElement {
         float: right;
       }
       `
-    }
-  
-    render() {
-      return html`
+	}
+
+	render() {
+		return html`
       <h1 class="display-4">Welcome to the annotation tool PIXANO!</h1>
       <div id="login-page">
         <form class="section">
@@ -129,6 +129,6 @@ class AppLogin extends LitElement {
       </div>
 
       `
-    }
+	}
 }
 customElements.define('app-login', AppLogin);

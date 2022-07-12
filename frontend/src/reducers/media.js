@@ -5,20 +5,20 @@
 */
 
 import {
-    SET_MEDIA_INFO
-  } from '../actions/media';
+	SET_MEDIA_INFO
+} from '../actions/media';
 
 const INITIAL_MEDIA_STATE = {
-    info: {}
+	info: {}
 };
 
 const media = (state = INITIAL_MEDIA_STATE, action) => {
-    switch (action.type) {
-        case SET_MEDIA_INFO:
-            return {...action.info}
-        default:
-            return state
-    }
+	switch (action.type) {
+		case SET_MEDIA_INFO:
+			return { ...action.info }
+		default:
+			return state
+	}
 };
 
 export default media;

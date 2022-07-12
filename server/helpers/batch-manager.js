@@ -8,35 +8,35 @@
 const sizeof = require('object-sizeof');
 
 class BatchManager {
-  constructor(db) {
-    this._db = db;
-    this._maxByteSize = 100000000;  // about 100 MB
-    this._currentByteSize = 0;
-    this.ops = [];
-  }
+	constructor(db) {
+		this._db = db;
+		this._maxByteSize = 100000000;  // about 100 MB
+		this._currentByteSize = 0;
+		this.ops = [];
+	}
 
-  async add(entry) {
-    const entrySize = sizeof(entry);
-    // console.log('entry size', entrySize, this._currentByteSize);
-    if (this._currentByteSize + entrySize > this._maxByteSize) {
-      // Need to flush
-      console.log('Flushing ...');
-      await this.flush();
-      console.log('  done');
-    }
+	async add(entry) {
+		const entrySize = sizeof(entry);
+		// console.log('entry size', entrySize, this._currentByteSize);
+		if (this._currentByteSize + entrySize > this._maxByteSize) {
+			// Need to flush
+			console.log('Flushing ...');
+			await this.flush();
+			console.log('  done');
+		}
 
-    this._currentByteSize += entrySize;
-    this.ops.push(entry);    
-  }
+		this._currentByteSize += entrySize;
+		this.ops.push(entry);
+	}
 
-  async flush() {
-    await this._db.batch(this.ops);
-    this._currentByteSize = 0;
-    this.ops = [];
-  }
+	async flush() {
+		await this._db.batch(this.ops);
+		this._currentByteSize = 0;
+		this.ops = [];
+	}
 }
 
 
 module.exports = {
-  BatchManager
+	BatchManager
 }

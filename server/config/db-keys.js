@@ -9,43 +9,43 @@
 //// key management function
 ////////////////////////////
 const keyForVersion = () => {
-  return 'v';
+	return 'v';
 }
 
 const keyForUser = (username = '') => {
-  return 'u:' + username;
+	return 'u:' + username;
 }
 
 const keyForDataset = (dataset_id = '') => {
-  return 'd:' + dataset_id
+	return 'd:' + dataset_id
 }
 
 const keyForData = (dataset_id, data_id = '') => {
-  return 'd:' + dataset_id + ':' + data_id;
+	return 'd:' + dataset_id + ':' + data_id;
 }
 
 const keyForSpec = (spec_id = '') => {
-  return 's:' + spec_id;
+	return 's:' + spec_id;
 }
 
 const keyForTask = (task_name = '') => {
-  return 't:' + task_name
+	return 't:' + task_name
 }
 
 const keyForJob = (task_name, job_id = '') => {
-  return 'j:' + task_name + ':' + job_id;
+	return 'j:' + task_name + ':' + job_id;
 }
 
 const keyForAllResults = () => {
-  return 'r:';
+	return 'r:';
 }
 
-const keyForResult = (task_name, data_id='') => {
-  return 'r:' + task_name + ':' + data_id;
+const keyForResult = (task_name, data_id = '') => {
+	return 'r:' + task_name + ':' + data_id;
 }
 
 const keyForLabels = (task_name, data_id = '') => {
-  return 'l:' + task_name + ':' + data_id;
+	return 'l:' + task_name + ':' + data_id;
 }
 
 const keyForCliOptions = () => {
@@ -55,15 +55,15 @@ const keyForCliOptions = () => {
 
 
 module.exports = {
-  keyForVersion,
-  keyForUser,
-  keyForDataset,
-  keyForData,
-  keyForTask,
-  keyForSpec,
-  keyForJob,
-  keyForAllResults,
-  keyForResult,
-  keyForLabels,
-  keyForCliOptions
+	keyForVersion,
+	keyForUser,
+	keyForDataset,
+	keyForData,
+	keyForTask,
+	keyForSpec,
+	keyForJob,
+	keyForAllResults,
+	keyForResult,
+	keyForLabels,
+	keyForCliOptions
 }

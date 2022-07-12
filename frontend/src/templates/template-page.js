@@ -28,100 +28,100 @@ import '../helpers/pop-up';
 
 
 export default class TemplatePage extends LitElement {
-  static get properties() {
-    return {
-      active: { type: Boolean },
-      theme: { type: String }
-    };
-  }
+	static get properties() {
+		return {
+			active: { type: Boolean },
+			theme: { type: String }
+		};
+	}
 
-  constructor() {
-    super();
-    this.loaded = false;
-    this.theme = 'black';
-  }
+	constructor() {
+		super();
+		this.loaded = false;
+		this.theme = 'black';
+	}
 
-  /**
-   * Fired when the composant is loaded.
-   * Make sure you do not override this method
-   * within child classes by calling super.
-   */
-  firstUpdated() {
-    this.loaded = true;
-    const pref = getState('user').currentUser.preferences;
-    if (pref && pref.theme) {
-      this.theme = pref.theme;
-    }
-  }
+	/**
+	 * Fired when the composant is loaded.
+	 * Make sure you do not override this method
+	 * within child classes by calling super.
+	 */
+	firstUpdated() {
+		this.loaded = true;
+		const pref = getState('user').currentUser.preferences;
+		if (pref && pref.theme) {
+			this.theme = pref.theme;
+		}
+	}
 
-  /**
-   * Invoked each time user goes to page
-   */
-  onActivate() {
+	/**
+	 * Invoked each time user goes to page
+	 */
+	onActivate() {
 
-  }
+	}
 
-  /**
-   * Invoked each time user leaves page
-   */
-  onDesactivate() {
+	/**
+	 * Invoked each time user leaves page
+	 */
+	onDesactivate() {
 
-  }
+	}
 
-  updated(changedProperties) {
-    if (changedProperties.has('active')) {
-      // make sure the composant is loaded
-      // before calling the activated/desactivated method
-      if (this.loaded) {
-        if (this.active) {
-          this.onActivate();
-        } else {
-          this.onDesactivate();
-        }        
-      }
-    }
-  }
+	updated(changedProperties) {
+		if (changedProperties.has('active')) {
+			// make sure the composant is loaded
+			// before calling the activated/desactivated method
+			if (this.loaded) {
+				if (this.active) {
+					this.onActivate();
+				} else {
+					this.onDesactivate();
+				}
+			}
+		}
+	}
 
-  /**
-   * Go to page
-   * @param {string} page e.g. /#dashboard-admin or /
-   */
-  gotoPage(page) {
-    window.history.pushState({}, '', encodeURI(page));
-    store.dispatch(navigate(page));
-  }
+	/**
+	 * Go to page
+	 * @param {string} page e.g. /#dashboard-admin or /
+	 */
+	gotoPage(page) {
+		window.history.pushState({}, '', encodeURI(page));
+		store.dispatch(navigate(page));
+	}
 
-  /**
-   * Go to home page
-   */
-  goHome() {
-    // cancel current job ?
-    const state = getState();
-    const role = (state.user && state.user) ? state.user.currentUser.role : '';
-    let page = '';
-    if (role === 'admin') {
-      page = '/#dashboard-admin';
-    } else if (role === 'user') {
-      page = '/#dashboard-user';
-    } else {
-      return;
-    }
-    window.history.pushState({}, '', encodeURI(page));
-    store.dispatch(navigate(page));
-  }
+	/**
+	 * Go to home page
+	 */
+	goHome() {
+		// cancel current job ?
+		const state = getState();
+		const role = (state.user && state.user) ? state.user.currentUser.role : '';
+		let page = '';
+		if (role === 'admin') {
+			page = '/#dashboard-admin';
+		} else if (role === 'user') {
+			page = '/#dashboard-user';
+		} else {
+			return;
+		}
+		window.history.pushState({}, '', encodeURI(page));
+		store.dispatch(navigate(page));
+	}
 
-  /**
-   * Generic pop up
-   * @param {string} message 
-   */
-  errorPopup(message, options = ['ok']) {
-    this.popUp.message = message;
-    this.popUp.buttons = options;
-    return this.popUp.prompt();
-  }
+	/**
+	 * Generic pop up
+	 * @param {string} message 
+	 */
+	errorPopup(message, options = ['ok']) {
+		this.popUp.message = message;
+		this.popUp.buttons = options;
+		return this.popUp.prompt();
+	}
 
-  static get styles() {
-    return css`
+	static get styles() {
+		return css`
       :host {
         height: 100%;
         overflow: auto;
@@ -274,51 +274,51 @@ export default class TemplatePage extends LitElement {
         user-select: none;
       }
     `;
-  }
+	}
 
-  get popUp() {
-    return this.shadowRoot.querySelector('pop-up');
-  }
+	get popUp() {
+		return this.shadowRoot.querySelector('pop-up');
+	}
 
-  get leftPanelContent() {
-    return html``
-  }
+	get leftPanelContent() {
+		return html``
+	}
 
-  get headerContent() {
-    return html` `
-  }
+	get headerContent() {
+		return html` `
+	}
 
-  get pageContent() {
-    return html``
-  }
+	get pageContent() {
+		return html``
+	}
 
-  get pageDiv() {
-    return html`
+	get pageDiv() {
+		return html`
     <div class="page">
       ${this.pageContent}
   </div>`
-  }
+	}
 
-  get leftPanel() {
-    return html`
+	get leftPanel() {
+		return html`
       <div class="left-panel">
         ${this.leftPanelContent}
       </div>`
-  }
+	}
 
-  get body() {
-    return html`
+	get body() {
+		return html`
     <div class="body">
       ${this.leftPanel}
       ${this.pageDiv}
     </div>`
-  }
-  
-  /**
-   * Element template to be renderer on screen.
-   */
-  render() {
-    return html`
+	}
+
+	/**
+	 * Element template to be renderer on screen.
+	 */
+	render() {
+		return html`
       <div class="main ${this.theme}">
         <div class="header">
           <div class="logo">
@@ -332,6 +332,6 @@ export default class TemplatePage extends LitElement {
       </div>
       <pop-up></pop-up>
     `;
-  }
+	}
 }
 
