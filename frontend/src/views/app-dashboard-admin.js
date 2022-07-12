@@ -59,6 +59,7 @@ class AppDashboardAdmin extends TemplatePage {
                               ['to_validate', ['to validate', 'youtube_searched_for', 'orange']],
                               ['to_correct', ['to correct', 'thumb_down', 'red']], 
                               ['discard', ['do NOT annotate', 'highlight_off', 'red']],
+                              ['skip', ['to annotate (skipped)', 'create', 'blue']],
                               ['done', ['done', 'done', 'green']]]);
     this.assignedMap = new Map([['', ''], 
                                 ['true', 'in progress'], 

@@ -151,6 +151,13 @@ class AppLabel extends AppExplore {
     this._submissionHelper('to_correct');
   }
 
+	/**
+	 * Submit job.
+	 */
+	skip() {
+		this._submissionHelper('skip');    
+	}
+
   get headerContent() {
     return html`
       <mwc-icon-button style="margin: 0;"
@@ -197,20 +204,21 @@ class AppLabel extends AppExplore {
 
   get toAnnotateButtons() {
     return html`
-      <mwc-button @click=${() => this.submit()}>SUBMIT</mwc-button>
+		<mwc-button outlined @click=${() => this.skip()}>SKIP</mwc-button>
+		<mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>SUBMIT</mwc-button>
     `
   }
 
   get toValidateButtons() {
     return html`
-      <mwc-button @click=${() => this.reject()}>REJECT</mwc-button>
-      <mwc-button @click=${() => this.validate()}>VALIDATE</mwc-button>
+      <mwc-button outlined style="--mdc-button-outline-color: red" @click=${() => this.reject()}>REJECT</mwc-button>
+      <mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.validate()}>VALIDATE</mwc-button>
     `
   }
 
   get toCorrectButtons() {
     return html`
-      <mwc-button @click=${() => this.submit()}>RE-SUBMIT</mwc-button>
+      <mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>RE-SUBMIT</mwc-button>
     `
   }
 

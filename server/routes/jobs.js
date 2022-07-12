@@ -209,10 +209,10 @@ async function put_job(req, res) {
 
     // Update result
     resultData.in_progress = false;
-    resultData.status = ['to_annotate', 'to_validate', 'to_correct', 'discard', 'done'].includes(newObjective) ? newObjective : 'to_annotate';
+    resultData.status = ['to_annotate', 'to_validate', 'to_correct', 'discard', 'done', 'skip'].includes(newObjective) ? newObjective : 'to_annotate';
     resultData.finished_job_ids.push(resultData.current_job_id);
 
-    if (newObjective === 'done' || newObjective === 'discard') {
+    if (newObjective === 'done' || newObjective === 'discard' || newObjective === 'skip') {
         resultData.current_job_id = '';
         ops.push({ type: 'put', key: dbkeys.keyForResult(taskName, jobData.data_id), value: resultData});
         await db.batch(ops);
@@ -220,7 +220,7 @@ async function put_job(req, res) {
     }
 
     // Create new Job if not 'done' or 'discard'
-    const newJob = createJob(jobData.task_name, jobData.data_id, newObjective);
+    const newJob = createJob(jobData.task_name, jobData.data_id, resultData.status);
     resultData.current_job_id = newJob.id;
 
     if (newObjective === 'to_correct') {
