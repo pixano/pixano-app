@@ -29,7 +29,7 @@ export const getState = (substate = '') => {
 	if (substate === '') {
 		return store.getState()
 	} else {
-		const labels = store.getState()[substate]
+		const labels = store.getState()[substate];
 		if (labels.present !== undefined) {
 			return labels.present
 		} else {
@@ -40,10 +40,6 @@ export const getState = (substate = '') => {
 
 export const getAnnotations = () => {
 	return JSON.parse(JSON.stringify(getState('annotations')));
-}
-
-export const getApplication = () => {
-	return getState('application');
 }
 
 export const store = createStore(combineReducers(staticReducers),

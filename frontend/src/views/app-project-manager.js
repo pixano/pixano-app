@@ -34,7 +34,6 @@ import {
 	putTask,
 	getTasks
 } from '../actions/application';
-import { Select } from '@material/mwc-select';
 
 
 class AppProjectManager extends connect(store)(TemplatePage) {
@@ -287,12 +286,11 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 
 	get headerContent() {
 		return html`
-      <mwc-icon-button style="margin: 0;" icon="keyboard_backspace" @click=${() => this.goHome()}></mwc-icon-button>
-      <h1 class="display-4">Task Manager</h1>
-      <mwc-icon-button icon="exit_to_app"
-                       @click=${() => store.dispatch(logout())}
-                       title="Log out"></mwc-icon-button>
-    `
+			<mwc-icon-button style="margin: 0;" icon="keyboard_backspace" @click=${() => this.goHome()}></mwc-icon-button>
+			<h1 class="display-4">Task Manager</h1>
+			<mwc-icon-button icon="exit_to_app"
+							@click=${() => store.dispatch(logout())}
+							title="Log out"></mwc-icon-button>`
 	}
 
 	/**
@@ -345,80 +343,82 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		const datasetPath = t ? t.dataset.path : '';
 		const pluginName = t ? t.spec.plugin_name : '';
 		return html`
-    <form class="section">
-      ${this.taskHeader}
-      <div>
-        <mwc-tab-bar @MDCTabBar:activated=${this.onTabChanged} activeindex="${this.taskIdx}">
-          ${this.tasks.map((t) => html`<mwc-tab label="Task ${t.name}" style="max-width: 200px;"></mwc-tab>`)}
-          <mwc-button outlined
-                      id="add-task"
-                      class="add-task ${this.tasks.length ? 'multi' : 'single'}"
-                      style=${this.creatingTask ? 'display: none;' : 'display: flex;'}
-                      type="button"
-                      icon="add"
-                      title="Add new annotation task"
-                      @click="${this.onAddTask}">New task</mwc-button>
-        </mwc-tab-bar>
-        <div style="${t != undefined && this.tasks.length ? 'display: block;' : 'display: none;'}">
-          <div class="form-group" style="display: flex; flex-wrap: wrap;">
-              <mwc-textfield label="Task name" required pattern="[a-zA-Z0-9-_]+"
-                            ?disabled=${!this.creatingTask}
-                            @input="${this.onTaskNameInput}"
-                            value="${taskName}"></mwc-textfield>
-              <mwc-textfield label="Data folder" required
-                            ?disabled=${!this.creatingTask}
-                            @input="${this.onDataInput}"
-                            value="${datasetPath}"></mwc-textfield>
-              <mwc-select id="plugin"
-                          label="Plugin"
-                          ?disabled=${!this.creatingTask}
-                          @action=${(e) => {
-				const newValue = e.target.value;
-				if (this.creatingTask && pluginName && newValue != pluginName) {
-					t.spec.plugin_name = newValue;
-					t.spec.data_type = getDataType(newValue);
-					t.spec.label_schema = defaultLabelValues(newValue);
-					t.spec.settings = defaultSettings(newValue);
-					this.updateDisplayedSettings();
-				}
-			}}>
-                ${pluginsList.map((v) => html`<mwc-list-item value=${v} ?selected=${pluginName == v}>${v}</mwc-list-item>`)}
-              </mwc-select>
-            </div>
-            <div>
-              <h1 style="font-size: 16px; color: #626262; margin-top: 20px; margin-bottom: 20px;">Label and plugin configurator</h1>
-              <div style="display: flex;">
-                <fleshy-jsoneditor id="taskSettings" mode="code"></fleshy-jsoneditor>
-                <fleshy-jsoneditor id="pluginSettings" mode="code"></fleshy-jsoneditor>
-              </div>
-            </div>
-            ${this.creatingTask ? html`
-            <mwc-button outlined type="button" icon="save" @click="${this.onCreateTask}">Create task</mwc-button>
-            <mwc-button outlined type="button" @click="${this.onCancelTask}">Cancel</mwc-button>
-            ` : html`
-            <mwc-button outlined type="button" icon="save" @click="${this.onSaveTask}">Save task</mwc-button>
-            <mwc-button outlined id="remove-task" type="button" icon="delete" @click="${this.onRemoveTask}">Remove task</mwc-button>
-            `}
-            </div>
-      </div>
-    </form>
-    <mwc-dialog heading="Remove task" id="dialog-remove-task">
-      <div>Remove task ${this.tasks.length > 0 && t ? t.name : ''}? <br>
-      WARNING: All associated jobs will be lost.
-      </div>
-      <mwc-button
-          slot="primaryAction"
-          dialogAction="ok"
-          @click=${() => this.removeTask()}>
-        Ok
-      </mwc-button>
-      <mwc-button
-          slot="secondaryAction"
-          dialogAction="cancel">
-        Cancel
-      </mwc-button>
-    </mwc-dialog>
-    `;
+			<form class="section">
+				${this.taskHeader}
+				<div>
+					<mwc-tab-bar @MDCTabBar:activated=${this.onTabChanged} activeindex="${this.taskIdx}">
+					${this.tasks.map((t) => html`<mwc-tab label="Task ${t.name}" style="max-width: 200px;"></mwc-tab>`)}
+					<mwc-button outlined
+								id="add-task"
+								class="add-task ${this.tasks.length ? 'multi' : 'single'}"
+								style=${this.creatingTask ? 'display: none;' : 'display: flex;'}
+								type="button"
+								icon="add"
+								title="Add new annotation task"
+								@click="${this.onAddTask}">New task</mwc-button>
+					</mwc-tab-bar>
+					<div style="${t != undefined && this.tasks.length ? 'display: block;' : 'display: none;'}">
+						<div class="form-group" style="display: flex; flex-wrap: wrap;">
+							<mwc-textfield label="Task name" required pattern="[a-zA-Z0-9-_]+"
+											?disabled=${!this.creatingTask}
+											@input="${this.onTaskNameInput}"
+											value="${taskName}"></mwc-textfield>
+							<mwc-textfield label="Data folder" required
+											?disabled=${!this.creatingTask}
+											@input="${this.onDataInput}"
+											value="${datasetPath}"></mwc-textfield>
+							<mwc-select id="plugin"
+										label="Plugin"
+										?disabled=${!this.creatingTask}
+										@action=${(e) => {
+								const newValue = e.target.value;
+								if (this.creatingTask && pluginName && newValue != pluginName) {
+									t.spec.plugin_name = newValue;
+									t.spec.data_type = getDataType(newValue);
+									t.spec.label_schema = defaultLabelValues(newValue);
+									t.spec.settings = defaultSettings(newValue);
+									this.updateDisplayedSettings();
+								}
+							}}>
+								${pluginsList.map((v) => html`<mwc-list-item value=${v} ?selected=${pluginName == v}>${v}</mwc-list-item>`)}
+							</mwc-select>
+						</div>
+						<div>
+							<h1 style="font-size: 16px; color: #626262; margin-top: 20px; margin-bottom: 20px;">Label and plugin configurator</h1>
+							<div style="display: flex;">
+								<fleshy-jsoneditor id="taskSettings" mode="code"></fleshy-jsoneditor>
+								<fleshy-jsoneditor id="pluginSettings" mode="code"></fleshy-jsoneditor>
+							</div>
+						</div>
+						${this.creatingTask
+							? html`
+								<mwc-button outlined type="button" icon="save" @click="${this.onCreateTask}">Create task</mwc-button>
+								<mwc-button outlined type="button" @click="${this.onCancelTask}">Cancel</mwc-button>`
+							: html`
+								<mwc-button outlined type="button" icon="save" @click="${this.onSaveTask}">Save task</mwc-button>
+								<mwc-button outlined id="remove-task" type="button" icon="delete" @click="${this.onRemoveTask}">Remove task</mwc-button>`
+						}
+					</div>
+				</div>
+			</form>
+			<mwc-dialog heading="Remove task" id="dialog-remove-task">
+				<div>
+					Remove task ${this.tasks.length > 0 && t ? t.name : ''}? <br>
+					WARNING: All associated jobs will be lost.
+				</div>
+				<mwc-button
+					slot="primaryAction"
+					dialogAction="ok"
+					@click=${() => this.removeTask()}>
+					Ok
+				</mwc-button>
+				<mwc-button
+					slot="secondaryAction"
+					dialogAction="cancel">
+					Cancel
+				</mwc-button>
+			</mwc-dialog>
+		`;
 	}
 
 	get pageContent() {
@@ -430,25 +430,25 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 			<mwc-dialog style="text-align: center;" heading="${this.importExportText.toUpperCase()}" id="dialog-import-export-path">
 				<div> Choose an ${this.importExportText} location type</div>
 				<div><mwc-select style="width: 16em;" id='mwc-select' label="${this.importExportText} type" @selected=${(evt) => {
-				if (evt.detail.index == -1) {//reinitialize dialog
-					this.shadowRoot.getElementById('importexportdialog_disabled').hidden = false;//disable dialog second part
-					this.shadowRoot.getElementById('importexportdialog_enabled').hidden = true;
-				} else {
-					switch (evt.detail.index) {
-						case 0://local path
-							this.default_path = "my_export";
-							this.pathOrURL = 'Path';
-							break;
-						case 1://URL
-							this.default_path = "http://elasticsearch-coordinating-only:9200/pixano_export_data/";
-							this.pathOrURL = 'URL';
-							break;
-					}
-					//enable dialog second part
-					this.shadowRoot.getElementById('importexportdialog_disabled').hidden = true;
-					this.shadowRoot.getElementById('importexportdialog_enabled').hidden = false;
-				}
-			}}>
+						if (evt.detail.index == -1) {//reinitialize dialog
+							this.shadowRoot.getElementById('importexportdialog_disabled').hidden = false;//disable dialog second part
+							this.shadowRoot.getElementById('importexportdialog_enabled').hidden = true;
+						} else {
+							switch (evt.detail.index) {
+								case 0://local path
+									this.default_path = "my_export";
+									this.pathOrURL = 'Path';
+									break;
+								case 1://URL
+									this.default_path = "http://elasticsearch-coordinating-only:9200/pixano_export_data/";
+									this.pathOrURL = 'URL';
+									break;
+							}
+							//enable dialog second part
+							this.shadowRoot.getElementById('importexportdialog_disabled').hidden = true;
+							this.shadowRoot.getElementById('importexportdialog_enabled').hidden = false;
+						}
+					}}>
 					<mwc-list-item twoline value="0"><span>Local path - </span><span slot="secondary">(Use a relative path to workspace)</span></mwc-list-item>
 					<mwc-list-item twoline value="1"><span>URL - </span><span slot="secondary">(Use a remote address)</span></mwc-list-item>
 				</mwc-select></div>
@@ -469,7 +469,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 					</div>
 				</div>
 			</mwc-dialog>
-		`
+		`;
 	}
 }
 customElements.define('app-project-manager', AppProjectManager);

@@ -181,11 +181,11 @@ class AppLabel extends AppExplore {
 
 	get jobInfo() {
 		return `
-    \n
-    Data id: ${this.job.data_id}\n
-    Last annotated by: ${this.job.annotator}\n
-    Last validated by: ${this.job.validator}\n
-    Last updated at: ${timeConverter(this.job.last_update_at)}\n`
+			\n
+			Data id: ${this.job.data_id}\n
+			Last annotated by: ${this.job.annotator}\n
+			Last validated by: ${this.job.validator}\n
+			Last updated at: ${timeConverter(this.job.last_update_at)}\n`
 	}
 
 	get buttons() {
@@ -204,22 +204,22 @@ class AppLabel extends AppExplore {
 
 	get toAnnotateButtons() {
 		return html`
-		<mwc-button outlined @click=${() => this.skip()}>SKIP</mwc-button>
-		<mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>SUBMIT</mwc-button>
-    `
+			<mwc-button outlined @click=${() => this.skip()}>SKIP</mwc-button>
+			<mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>SUBMIT</mwc-button>
+		`
 	}
 
 	get toValidateButtons() {
 		return html`
-      <mwc-button outlined style="--mdc-button-outline-color: red" @click=${() => this.reject()}>REJECT</mwc-button>
-      <mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.validate()}>VALIDATE</mwc-button>
-    `
+			<mwc-button outlined style="--mdc-button-outline-color: red" @click=${() => this.reject()}>REJECT</mwc-button>
+			<mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.validate()}>VALIDATE</mwc-button>
+		`
 	}
 
 	get toCorrectButtons() {
 		return html`
-      <mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>RE-SUBMIT</mwc-button>
-    `
+			<mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>RE-SUBMIT</mwc-button>
+		`
 	}
 
 	get snack() {
@@ -228,9 +228,9 @@ class AppLabel extends AppExplore {
 
 	get body() {
 		return html`
-    ${super.body}
-    <mwc-snackbar id="infoSnack" labelText="Successfully saved labels !" timeoutMs=4000></mwc-snackbar>
-    `;
+			${super.body}
+			<mwc-snackbar id="infoSnack" labelText="Successfully saved labels !" timeoutMs=4000></mwc-snackbar>
+		`;
 	}
 }
 customElements.define('app-label', AppLabel);
