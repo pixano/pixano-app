@@ -46,105 +46,106 @@ import 'typeface-roboto/index.css';
 import '@material/mwc-circular-progress-four-color';
 
 
-class MyApp extends connect(store)(LitElement)  {
-  static get properties() {
-    return {
-      _page: { type: String },
-      waiting: { type: Boolean }
-    };
-  }
-  constructor() {
-    super();
-    this.ready = false;
-    this.waiting = false;
-  }
+class MyApp extends connect(store)(LitElement) {
+	static get properties() {
+		return {
+			_page: { type: String },
+			waiting: { type: Boolean }
+		};
+	}
+	constructor() {
+		super();
+		this.ready = false;
+		this.waiting = false;
+	}
 
-  _locationChanged(location) {
-    // What action creator you dispatch and what part of the location
-    // will depend on your app.
-    store.dispatch(navigate(location.pathname + location.hash));
-  }
+	_locationChanged(location) {
+		// What action creator you dispatch and what part of the location
+		// will depend on your app.
+		store.dispatch(navigate(location.pathname + location.hash));
+	}
 
-  goHome() {
-    const user = getState('user');
-    const page = user.currentUser.role === 'admin' ? '/#dashboard-admin': '/#dashboard-user';
-    window.history.pushState({}, '', encodeURI(page));
-    store.dispatch(navigate(page));
-  }
+	goHome() {
+		const user = getState('user');
+		const page = user.currentUser.role === 'admin' ? '/#dashboard-admin' : '/#dashboard-user';
+		window.history.pushState({}, '', encodeURI(page));
+		store.dispatch(navigate(page));
+	}
 
-  goLogin() {
-    const page = '/#login';
-    window.history.pushState({}, '', encodeURI(page));
-    store.dispatch(navigate(page));
-  }
-  
-  firstUpdated() {
-    // Automatic check if client is authenticated
-    // else redirect to login page
-    store.dispatch(getProfile()).then(() => {
-      store.dispatch(getTasks()).then( () => {
-        this.ready = true;
-        installRouter(this._locationChanged);
-        const currUrl = location.pathname + location.hash;
-        if (currUrl === '/#login') {
-          this.goHome();
-        } else {
-          this._locationChanged(window.location);
-        }
-      });
-    }).catch(() => {
-      this.ready = true;
-      this.goLogin();
-      installRouter(this._locationChanged);
-    });  
-  }
+	goLogin() {
+		const page = '/#login';
+		window.history.pushState({}, '', encodeURI(page));
+		store.dispatch(navigate(page));
+	}
 
-  stateChanged(state) {
-    if (this.ready) {
-      this._page = state.application.page;
-      this.waiting = state.application.waiting;
-    }
-  }
+	firstUpdated() {
+		// Automatic check if client is authenticated
+		// else redirect to login page
+		store.dispatch(getProfile()).then(() => {
+			store.dispatch(getTasks()).then(() => {
+				this.ready = true;
+				installRouter(this._locationChanged);
+				const currUrl = location.pathname + location.hash;
+				if (currUrl === '/#login') {
+					this.goHome();
+				} else {
+					this._locationChanged(window.location);
+				}
+			});
+		}).catch(() => {
+			this.ready = true;
+			this.goLogin();
+			installRouter(this._locationChanged);
+		});
+	}
 
-  static get styles() {
-    return [
-      css`
-        :host {
-          display: block;
-          height: 100%;
-          overflow: hidden;
-        }
-        .page {
-          display: none;
-        }
-        .page[active] {
-          display: block;
-        }
-        mwc-circular-progress-four-color {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          --mdc-circular-progress-bar-color-1: #79005D;
-          --mdc-circular-progress-bar-color-2: #FF5C64;
-          --mdc-circular-progress-bar-color-3: #FF5C64;
-          --mdc-circular-progress-bar-color-4: #79005D;
-        }
-        `]
-  }
+	stateChanged(state) {
+		if (this.ready) {
+			this._page = state.application.page;
+			this.waiting = state.application.waiting;
+		}
+	}
 
-  render() {
-      return html`
-        <app-login class="page" ?active="${this._page === 'login'}"></app-login>
-        <app-dashboard-user class="page" ?active="${this._page === 'dashboard-user'}"></app-dashboard-user>
-        <app-dashboard-admin class="page" ?active="${this._page === 'dashboard-admin'}"></app-dashboard-admin>
-        <app-user-manager class="page" ?active="${this._page === 'user-manager'}"></app-user-manager>
-        <app-project-manager class="page" ?active="${this._page === 'project-manager'}"></app-project-manager>
-        <app-label class="page" ?active="${this._page === 'label'}"></app-label>
-        <app-explore class="page" ?active="${this._page === 'explore'}"></app-explore>
-        <app-404 class="page" ?active="${this._page === 'view404'}"></app-404>
-        <mwc-circular-progress-four-color indeterminate ?closed=${!this.waiting} style="display: ${this.waiting ? "block" : "none"}"></mwc-circular-progress-four-color>
-      `;
-    }
+	static get styles() {
+		return [
+			css`
+				:host {
+				display: block;
+				height: 100%;
+				overflow: hidden;
+				}
+				.page {
+				display: none;
+				}
+				.page[active] {
+				display: block;
+				}
+				mwc-circular-progress-four-color {
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				--mdc-circular-progress-bar-color-1: #79005D;
+				--mdc-circular-progress-bar-color-2: #FF5C64;
+				--mdc-circular-progress-bar-color-3: #FF5C64;
+				--mdc-circular-progress-bar-color-4: #79005D;
+				}
+			`]
+	}
+
+	render() {
+		return html`
+			<app-login class="page" ?active="${this._page === 'login'}"></app-login>
+			<app-dashboard-user class="page" ?active="${this._page === 'dashboard-user'}"></app-dashboard-user>
+			<app-dashboard-admin class="page" ?active="${this._page === 'dashboard-admin'}"></app-dashboard-admin>
+			<app-user-manager class="page" ?active="${this._page === 'user-manager'}"></app-user-manager>
+			<app-project-manager class="page" ?active="${this._page === 'project-manager'}"></app-project-manager>
+			<app-datasets-manager class="page" ?active="${this._page === 'datasets-manager'}"></app-datasets-manager>
+			<app-label class="page" ?active="${this._page === 'label'}"></app-label>
+			<app-explore class="page" ?active="${this._page === 'explore'}"></app-explore>
+			<app-404 class="page" ?active="${this._page === 'view404'}"></app-404>
+			<mwc-circular-progress-four-color indeterminate ?closed=${!this.waiting} style="display: ${this.waiting ? "block" : "none"}"></mwc-circular-progress-four-color>
+		`;
+	}
 }
 
 customElements.define('my-app', MyApp);

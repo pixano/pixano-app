@@ -22,22 +22,22 @@ const populator = require('../helpers/data-populator');
  * 
  */
 async function get_datasets(req, res) {
-    checkAdmin(req, async () => {
-        try {
-            const datasets = [];
-            const stream = utils.iterateOnDB(db, dbkeys.keyForDataset(), true, true);
-            for await(const {key, value} of stream) {
-                if (key.split(':').length == 2) {
-                  datasets.push(value)
-                }
-            }
-            return res.send(datasets);
-        } catch (err) {
-            res.status(400).json({
-                message: 'Error searching datasets'
-            });
-        }
-    });
+	checkAdmin(req, async () => {
+		try {
+			const datasets = [];
+			const stream = utils.iterateOnDB(db, dbkeys.keyForDataset(), true, true);
+			for await (const { key, value } of stream) {
+				if (key.split(':').length == 2) {
+					datasets.push(value)
+				}
+			}
+			return res.send(datasets);
+		} catch (err) {
+			res.status(400).json({
+				message: 'Error searching datasets'
+			});
+		}
+	});
 }
 
 /**
@@ -55,16 +55,16 @@ async function get_datasets(req, res) {
  *     HTTP/1.1 204 Dataset already existing
  */
 async function post_datasets(req, res) {
-    checkAdmin(db, req, async () => {
-        const dataset = req.body;
-        const ret = await getOrcreateDataset(db, dataset.path, workspace)
-        if (ret) {
-            return res.status(201).json(ret)
-        }
-        else {
-            return res.status(204).json({})
-    }
-});
+	checkAdmin(db, req, async () => {
+		const dataset = req.body;
+		const ret = await getOrcreateDataset(db, dataset, workspace)
+		if (ret) {
+			return res.status(201).json(ret)
+		}
+		else {
+			return res.status(204).json({})
+		}
+	});
 }
 
 /**
@@ -83,16 +83,16 @@ async function post_datasets(req, res) {
  * 
  */
 async function get_dataset(req, res) {
-    checkAdmin(req, async () => {
-        try {
-            const datasetData = await db.get(dbkeys.keyForDataset(req.params.dataset_id))
-            return res.send(datasetData);
-        } catch (err) {
-          return res.status(400).json({
-              message: 'Unknown dataset ' + req.params.dataset_id
-          });
-        }
-    });
+	checkAdmin(req, async () => {
+		try {
+			const datasetData = await db.get(dbkeys.keyForDataset(req.params.dataset_id))
+			return res.send(datasetData);
+		} catch (err) {
+			return res.status(400).json({
+				message: 'Unknown dataset ' + req.params.dataset_id
+			});
+		}
+	});
 }
 
 /**
@@ -108,12 +108,12 @@ async function get_dataset(req, res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function delete_dataset(req, res) {
-    checkAdmin(req, async () => {
-        const key = dbkeys.keyForDataset(req.params.dataset_id)
-        await db.del(key);
-        // TODO: delete also its data items
-        return res.status(204).json({});
-    });
+	checkAdmin(req, async () => {
+		const key = dbkeys.keyForDataset(req.params.dataset_id)
+		await db.del(key);
+		// TODO: delete also its data items
+		return res.status(204).json({});
+	});
 }
 
 
@@ -134,36 +134,71 @@ async function delete_dataset(req, res) {
  * 
  */
 async function get_data(req, res) {
-    try {
-        const output = await getDataDetails(req.params.dataset_id, req.params.data_id);
-        return res.send(output);
-    } catch (err) {
-        return res.status(400).json({
-            type: 'unknown_data',
-            message: 'Unknown data ' + req.params.data_id + ' for dataset ' + req.params.dataset_id
-        });
-    }
+	try {
+		const output = await getDataDetails(req.params.dataset_id, req.params.data_id);
+		return res.send(output);
+	} catch (err) {
+		return res.status(400).json({
+			type: 'unknown_data',
+			message: 'Unknown data ' + req.params.data_id + ' for dataset ' + req.params.dataset_id
+		});
+	}
 }
 
 
 /**
- * @api {get} /datasets/:dataset_id/data Get all data items
+ * @api {get} /datasets/:dataset_id/data Get all data items with given contraints
  * @apiName GetDatas
  * @apiGroup Dataset
  * 
+ * @queryParam {number} page
+ * @queryParam {number} count
+ * @queryParam {string} <any> (filter result any keys with value inclusion)
+ * 
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
- *     []: DbData[]
+ *     {
+ *      results: DbData[],
+ *      counter: number, // number of included results
+ *      globalCounter: number, // number of all results
+ *     }
  * 
  */
 async function get_datas(req, res) {
-  const datasetId = req.params.dataset_id;
-  const stream = utils.iterateOnDB(db, dbkeys.keyForData(datasetId), false, true);
-  const datas = []
-  for await(const data of stream) {
-    datas.push(data);
-  }
-  return res.send(datas);
+	const queries = req.query;
+	const match = {
+		page: queries.page || 0,
+		count: queries.count || 1
+	};
+	delete queries.page;
+	delete queries.count;
+	const keys = [...Object.keys(queries)];
+	let counter = 0;
+	let results = [];
+	let globalCounter = 0;
+
+	const datasetId = req.params.dataset_id;
+	const stream = utils.iterateOnDB(db, dbkeys.keyForData(datasetId), false, true);
+	for await (const data of stream) {
+		// filter results
+		let included = true;
+		for (let k of keys) {
+			const query = queries[k];
+			const r = JSON.stringify(data[k]) || '';
+			// if the filter is a (semicolon separated) list, include all data that satisfies at least one of them
+			const queryList = query.split(";").filter((q) => q != "");
+			included = queryList.some((q) => r.includes(q));
+			if (!included) break;
+		}
+		if (included) {
+			if (counter >= (match.page - 1) * match.count && counter < match.page * match.count) {
+				results.push(data);
+			}
+			counter += 1;
+		}
+		globalCounter += 1;
+	}
+	return res.send({ results, counter, globalCounter });
 }
 
 
@@ -177,21 +212,21 @@ async function get_datas(req, res) {
  * @returns 
  */
 const getDataDetails = async (dataset_id, data_id, relative = false) => {
-    const dataData = await db.get(dbkeys.keyForData(dataset_id, data_id));
-    let path = dataData.path;
-    let children = dataData.children;
-    if (relative) {
-      path = populator.toRelative(path);
-      if (children) {
-        children = children.map((d) => ({...d, path: populator.toRelative(d.path)}));
-      }
-    }
-    const output = {
+	const dataData = await db.get(dbkeys.keyForData(dataset_id, data_id));
+	let path = dataData.path;
+	let children = dataData.children;
+	if (relative) {
+		path = populator.toRelative(path);
+		if (children) {
+			children = children.map((d) => ({ ...d, path: populator.toRelative(d.path) }));
+		}
+	}
+	const output = {
 		...dataData,
-      children,
-      path
-    };
-    return output; 
+		children,
+		path
+	};
+	return output;
 }
 
 /**
@@ -201,19 +236,22 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
  * @param {String} workspace 
  */
 async function getOrcreateDataset(dataset, workspace) {
-	dataset.path = path.normalize(dataset.path+'/');//normalize path in order to not duplicate datasets because of a typo error
-    const existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
-    if (!existingDataset) {
-      const newDataset = {
-        ...dataset,
-        id: utils.generateKey()
-      }
-      await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
-      await populator[dataset.data_type](db, newDataset.path, workspace, newDataset.id)
-      return newDataset;
-    } else {
-      return existingDataset;
-    }
+	dataset.path = path.normalize(dataset.path + '/');//normalize path in order to not duplicate datasets because of a typo error
+	var existingDataset = await getDatasetFromId(db, dataset.id, dataset.data_type);
+	if (existingDataset) return existingDataset;
+	existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
+	if (!existingDataset) {
+		const newDataset = {
+			...dataset,
+			id: utils.generateKey()
+		}
+		await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
+		await db.put(dbkeys.keyForDatasetName(newDataset.id), newDataset.name);
+		await populator[dataset.data_type](db, newDataset.path, workspace, newDataset.id)
+		return newDataset;
+	} else {
+		return existingDataset;
+	}
 }
 
 /**
@@ -222,19 +260,40 @@ async function getOrcreateDataset(dataset, workspace) {
  * @param {String} path 
  */
 const getDatasetFromPath = (db, path, data_type) => {
-    let foundDataset = null;
-    return new Promise((resolve, reject) => {
-      // update datasets if previously unknown data path is given
-      const s1 = utils.iterateOnDB(db, dbkeys.keyForDataset(), false, true);
-      s1.on('data', (value) => {
-        if (value.path === path && value.data_type === data_type) {
-          foundDataset = value;
-          s1.destroy();
-        }   
-      }).on('close', () => {
-        resolve(foundDataset);   
-      });
-    });
+	let foundDataset = null;
+	return new Promise((resolve, reject) => {
+		// update datasets if previously unknown data path is given
+		const s1 = utils.iterateOnDB(db, dbkeys.keyForDataset(), false, true);
+		s1.on('data', (value) => {
+			if (value.path === path && value.data_type === data_type) {
+				foundDataset = value;
+				s1.destroy();
+			}
+		}).on('close', () => {
+			resolve(foundDataset);
+		});
+	});
+}
+
+/**
+ * Get dataset entry from a dataset id if it exists.
+ * @param {Level} db 
+ * @param {String} id 
+ */
+const getDatasetFromId = (db, id, data_type) => {
+	let foundDataset = null;
+	return new Promise((resolve, reject) => {
+		// update datasets if previously unknown data path is given
+		const s1 = utils.iterateOnDB(db, dbkeys.keyForDataset(), false, true);
+		s1.on('data', (value) => {
+			if (value.id === id && value.data_type === data_type) {
+				foundDataset = value;
+				s1.destroy();
+			}
+		}).on('close', () => {
+			resolve(foundDataset);
+		});
+	});
 }
 
 /**
@@ -244,15 +303,15 @@ const getDatasetFromPath = (db, path, data_type) => {
  * @param {String} type
  */
 function getAllDataFromDataset(dataset_id) {
-    const dataList = [];
-    const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), true, false)
-    return new Promise((resolve) => {
-      stream.on('data', (key) => {
-        dataList.push(key.slice(dbkeys.keyForData(dataset_id).length));
-      }).on('end', () => {
-        resolve(dataList);
-      })
-    });
+	const dataList = [];
+	const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), true, false)
+	return new Promise((resolve) => {
+		stream.on('data', (key) => {
+			dataList.push(key.slice(dbkeys.keyForData(dataset_id).length));
+		}).on('end', () => {
+			resolve(dataList);
+		})
+	});
 }
 
 /**
@@ -262,29 +321,29 @@ function getAllDataFromDataset(dataset_id) {
  * @param {String} type
  */
 function getAllPathsFromDataset(dataset_id) {
-  const dataMap = {};
-  const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), false, true)
-  return new Promise((resolve) => {
-    stream.on('data', (value) => { 
-      const p = Array.isArray(value.path) ? value.path[0] : value.path;
-      const relUrl = path.normalize(p.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
-      // console.log('relUrl', relUrl);
-      dataMap[relUrl] = value.id;
-    }).on('end', () => {
-      resolve(dataMap);
-    })
-  });
+	const dataMap = {};
+	const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), false, true)
+	return new Promise((resolve) => {
+		stream.on('data', (value) => {
+			const p = Array.isArray(value.path) ? value.path[0] : value.path;
+			const relUrl = path.normalize(p.replace(populator.MOUNTED_WORKSPACE_PATH, ''));
+			// console.log('relUrl', relUrl);
+			dataMap[relUrl] = value.id;
+		}).on('end', () => {
+			resolve(dataMap);
+		})
+	});
 }
 
 module.exports = {
-    get_datasets,
-    post_datasets,
-    get_dataset,
-    delete_dataset,
-    get_data,
-    get_datas,
-    getOrcreateDataset,
-    getAllDataFromDataset,
-    getAllPathsFromDataset,
-    getDataDetails
+	get_datasets,
+	post_datasets,
+	get_dataset,
+	delete_dataset,
+	get_data,
+	get_datas,
+	getOrcreateDataset,
+	getAllDataFromDataset,
+	getAllPathsFromDataset,
+	getDataDetails
 }

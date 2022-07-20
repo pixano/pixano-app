@@ -74,7 +74,7 @@ router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
 router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);
 
 router.get('/datasets/:dataset_id/data/:data_id', middleware.checkToken, get_data);
-router.get('/datasets/:dataset_id/data/', middleware.checkToken, get_datas);
+router.get('/datasets/:dataset_id/data', middleware.checkToken, get_datas);
 
 router.get('/specs', middleware.checkToken, get_specs);
 router.post('/specs', middleware.checkToken, post_specs);

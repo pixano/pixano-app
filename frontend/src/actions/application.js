@@ -100,6 +100,10 @@ export const navigate = (path) => (dispatch, getState) => {
 			import('../views/app-dashboard-admin.js').then(() => {
 			})
 			break;
+		case 'datasets-manager':
+			import('../views/app-datasets-manager.js').then(() => {
+			})
+			break;
 		case 'project-manager':
 			import('../views/app-project-manager.js').then(() => {
 			})
@@ -363,21 +367,6 @@ export const exportTasks = (path, isURL) => (dispatch) => {
 export const importTasks = (path, isURL) => (dispatch) => {
 	if (isURL) return POST('/api/v1/tasks/import', { url: path }, dispatch);
 	else return POST('/api/v1/tasks/import', { path: path }, dispatch);
-}
-
-/**
- * Update a dataset.
- * @param {Object} config 
- */
-export const putDataset = (config) => (dispatch) => {
-	return POST('/api/v1/datasets', config).then((data) => {
-		if (data) {
-			dispatch(updateInputPath(data['path']));
-			return Promise.resolve('success');
-		} else {
-			return Promise.resolve('failure');
-		}
-	});
 }
 
 /**
