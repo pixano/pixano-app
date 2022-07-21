@@ -22,7 +22,14 @@ const toRelative = (url) => {
 	}
 }
 
-const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+const data_types = [//list of available data types (implemented in data-papulator)
+	"image",
+	"pcl",
+	"pcl_image",
+	"sequence_image",
+	"sequence_pcl",
+	"sequence_pcl_image"
+];
 
 async function image(db, mediaRelativePath, hostWorkspacePath, datasetId) {
 	return populateSimple(db, mediaRelativePath, hostWorkspacePath, datasetId, ['jpg', 'png', 'PNG', 'jpeg', 'JPEG'], 'image');
@@ -209,9 +216,7 @@ function parseFolder(dir, extensions = ['jpg', 'png']) {
 			console.log("Directory does not exist.")
 			return resolve({ folders: {} });
 		}
-		// bar.start(0, 0);
 		walk(dir, extensions, (err, result) => {
-			// bar.stop();
 			if (err) throw err;
 			resolve(result);
 		});
@@ -236,11 +241,9 @@ const walk = (dir, ext, done) => {
 			file = path.resolve(dir, file);
 			fs.stat(file, (err, stat) => {
 				if (stat && stat.isDirectory()) {
-					// bar.setTotal(bar.total + 1);
 					walk(file, ext, (err, out) => {
 						folders = { ...folders, ...out.folders }
 						total += out.total;
-						// bar.increment();
 						if (!--pending) {
 							done(null, { folders, total });
 						}
@@ -259,6 +262,7 @@ const walk = (dir, ext, done) => {
 };
 
 module.exports = {
+	data_types,
 	image,
 	pcl,
 	pcl_image,

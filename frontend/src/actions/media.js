@@ -4,7 +4,7 @@
  * @license CECILL-C
 */
 
-import { GET } from './requests';
+import { GET, POST, DELETE } from './requests';
 
 export const SET_MEDIA_INFO = 'SET_MEDIA_INFO';
 export const UPDATE_DATASETS = 'UPDATE_DATASETS';
@@ -50,12 +50,6 @@ export const getData = (datasetId, dataId) => (dispatch) => {
 export const getDatasets = () => (dispatch, getState) => {
 	return GET('/api/v1/datasets').then((data) => {
 		dispatch(updateDatasets(data));
-		if (data.length) {
-			const datasetId = getState().media.datasetId;
-			if (!datasetId) {
-				dispatch(updateDatasetId(data[0].id));
-			}
-		}
 		return Promise.resolve(data);
 	});
 }
@@ -64,37 +58,30 @@ export const getDatasets = () => (dispatch, getState) => {
  * Import a new dataset.
  * @param {String} path origin path
  * @param {String} name name / id associated to this new dataset
+ * @param {String} data_type type of data
  * @param {Boolean} isURL if the destination is an URL instead of a local path
  */
- export const importDataset = (path, name, isURL) => (dispatch) => {
-	if (isURL) return POST('/api/v1/datasets', { url: path, id: name }, dispatch);
-	else return POST('/api/v1/datasets', { path: path, id: name }, dispatch);
+export const importDataset = (path, name, data_type, isURL) => (dispatch) => {
+	if (isURL) return POST('/api/v1/datasets', { url: path, id: name, data_type: data_type }, dispatch);
+	else return POST('/api/v1/datasets', { path: path, id: name, data_type: data_type }, dispatch);
 }
 
 /**************************** */
 
 /**
- * Delete dataset.
+ * Delete a dataset.
  * @param {String} datasetId 
  */
- export const deleteDataset = (datasetId) => (dispatch, getState) => {
-	return DELETE(`/api/v1/datasets/${datasetId}`, {}, dispatch).then((res) => {
-		console.error("NOT IMPLEMENTED");//TODO
-		let tasks = getState().media.tasks;
-		tasks = tasks.filter((t) => t.name != taskName);
-		const newTaskName = tasks.length ? tasks[0].name : '';
-		dispatch(updateTasks(tasks));
-		dispatch(updateTaskName(newTaskName));
-		return Promise.resolve(tasks);
+export const deleteDataset = (datasetId) => (dispatch, getState) => {
+	return DELETE(`/api/v1/datasets/${datasetId}`, {}, dispatch).then(() => {
+		const datasets = dispatch(getDatasets());
+		return Promise.resolve(datasets);
 	});
 }
 
 export const fetchRangeDatas = (page, pageSize) => (dispatch, getState) => {
-	console.log("fetchRangeDatas",page, pageSize);
 	const datasetId = getState().media.datasetId;
 	const filters = getState().application.filters;
-	console.log("datasetId",datasetId);
-	console.log("filters",filters);
 	if (datasetId) {
 		let url = `/api/v1/datasets/${datasetId}/data?page=${page}&count=${pageSize}`;
 		for (const [key, value] of Object.entries(filters)) {
@@ -108,6 +95,6 @@ export const fetchRangeDatas = (page, pageSize) => (dispatch, getState) => {
 			return Promise.reject(error);
 		});
 	} else {
-		return Promise.reject('fetchRangeDatas: Program error');
+		return Promise.reject('fetchRangeDatas: no datasetId defined');
 	}
 }

@@ -1,5 +1,6 @@
 const path = require('path');
 const { db, workspace } = require('../config/db');
+const batchManager = require('../helpers/batch-manager');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -55,11 +56,13 @@ async function get_datasets(req, res) {
  *     HTTP/1.1 204 Dataset already existing
  */
 async function post_datasets(req, res) {
-	checkAdmin(db, req, async () => {
+	console.log("post_datasets");
+	checkAdmin(req, async () => {
 		const dataset = req.body;
-		const ret = await getOrcreateDataset(db, dataset, workspace)
-		if (ret) {
-			return res.status(201).json(ret)
+		console.log("dataset=",dataset);
+		const newDataset = await getOrcreateDataset(dataset, workspace)
+		if (newDataset) {
+			return res.status(201).json(newDataset)
 		}
 		else {
 			return res.status(204).json({})
@@ -109,13 +112,17 @@ async function get_dataset(req, res) {
  */
 async function delete_dataset(req, res) {
 	checkAdmin(req, async () => {
-		const key = dbkeys.keyForDataset(req.params.dataset_id)
-		await db.del(key);
-		// TODO: delete also its data items
+		const key = dbkeys.keyForDataset(req.params.dataset_id);
+		const bm = new batchManager.BatchManager(db);
+		await bm.add({ type: 'del', key });//delete dataset
+		const stream = utils.iterateOnDB(db, dbkeys.keyForData(req.params.dataset_id), true, false);
+		for await (const dkey of stream) {
+			await bm.add({ type: 'del', key: dkey });//delete each data in this dataset
+		}
+		await bm.flush();
 		return res.status(204).json({});
 	});
 }
-
 
 /**
  * @api {get} /datasets/:dataset_id/data/:data_id Get data item info
@@ -237,6 +244,11 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
  */
 async function getOrcreateDataset(dataset, workspace) {
 	dataset.path = path.normalize(dataset.path + '/');//normalize path in order to not duplicate datasets because of a typo error
+	console.log("dataset.data_type=",dataset.data_type);
+	if (!populator.data_types.includes(dataset.data_type)) {
+		console.error("getOrcreateDataset:",dataset.data_type,"is not part of available data_types");
+		return undefined;
+	}
 	var existingDataset = await getDatasetFromId(db, dataset.id, dataset.data_type);
 	if (existingDataset) return existingDataset;
 	existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
@@ -246,7 +258,6 @@ async function getOrcreateDataset(dataset, workspace) {
 			id: utils.generateKey()
 		}
 		await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
-		await db.put(dbkeys.keyForDatasetName(newDataset.id), newDataset.name);
 		await populator[dataset.data_type](db, newDataset.path, workspace, newDataset.id)
 		return newDataset;
 	} else {

@@ -627,27 +627,6 @@ async function remove_task(taskName) {
 		await bm.add({ type: 'del', key: dbkeys.keyForSpec(taskData.spec_id) });
 	}
 
-	// [temporary] if associated dataset is no longer associated
-	// to any other task, remove it as well
-	foundAssociation = false;
-	stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
-	for await (const t of stream) {
-		// console.log('task', t);
-		if (t.name !== taskData.name && t.dataset_id === taskData.dataset_id) {
-			foundAssociation = true;
-			break;
-		}
-	}
-	if (!foundAssociation) {
-		// console.log("del dataset",taskData.dataset_id);
-		await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id) });
-		const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
-		for await (const dkey of stream) {
-			await bm.add({ type: 'del', key: dkey });
-		}
-	} else {
-		console.log("Dataset used by other task, nothing to delete.");
-	}
 	await bm.flush();
 }
 

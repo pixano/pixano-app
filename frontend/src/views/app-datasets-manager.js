@@ -29,7 +29,8 @@ import {
 } from '../actions/media';
 
 import {
-	updateFilters
+	updateFilters,
+	getTasks
 } from '../actions/application';
 
 
@@ -46,7 +47,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 
 	constructor() {
 		super();
-		this.datasets = [];//utile ? pourquoi ne pas prendre getState('media').datasets à chaque fois ? => pour l'observabilité !
+		this.datasets = [];
 		this.datasetIdx = -1;
 		this.pathOrURL = "undetermined";
 		this.default_path = "";
@@ -68,25 +69,39 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	 * => refresh displayed table and items
 	 */
 	async refreshGrid() {
-		console.log("refreshGrid");
-		this.datasetIdx = -1; // To force datasetIdx to change with stateChanged
-		// refresh datasets list and selected id
-		this.datasets = await store.dispatch(getDatasets()).catch((err) => {
-			this.errorPopup("Error while getting datasets :\n"+err, ["home"]).then(() => this.goHome());
-		});
-		this.datasetId = getState('media').datasetId;
-		this.datasetIdx = this.datasets.findIndex((t) => t.id === this.datasetId);
-		// refresh displayed table
-		this.table.items.forEach((e) => e.selected = false);
-		this.tableCheckbox.checked = false;
-		this.nbSelectedRows = 0;
-		this.table.layout();
-		// refresh displayed items
-		const data = await store.dispatch(fetchRangeDatas(this.page, this.pageSize));
-		this.resultsLength = data.counter;
-		this.globalCounter = data.globalCounter;
-		this.items = data.results;
-		console.log("this.items=",this.items);
+		store.dispatch(getDatasets())
+			.then((datasets) => {
+				// refresh table selections
+				this.table.items.forEach((e) => e.selected = false);
+				this.tableCheckbox.checked = false;
+				this.nbSelectedRows = 0;
+				this.table.layout();
+				// refresh datasets list
+				this.datasets = datasets
+				// refresh displayed items
+				if (this.datasets.length) {
+					if (this.datasetIdx===-1) this.datasetIdx = this.datasets.length-1;//select the last one if nothing was selected
+					store.dispatch(updateDatasetId(this.datasets[this.datasetIdx].id));
+					store.dispatch(fetchRangeDatas(this.page, this.pageSize))
+						.then((data) => {
+							this.resultsLength = data.counter;
+							this.globalCounter = data.globalCounter;
+							this.items = data.results;
+						})
+						.catch((err) => {
+							this.errorPopup("Error while fetching data :\n"+err, ["home"]).then(() => this.goHome());
+						});
+				} else {
+					store.dispatch(updateDatasetId(''));
+					this.datasetIdx = -1;
+					this.resultsLength = 0;
+					this.globalCounter = 0;
+					this.items = [];
+				}
+			})
+			.catch((err) => {
+				this.errorPopup("Error while getting datasets :\n"+err, ["home"]).then(() => this.goHome());
+			});
 	}
 
 	/**
@@ -101,6 +116,12 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 			store.dispatch(updateFilters(newFilters));
 			await this.refreshGrid();
 		}
+	}
+
+	/******************* EVENTS handlers *******************/
+
+	onActivate() {
+		if (this.table) this.refreshGrid();//don't refresh if no dataset has been created for now
 	}
 
 	/******************* BUTTONS handlers *******************/
@@ -119,35 +140,36 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	addDataset() {
 		const ioPath = this.shadowRoot.getElementById('io-path').value;
 		const ioName = this.shadowRoot.getElementById('io-name').value;
-		store.dispatch(importDataset(ioPath,ioName, this.pathOrURL === 'URL')).then(() => {
-			store.dispatch(getDatasets()).then(() => {
-				this.onActivate();
-			})
-		}).catch(error => {
-			this.errorPopup(error.message);
-			store.dispatch(getDatasets());
-		});
+		const iodata_type = this.shadowRoot.getElementById('io-data_type').value;
+		store.dispatch(importDataset(ioPath,ioName,iodata_type, this.pathOrURL === 'URL'))
+			.then(() => this.refreshGrid())
+			.catch(error => this.errorPopup(error.message));
 	}
 
 	/**
 	 * Fired when user wants to delete a dataset.
 	 */
 	onRemoveDataset() {
-		console.log("onRemoveDataset");
-		const dialog = this.shadowRoot.getElementById('dialog-remove-dataset');
-		if (dialog) dialog.open = true;
+		// verify first if a task is using this dataset => if yes, don't allow deleting this dataset
+		store.dispatch(getTasks()).then(() => {
+			const datasetId = getState('media').datasetId;
+			const tasks = getState('application').tasks;
+			const correspondingTask = tasks.find((task) => task.dataset.id === datasetId);
+			if (correspondingTask) this.errorPopup("Dataset '"+datasetId+"' is used by the task '"+correspondingTask.name+"'.\nPlease delete this task first.");
+			else {
+				const dialog = this.shadowRoot.getElementById('dialog-remove-dataset');
+				if (dialog) dialog.open = true;
+			}
+		});
 	}
 
 	/**
 	 * Fired when remiving a new dataset
 	 */
 	removeDataset() {
-		console.log("removeDataset: ",getState('media'));
-		const dataset_id = this.datasets[this.datasetIdx].id;
-		store.dispatch(deleteDataset(dataset_id)).then(() => {
-			this.datasets = getState('media').datasets;
-			this.datasetIdx = getState('media').datasets.findIndex((t) => t.id === getState('media').datasetId);
-		})
+		store.dispatch(deleteDataset(getState('media').datasetId))
+			.then(() => this.refreshGrid())
+			.catch(error => this.errorPopup(error.message));
 	}
 
 	/**
@@ -178,7 +200,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	onLastPage() {
 		if (this.pageEnd < this.resultsLength) {
 			this.page = Math.ceil(this.resultsLength / this.pageSize);
-			console.log("onLastPage");
 			this.refreshGrid();
 		}
 	}
@@ -189,7 +210,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	onNextPage() {
 		if (this.pageEnd < this.resultsLength) {
 			this.page += 1;
-			console.log("onNextPage");
 			this.refreshGrid();
 		}
 	}
@@ -200,7 +220,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	onPreviousPage() {
 		if (this.page > 1) {
 			this.page -= 1;
-			console.log("onPreviousPage");
 			this.refreshGrid();
 		}
 	}
@@ -211,7 +230,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	onFirstPage() {
 		if (this.page > 1) {
 			this.page = 1;
-			console.log("onFirstPage");
 			this.refreshGrid();
 		}
 	}
@@ -221,7 +239,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	 */
 	onPageSelection(evt) {
 		this.pageSize = this.pageSizes[evt.detail.index]
-		console.log("onPageSelection");
 		this.refreshGrid();
 	}
 	
@@ -404,23 +421,18 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 
 	get datasetSelectionSection() {
 		const datasetId = getState('media').datasetId;
-		const datasets = getState('media').datasets;
-		if (!datasets) return html``;
 		return html`
 			<div id="overview" class="section">
 				<h1 class="display-4" style="margin: auto;">Select a dataset: </h1>
 				<mwc-select label='Dataset' @selected=${(e) => {
-						console.log("selected=",e);
-						if (datasets[e.detail.index] && datasets[e.detail.index].id !== datasetId) {
-							console.log("datasetSelectionSection");
-							store.dispatch(updateDatasetId(datasets[e.detail.index].id));
-							console.log("updateDatasetId");
+						if (this.datasets[e.detail.index] && this.datasets[e.detail.index].id !== datasetId) {
+							this.datasetIdx = e.detail.index;
 							this.refreshGrid();
 						}
 					}}>
-					${datasets.map((p) => html`<mwc-list-item value=${p.id} ?selected=${datasetId === p.id}>${p.id}</mwc-list-item>`)}
+					${this.datasets.map((p) => html`<mwc-list-item value=${p.id} ?selected=${datasetId === p.id}>${p.id}</mwc-list-item>`)}
 				</mwc-select>
-				<mwc-icon-button icon="delete" @click="${this.onRemoveDataset}"></mwc-icon-button>
+				<mwc-icon-button ?disabled=${this.datasetIdx===-1} style="color: tomato" icon="delete" @click="${this.onRemoveDataset}"></mwc-icon-button>
 			</div>
 			${this.dialogRemoveDataset}
 		`;
@@ -467,11 +479,10 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 
 	get dialogNewDataset() {
 		return html`
-			<mwc-dialog style="text-align: center;" heading="Add a new Dataset" id="dialog-new-dataset">
+			<mwc-dialog heading="Add a new Dataset" id="dialog-new-dataset"><div style="text-align: center; height: 45em">
 				<div> Choose a location type </div>
-				<div><mwc-select style="width: 16em;" id='mwc-select' label="location type" @selected=${(evt) => {
+				<div><mwc-select style="width: 16em" id='mwc-select' label="location type" @selected=${(evt) => {
 						if (evt.detail.index == -1) {//reinitialize dialog
-							this.shadowRoot.getElementById('dialog-new-dataset_disabled').hidden = false;//disable dialog second part
 							this.shadowRoot.getElementById('dialog-new-dataset_enabled').hidden = true;
 						} else {
 							switch (evt.detail.index) {
@@ -485,34 +496,54 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 									break;
 							}
 							//enable dialog second part
-							this.shadowRoot.getElementById('dialog-new-dataset_disabled').hidden = true;
-							this.shadowRoot.getElementById('dialog-new-dataset_enabled').hidden = false;
+							this.shadowRoot.getElementById('dialog-new-dataset_enabled').hidden = false;//disable dialog second part
 						}
 					}}>
-					<mwc-list-item twoline value="0"><span>Local path - </span><span slot="secondary">(Use a relative path to workspace)</span></mwc-list-item>
-					<mwc-list-item twoline value="1"><span>URL - </span><span slot="secondary">(Use a remote address)</span></mwc-list-item>
+					<mwc-list-item twoline value="0"><span> Local path -</span>
+						<span slot="secondary">(Use a relative path to workspace)</span>
+					</mwc-list-item>
+					<mwc-list-item twoline value="1"><span> URL -</span>
+						<span slot="secondary">(Use a remote address)</span>
+					</mwc-list-item>
 				</mwc-select></div>
-				<div id='dialog-new-dataset_disabled'>
-					<div style="color: #ccc"> Enter location of dataset </div>
-					<div><mwc-textfield disabled label="location of dataset"></mwc-textfield></div>
-					<div style="color: #ccc"> Enter a name for this dataset </div>
-					<div><mwc-textfield disabled label="dataset name"></mwc-textfield></div>
-					<div>
-						<mwc-button disabled slot="primaryAction" dialogAction="close"> Ok </mwc-button>
-						<mwc-button slot="secondaryAction" dialogAction="close"> Cancel </mwc-button>
-					</div>
-				</div>
+				<p></p>
 				<div id='dialog-new-dataset_enabled' hidden>
 					<div> Enter ${this.pathOrURL.toLowerCase()} of dataset </div>
 					<div><mwc-textfield id="io-path" label="${this.pathOrURL} of dataset" value=${this.default_path} dialogInitialFocus></mwc-textfield></div>
+					<p></p>
 					<div> Enter a name for this dataset </div>
 					<div><mwc-textfield id="io-name" label="dataset name" value="my_dataset"></mwc-textfield></div>
+					<p></p>
+					<div> Enter the type of data to load </div>
+					<div><mwc-select style="width: 25em" id='io-data_type' label="data type"
+						helper="using sequence-* will consider every sub-folder as a video/image sequence"
+							<mwc-list-item></mwc-list-item>
+							<mwc-list-item twoline value="image" selected><span> images -</span>
+								<span slot="secondary">(folder(s) containing images)</span>
+							</mwc-list-item>
+							<mwc-list-item twoline value="pcl"><span> pointclouds -</span>
+								<span slot="secondary">(folder(s) containing pointcloud files)</span>
+							</mwc-list-item>
+							<mwc-list-item twoline value="pcl_image"><span> pointclouds + images -</span>
+								<span slot="secondary">(folder(s) containing pointcloud files and images)</span>
+							</mwc-list-item>
+							<mwc-list-item twoline value="sequence_image"><span> image sequences -</span>
+								<span slot="secondary">(folder(s) containing image sequences)</span>
+							</mwc-list-item>
+							<mwc-list-item twoline value="sequence_pcl"><span> pointcloud sequences -</span>
+								<span slot="secondary">(folder(s) containing sequences of pointcloud files)</span>
+							</mwc-list-item>
+							<mwc-list-item twoline value="sequence_pcl_image"><span> pointcloud + image sequences -</span>
+								<span slot="secondary">(folder(s) containing sequences of image + pointcloud)</span>
+							</mwc-list-item>
+					</mwc-select></div>
 					<div>
 						<mwc-button slot="primaryAction" dialogAction="close" @click=${() => { this.addDataset(); this.shadowRoot.getElementById('mwc-select').select(-1); }}> Ok </mwc-button>
 						<mwc-button slot="secondaryAction" dialogAction="close" @click=${() => this.shadowRoot.getElementById('mwc-select').select(-1)}> Cancel </mwc-button>
 					</div>
 				</div>
-			</mwc-dialog>
+				<p></p>
+			</mwc-dialog></div>
 		`;
 	}
 
@@ -520,9 +551,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		const datasetId = getState('media').datasetId;
 		return html`
 			<mwc-dialog heading="Remove task" id="dialog-remove-dataset">
-				<div>Remove Dataset ${datasetId}? <br>
-				WARNING: All associated jobs will be lost.
-				</div>
+				<div> Remove Dataset ${datasetId}? </div>
 				<mwc-button
 					slot="primaryAction"
 					dialogAction="ok"
