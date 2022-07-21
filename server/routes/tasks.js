@@ -47,18 +47,20 @@ async function get_tasks(_, res) {
  * 
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 400 Task already existing
+ *     HTTP/1.1 400 Data type of dataset does not correspond to plugin's one
  */
 async function post_tasks(req, res) {
 	checkAdmin(req, async () => {
 		const task = req.body;
 		const spec = await getOrcreateSpec(task.spec);
-		const dataset = await getOrcreateDataset({ ...task.dataset, data_type: spec.data_type }, workspace);
-
+		const dataset = await getOrcreateDataset(task.dataset, workspace);
+		if (spec.data_type !== dataset.data_type) {
+			return res.status(400).json({ message: 'Data type of dataset ('+dataset.data_type+') does not correspond to plugin\'s one ('+spec.data_type+')' });
+		}
 		try {
 			await db.get(dbkeys.keyForTask(task.name));
 			return res.status(400).json({ message: 'Taskname already existing' });
 		} catch (e) { }
-
 		// Task does not exist create it
 		const newTask = { name: task.name, dataset_id: dataset.id, spec_id: spec.id }
 		await db.put(dbkeys.keyForTask(newTask.name), newTask);

@@ -172,7 +172,10 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	 */
 	removeDataset() {
 		store.dispatch(deleteDataset(getState('media').datasetId))
-			.then(() => this.refreshGrid())
+			.then(() => {
+				this.datasetIdx = -1;
+				this.refreshGrid();
+			})
 			.catch(error => this.errorPopup(error.message));
 	}
 

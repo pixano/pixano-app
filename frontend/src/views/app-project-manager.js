@@ -373,9 +373,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 										?disabled=${!this.creatingTask}
 										@action=${(e) => {
 								const newValue = e.target.value;
-								if (this.creatingTask && datasetId && newValue != datasetId) {
-									t.dataset = this.datasetIds.find((dataset) => dataset.id===newValue);
-									console.log("t.dataset=",t.dataset);
+								if (this.creatingTask && datasetId && newValue !== datasetId) {
+									t.dataset.id = newValue;
 									//TODO modify proposed plugin list to show only compatible ones (or show all, but disable non compatible)
 								}
 							}}>

@@ -56,10 +56,8 @@ async function get_datasets(req, res) {
  *     HTTP/1.1 204 Dataset already existing
  */
 async function post_datasets(req, res) {
-	console.log("post_datasets");
 	checkAdmin(req, async () => {
 		const dataset = req.body;
-		console.log("dataset=",dataset);
 		const newDataset = await getOrcreateDataset(dataset, workspace)
 		if (newDataset) {
 			return res.status(201).json(newDataset)
@@ -243,26 +241,27 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
  * @param {String} workspace 
  */
 async function getOrcreateDataset(dataset, workspace) {
-	dataset.path = path.normalize(dataset.path + '/');//normalize path in order to not duplicate datasets because of a typo error
-	console.log("dataset.data_type=",dataset.data_type);
+	//return existing dataset if true
+	if (dataset.path) {
+		dataset.path = path.normalize(dataset.path + '/');//normalize path in order to not duplicate datasets because of a typo error
+		const existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
+		if (existingDataset) return existingDataset;
+	}
+	if (dataset.id) {
+		const existingDataset = await getDatasetFromId(db, dataset.id);
+		if (existingDataset) return existingDataset;
+	} else {
+		dataset.id = utils.generateKey();//if id not existing, generate it
+	}
+	// verify if data_type is available
 	if (!populator.data_types.includes(dataset.data_type)) {
 		console.error("getOrcreateDataset:",dataset.data_type,"is not part of available data_types");
 		return undefined;
 	}
-	var existingDataset = await getDatasetFromId(db, dataset.id, dataset.data_type);
-	if (existingDataset) return existingDataset;
-	existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
-	if (!existingDataset) {
-		const newDataset = {
-			...dataset,
-			id: utils.generateKey()
-		}
-		await db.put(dbkeys.keyForDataset(newDataset.id), newDataset);
-		await populator[dataset.data_type](db, newDataset.path, workspace, newDataset.id)
-		return newDataset;
-	} else {
-		return existingDataset;
-	}
+	// create the dataset
+	await db.put(dbkeys.keyForDataset(dataset.id), dataset);
+	await populator[dataset.data_type](db, dataset.path, workspace, dataset.id)
+	return dataset;
 }
 
 /**
@@ -291,13 +290,13 @@ const getDatasetFromPath = (db, path, data_type) => {
  * @param {Level} db 
  * @param {String} id 
  */
-const getDatasetFromId = (db, id, data_type) => {
+const getDatasetFromId = (db, id) => {
 	let foundDataset = null;
 	return new Promise((resolve, reject) => {
 		// update datasets if previously unknown data path is given
 		const s1 = utils.iterateOnDB(db, dbkeys.keyForDataset(), false, true);
 		s1.on('data', (value) => {
-			if (value.id === id && value.data_type === data_type) {
+			if (value.id === id) {
 				foundDataset = value;
 				s1.destroy();
 			}
