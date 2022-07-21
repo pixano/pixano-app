@@ -23,7 +23,7 @@ const { checkAdmin } = require('./users');
 async function get_specs(_, res) {
 	try {
 		const specs = [];
-		const stream = utils.iterateOnDB(db, dbkeys.keyForSpec(), false, true)
+		const stream = utils.iterateOnDB(dbkeys.keyForSpec(), false, true)
 		stream.on('data', (value) => {
 			specs.push(value);
 		}).on('end', () => {
