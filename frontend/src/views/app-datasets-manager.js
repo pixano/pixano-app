@@ -117,6 +117,10 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 			await this.refreshGrid();
 		}
 	}
+	
+	get pageEnd() {
+		return Math.min(this.resultsLength, (this.page) * this.pageSize);
+	}
 
 	/******************* EVENTS handlers *******************/
 
