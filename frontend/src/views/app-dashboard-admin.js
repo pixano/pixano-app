@@ -311,9 +311,6 @@ class AppDashboardAdmin extends TemplatePage {
       button[selected] {
         background: red;
       }
-      mwc-button {
-        --mdc-button-text-transform: capitalize;
-      }
       .section {
         --mdc-theme-primary: var(--pixano-color);
       }
@@ -446,13 +443,13 @@ class AppDashboardAdmin extends TemplatePage {
 	get headerContent() {
 		return html`
 			<h1 class="display-4">Dashboard Admin</h1>
-			<mwc-button theme="primary" class="dark" @click=${() => this.startValidating()}>Start Validating</mwc-button>
-			<mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}>Start Annotating</mwc-button>
+			<mwc-button theme="primary" class="dark" @click=${() => this.startValidating()}> START VALIDATING </mwc-button>
+			<mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}> START ANNOTATIONS </mwc-button>
 			
 			<div class="right-header-content">
-				<mwc-button theme="primary" class="dark" @click=${() => this.gotoDatasetsManager()}>Datasets</mwc-button>
-				<mwc-button theme="primary" class="dark" @click=${() => this.gotoProjectManager()}>Tasks</mwc-button>
-				<mwc-button theme="primary" class="dark" @click=${() => this.gotoUserManager()}>Users</mwc-button>
+				<mwc-button theme="primary" class="dark" @click=${() => this.gotoDatasetsManager()}> DATASETS </mwc-button>
+				<mwc-button theme="primary" class="dark" @click=${() => this.gotoProjectManager()}> TASKS </mwc-button>
+				<mwc-button theme="primary" class="dark" @click=${() => this.gotoUserManager()}> USERS </mwc-button>
 				<div class="unselectable" style="margin: 10px;">${this.username}</div>
 				<mwc-icon-button icon="exit_to_app"
 							@click=${() => store.dispatch(logout())}
@@ -664,9 +661,10 @@ class AppDashboardAdmin extends TemplatePage {
 			: html`
 				<div id="starter">
 					<ol class="custom-counter">
-						<li>Configure your annotation project in the <p @click=${this.gotoProjectManager}> Tasks </p> menu</li>
-						<li>[Optional] Configure the users for the project in the <p @click=${this.gotoUserManager}> User </p> menu</li>
-						<li>Start <p @click=${this.gotoUserManager}> Annotating </p></li>
+						<li>Configure your dataset(s) in the <p @click=${this.gotoDatasetsManager}> DATASETS </p> menu</li>
+						<li>Configure your annotation project in the <p @click=${this.gotoProjectManager}> TASKS </p> menu</li>
+						<li>[Optional] Configure the users for the project in the <p @click=${this.gotoUserManager}> USER </p> menu</li>
+						<li>Start <p @click=${this.gotoUserManager}> ANNOTATING </p></li>
 					</ol>
 				</div>`;
 	}

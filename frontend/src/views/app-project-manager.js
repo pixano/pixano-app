@@ -34,6 +34,7 @@ import {
 	putTask,
 	getTasks
 } from '../actions/application';
+import { getDatasets } from '../actions/media';
 
 
 class AppProjectManager extends connect(store)(TemplatePage) {
@@ -63,6 +64,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		this.importExportText = "undetermined";
 		this.pathOrURL = "undetermined";
 		this.default_path = "";
+		this.datasetIds = [];
 	}
 
 	onActivate() {
@@ -136,22 +138,34 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	 * to be added in the database.
 	 */
 	onAddTask() {
-		const plugin_name = pluginsList[0];
-		// fill default values
-		const task = {
-			name: '',
-			spec: {
-				plugin_name,
-				label_schema: defaultLabelValues(plugin_name),
-				settings: defaultSettings(plugin_name),
-				data_type: getDataType(plugin_name)
-			},
-			dataset: { path: 'images/' }
-		};
-		const newTasks = [...this.tasks, task];
-		this.creatingTask = true;
-		this.tasks = newTasks;
-		this.taskIdx = this.tasks.length - 1;
+		store.dispatch(getDatasets())
+			.then((datasets) => {
+				if (datasets.length) {
+					// get list of dataset ids/names
+					this.datasetIds = datasets.map((dataset) => dataset.id);
+					// fill default values
+					const plugin_name = pluginsList[0];
+					const task = {
+						name: '',
+						spec: {
+							plugin_name,
+							label_schema: defaultLabelValues(plugin_name),
+							settings: defaultSettings(plugin_name),
+							data_type: getDataType(plugin_name)
+						},
+						dataset: { id: this.datasetIds[0] }
+					};
+					const newTasks = [...this.tasks, task];
+					this.creatingTask = true;
+					this.tasks = newTasks;
+					this.taskIdx = this.tasks.length - 1;
+				} else {
+					this.errorPopup("Please load your dataset(s) first", ["DATASETS"]).then(() => this.gotoPage('/#datasets-manager'));
+				}
+			})
+			.catch((err) => {
+				this.errorPopup("Error while getting datasets :\n"+err, ["home"]).then(() => this.goHome());
+			});
 	}
 
 	/**
@@ -301,14 +315,6 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		this.tasks[this.taskIdx].name = getValue(e);
 	}
 
-	/**
-	 * Fired when data input text is changed
-	 * @param {*} e 
-	 */
-	onDataInput(e) {
-		this.tasks[this.taskIdx].dataset.path = getValue(e);
-	}
-
 	autoCreateSegmentationTask() {
 		const taskName = this.tasks[this.taskIdx].name;
 		store.dispatch(autoCreateTask(taskName)).then(() => {
@@ -340,7 +346,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	get taskSection() {
 		const t = this.tasks[this.taskIdx];
 		const taskName = t ? t.name : '';
-		const datasetPath = t ? t.dataset.path : '';
+		const datasetId = t ? t.dataset.id : '';
 		const pluginName = t ? t.spec.plugin_name : '';
 		return html`
 			<form class="section">
@@ -363,10 +369,18 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 											?disabled=${!this.creatingTask}
 											@input="${this.onTaskNameInput}"
 											value="${taskName}"></mwc-textfield>
-							<mwc-textfield label="Data folder" required
-											?disabled=${!this.creatingTask}
-											@input="${this.onDataInput}"
-											value="${datasetPath}"></mwc-textfield>
+							<mwc-select label="Data folder"
+										?disabled=${!this.creatingTask}
+										@action=${(e) => {
+								const newValue = e.target.value;
+								if (this.creatingTask && datasetId && newValue != datasetId) {
+									t.dataset = this.datasetIds.find((dataset) => dataset.id===newValue);
+									console.log("t.dataset=",t.dataset);
+									//TODO modify proposed plugin list to show only compatible ones (or show all, but disable non compatible)
+								}
+							}}>
+								${this.datasetIds.map((v) => html`<mwc-list-item value=${v} ?selected=${datasetId == v}>${v}</mwc-list-item>`)}
+							</mwc-select>
 							<mwc-select id="plugin"
 										label="Plugin"
 										?disabled=${!this.creatingTask}
