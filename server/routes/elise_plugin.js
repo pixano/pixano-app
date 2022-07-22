@@ -44,7 +44,7 @@ async function elise_index_image(url,id,datasetId,f) {
 		var buffer = Buffer.from(arrayBuffer);
 		formData.append('image', buffer, url);
 	} else formData.append('image', fs.readFileSync(f), url);
-	formData.append('externalid', dbkeys.keyForData(datasetId, id));
+	formData.append('externalid', encodeURI(dbkeys.keyForData(datasetId, id)));
 	formData.append('title', url);
 	formData.append('externalurl', "elise.cea.fr"+url);
 	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
@@ -64,7 +64,7 @@ async function elise_index_image(url,id,datasetId,f) {
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'remove');
-	formData.append('externalid', datakey);
+	formData.append('externalid', encodeURI(datakey));
 	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request
 		.then(res => {
 			if (res.statusText=='OK') return res.json();
@@ -91,6 +91,7 @@ async function elise_search_similar_images(req, res) {
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	const taskName = req.params.task_name;
 	const task = await db.get(dbkeys.keyForTask(taskName));
+	const datasetId = task.dataset_id;
 	// const queries = req.query;
 	// delete queries.page;
 	// delete queries.count;
@@ -141,7 +142,7 @@ async function elise_search_similar_images(req, res) {
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
 				if (idscore.score/maxscore <= sim) {
 					// console.log("idscore=",idscore);
-					const datasetid_id = idscore.externalid.split(':');//'d:' + dataset_id + ':' + data_id;
+					const datasetid_id = decodeURI(idscore.externalid).split(':');//'d:' + dataset_id + ':' + data_id;
 					//verify datasetid
 					if (datasetid_id[1] != datasetId) continue;// don't return ids from other datasets
 					// console.log("add id",datasetid_id[2]);
@@ -192,7 +193,8 @@ async function elise_search_similar_images(req, res) {
 			//extract list of ids (externalid) that correspond to the current dataset
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
 				console.log("found=",idscore);
-				const datasetid_id = idscore.externalid.split(':');//'d:' + dataset_id + ':' + data_id;
+				const datasetid_id = decodeURI(idscore.externalid).split(':');//'d:' + dataset_id + ':' + data_id;
+				console.log("datasetid_id=",datasetid_id);
 				//verify datasetid
 				if (datasetid_id[1] != datasetId) continue;// don't return ids from other datasets
 				// console.log("add id",datasetid_id[2]);
