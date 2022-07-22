@@ -7,9 +7,6 @@
  * @license CECILL-C
 */
 
-import '../helpers/attribute-picker';
-
-
 /**
  * List of all plugin names
  */

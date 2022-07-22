@@ -350,7 +350,6 @@ async function export_tasks(req, res) {
 
 		const streamTask = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
 		for await (const task of streamTask) {
-            console.log("task=",task);
 			const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
 			delete spec.id;
 			const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));

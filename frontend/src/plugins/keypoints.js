@@ -78,13 +78,13 @@ export class PluginKeypoints extends TemplatePluginInstance {
   }
 
   get editor() {
-    return html`<pxn-graph id="main"
+    return html`<pxn-keypoints id="main"
                       mode=${this.mode}
                       @create=${this.onCreate}
                       @update=${this.onUpdate}
                       @delete=${this.onDelete}
                       @selection=${this.onSelection}
-                      @mode=${this.onModeChange}></pxn-graph>`;
+                      @mode=${this.onModeChange}></pxn-keypoints>`;
   }
 }
 customElements.define('plugin-keypoints', PluginKeypoints);
