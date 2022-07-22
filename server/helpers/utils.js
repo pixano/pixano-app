@@ -14,6 +14,20 @@ const generateKey = () => {
 	return crypto.randomBytes(8).toString('hex');
 }
 
+const MOUNTED_WORKSPACE_PATH = '/data/';
+
+const toRelative = (url) => {
+	if (Array.isArray(url)) {
+		return url.map((u) => u.replace(MOUNTED_WORKSPACE_PATH, ''));
+	} else {
+		return url.replace(MOUNTED_WORKSPACE_PATH, '');
+	}
+}
+
+const workspaceToMount = (hostWorkspacePath, f) => {
+	return path.normalize(f.replace(hostWorkspacePath, MOUNTED_WORKSPACE_PATH));
+}
+
 /**
  * Create a database stream interator.
  * @param {Level} db 
@@ -238,6 +252,8 @@ const pathToFilename = (path, removeExt = true) => {
 
 module.exports = {
 	generateKey,
+	toRelative,
+	workspaceToMount,
 	iterateOnDB,
 	iterateOnDBFrom,
 	isEqual,

@@ -40,7 +40,7 @@ export class AppExplore extends TemplatePage {
 	onActivate() {
 		const paths = window.location.hash.split('/');
 		const taskName = decodeURI(paths[1]);
-		const dataId = paths[2];
+		const dataId = decodeURI(paths[2]);
 		store.dispatch(updateTaskName(taskName));
 		const task = getState('application').tasks.find((t) => t.name === taskName);
 		this.pluginName = task.spec.plugin_name;

@@ -23,6 +23,5 @@ COPY data-test /data/data-test
 
 # ENTRYPOINT ["node", "server/server.js"]
 RUN echo 'node cli/pixano "$@"' > entrypoint.sh
-#RUN echo 'node cli/pixano "$@" > pixano_logs 2>&1' > entrypoint.sh
-ENTRYPOINT ["sh", "entrypoint.sh" ]
+ENTRYPOINT ["sh", "entrypoint.sh"]
 CMD []

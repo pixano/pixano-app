@@ -9,18 +9,9 @@ const fs = require('fs');
 const cliProgress = require('cli-progress');
 const path = require('path');
 const batchManager = require('./batch-manager');
-const { generateKey } = require('../helpers/utils');
+const { generateKey, toRelative, workspaceToMount, MOUNTED_WORKSPACE_PATH } = require('../helpers/utils');
 const dbkeys = require('../config/db-keys');
-const MOUNTED_WORKSPACE_PATH = '/data/';
 const imageThumbnail = require('image-thumbnail');
-
-const toRelative = (url) => {
-	if (Array.isArray(url)) {
-		return url.map((u) => u.replace(MOUNTED_WORKSPACE_PATH, ''));
-	} else {
-		return url.replace(MOUNTED_WORKSPACE_PATH, '');
-	}
-}
 
 const data_types = [//list of available data types (implemented in data-papulator)
 	"image",
@@ -198,10 +189,6 @@ async function populateSequence(db, mediaRelativePath, hostWorkspacePath, datase
 	}
 	bar1.stop();
 	await bm.flush();
-}
-
-const workspaceToMount = (hostWorkspacePath, f) => {
-	return path.normalize(f.replace(hostWorkspacePath, MOUNTED_WORKSPACE_PATH));
 }
 
 /**

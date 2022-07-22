@@ -320,6 +320,7 @@ export default class TemplatePage extends LitElement {
 	 */
 	render() {
 		return html`
+			<link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
 			<div class="main ${this.theme}">
 				<div class="header">
 					<div class="logo">

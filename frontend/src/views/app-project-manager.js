@@ -333,7 +333,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
             <mwc-button outlined
                         type="button"
                         title="Export annotations only to json files"
-                        @click="${this.onExport}">Export to files</mwc-button>
+                        @click="${this.onExport}">Export</mwc-button>
             <mwc-button outlined
                         type="button"
                         title="Import annotations from json files"

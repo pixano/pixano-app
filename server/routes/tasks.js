@@ -9,7 +9,6 @@ const { checkAdmin } = require('./users');
 const { getOrcreateSpec } = require('./specs');
 const { getOrcreateDataset } = require('./datasets');
 const { createJob } = require('./jobs');
-const populator = require('../helpers/data-populator');
 const { getAllDataFromDataset,
 	getAllPathsFromDataset,
 	getDataDetails } = require('./datasets');
@@ -55,6 +54,7 @@ async function post_tasks(req, res) {
 		const spec = await getOrcreateSpec(task.spec);
 		const dataset = await getOrcreateDataset(task.dataset, workspace);
 		if (spec.data_type !== dataset.data_type) {
+			//... TODO delete spec if newly created
 			return res.status(400).json({ message: 'Data type of dataset ('+dataset.data_type+') does not correspond to plugin\'s one ('+spec.data_type+')' });
 		}
 		try {
@@ -142,7 +142,6 @@ async function import_tasks(req, res) {
 				// TO BE DETERMINED when new version will arrise: solve compatibility issues
 			}
 			console.info("Annotation format version:", annotation_format_version);
-
 
 			const dataset = await getOrcreateDataset({ ...taskData.dataset, data_type: taskData.spec.data_type }, workspace);
 			const spec = await getOrcreateSpec(taskData.spec);
@@ -538,7 +537,7 @@ async function generateJobResultAndLabelsLists(task) {
 
 		// Get data path
 		const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
-		const path = populator.toRelative(dataData.path);
+		const path = utils.toRelative(dataData.path);
 		// Generate result associated with each data
 		const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path);
 
