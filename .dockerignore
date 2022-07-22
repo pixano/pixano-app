@@ -1,4 +1,4 @@
 *.tar
 frontend/node_modules
-.git
-
+*.zip
+*.7z

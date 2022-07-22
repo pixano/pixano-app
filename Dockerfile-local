@@ -6,7 +6,6 @@ RUN apt-get update
 RUN apt-get install -y nodejs
 RUN node --version
 
-
 # Copy bundled frontend and backend dependencies
 COPY build build
 COPY node_modules node_modules

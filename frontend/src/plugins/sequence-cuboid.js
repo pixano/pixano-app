@@ -11,18 +11,18 @@ import { setAnnotations } from '../actions/annotations';
 
 export class PluginSequenceCuboid extends sequence(PluginCuboid) {
 
-    /**
-     * Save current state to redux database (to keep history)
-     * Overwrite method to change .shapes to .editableCuboids.
-     * @param {CustomEvent} evt 
-     */
-    collect() {
-        const shapes = [...this.element.editableCuboids].map(({color, ...s}) => s);
-        let allAnnotations = getAnnotations().annotations;
-        allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
-        allAnnotations = [...allAnnotations, ...shapes];
-        store.dispatch(setAnnotations({ annotations: allAnnotations }));
-    }
+	/**
+	 * Save current state to redux database (to keep history)
+	 * Overwrite method to change .shapes to .editableCuboids.
+	 * @param {CustomEvent} evt 
+	 */
+	collect() {
+		const shapes = [...this.element.editableCuboids].map(({ color, ...s }) => s);
+		let allAnnotations = getAnnotations().annotations;
+		allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
+		allAnnotations = [...allAnnotations, ...shapes];
+		store.dispatch(setAnnotations({ annotations: allAnnotations }));
+	}
 }
 
 customElements.define('plugin-sequence-cuboid', PluginSequenceCuboid);

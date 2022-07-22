@@ -9,16 +9,18 @@ import { connect } from 'pwa-helpers/connect-mixin.js';
 import TemplatePage from '../templates/template-page';
 import { store, getState } from '../store';
 import { getValue } from '../helpers/utils';
-import { logout, signup,
-  getUsers,
-  deleteUser,
-  updateUser } from '../actions/user';
+import {
+	logout, signup,
+	getUsers,
+	deleteUser,
+	updateUser
+} from '../actions/user';
 
 import '@material/mwc-button';
 import '@material/mwc-formfield';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
-import '@material/mwc-tab'; 
+import '@material/mwc-tab';
 import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
 import '@material/mwc-select';
@@ -26,70 +28,70 @@ import '@material/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 
 class AppUserManager extends connect(store)(TemplatePage) {
-  static get properties() {
-    return {
-      users: { type: Array },
-      enabledUsername: { type: String }
-    };
-  }
+	static get properties() {
+		return {
+			users: { type: Array },
+			enabledUsername: { type: String }
+		};
+	}
 
-  constructor() {
-    super();
-    this.users = [];
-    this.dropdownValues = {
-      'role': ['admin', 'user'],
-      'preferences.theme': ['white', 'black']
-    };
-    this.enabledUsername = '';
-  }
+	constructor() {
+		super();
+		this.users = [];
+		this.dropdownValues = {
+			'role': ['admin', 'user'],
+			'preferences.theme': ['white', 'black']
+		};
+		this.enabledUsername = '';
+	}
 
-  onActivate() {
-    // get list of users from server database
-    store.dispatch(getUsers()).then(() => {
-      this.updateUserTable();
-    });
-  }
+	onActivate() {
+		// get list of users from server database
+		store.dispatch(getUsers()).then(() => {
+			this.updateUserTable();
+		});
+	}
 
-  firstUpdated() {
-    super.firstUpdated();
-    this.usernameElement = this.shadowRoot.getElementById('username');
-    this.passwordElement = this.shadowRoot.getElementById('password');
-    this.roleElement = this.shadowRoot.getElementById('role');
-    this.themeElement = this.shadowRoot.getElementById('theme');
-  }
+	firstUpdated() {
+		super.firstUpdated();
+		this.usernameElement = this.shadowRoot.getElementById('username');
+		this.passwordElement = this.shadowRoot.getElementById('password');
+		this.roleElement = this.shadowRoot.getElementById('role');
+		this.themeElement = this.shadowRoot.getElementById('theme');
+	}
 
 
-  /**
-   * Add user to database from the given
-   * input information.
-   */
-  onAddUser() {
-    const username = this.usernameElement.value;
-    const password = this.passwordElement.value;
-    const role = this.roleElement.value;
-    const theme = this.themeElement.value;
-    const value = {
-      username,
-      password,
-      role,
-      preferences: { theme }
-    }
-    if (username && password) {
-      store.dispatch(signup(value)).then(()=> {
-        this.updateUserTable();
-      });
-    }
-  }
+	/**
+	 * Add user to database from the given
+	 * input information.
+	 */
+	onAddUser() {
+		const username = this.usernameElement.value;
+		const password = this.passwordElement.value;
+		const role = this.roleElement.value;
+		const theme = this.themeElement.value;
+		const value = {
+			username,
+			password,
+			role,
+			preferences: { theme }
+		}
+		if (username && password) {
+			store.dispatch(signup(value)).then(() => {
+				this.updateUserTable();
+			});
+		}
+	}
 
-  onEdit(user) {
-    this.enabledUsername = user.username;
-  }
+	onEdit(user) {
+		this.enabledUsername = user.username;
+	}
 
-  onDeleteUser(user) {
-    store.dispatch(deleteUser(user.username)).then(() => {
-      this.updateUserTable();
-    });
-  }
+	onDeleteUser(user) {
+		store.dispatch(deleteUser(user.username)).then(() => {
+			this.updateUserTable();
+		});
+	}
 
 	onPasswordChanged(e) {
 		this.passwordElement.value = getValue(e);
@@ -101,25 +103,25 @@ class AppUserManager extends connect(store)(TemplatePage) {
 		this.enabledUsername = '';
 	}
 
-  onCancel() {
-    this.enabledUsername = '';
-    this.updateUserTable();
-  }
+	onCancel() {
+		this.enabledUsername = '';
+		this.updateUserTable();
+	}
 
-  updateUserTable() {
-    this.usernameElement.value = '';
-    this.passwordElement.value = '';
-    this.roleElement.select(0);
-    this.themeElement.select(0);
-    // force redraw of data table
-    this.users = [];
-    setTimeout(() => {
-      this.users = JSON.parse(JSON.stringify(getState('user').users));
-    }, 0)
-  }
+	updateUserTable() {
+		this.usernameElement.value = '';
+		this.passwordElement.value = '';
+		this.roleElement.select(0);
+		this.themeElement.select(0);
+		// force redraw of data table
+		this.users = [];
+		setTimeout(() => {
+			this.users = JSON.parse(JSON.stringify(getState('user').users));
+		}, 0)
+	}
 
-  static get styles() {
-    return [super.styles, css`
+	static get styles() {
+		return [super.styles, css`
     .section {
       border: 1px solid #e5e5e5;
     }
@@ -196,42 +198,42 @@ class AppUserManager extends connect(store)(TemplatePage) {
       border: 1px solid rgb(142, 142, 142);
     }
     `]
-  } 
+	}
 
-  get headerContent() {
-    return html`
+	get headerContent() {
+		return html`
       <mwc-icon-button style="margin: 0;" icon="keyboard_backspace" @click=${() => this.goHome()}></mwc-icon-button>
       <h1 class="display-4">User Manager</h1>
       <mwc-icon-button icon="exit_to_app"
                        @click=${() => store.dispatch(logout())}
                        title="Log out"></mwc-icon-button>
     `
-  }
+	}
 
-  /**
-   * Edition button cell
-   * @param {*} root grid item
-   * @param {*} column column element
-   * @param {*} rowData array item
-   */
-  editionCell(user) {
-    return html`
+	/**
+	 * Edition button cell
+	 * @param {*} root grid item
+	 * @param {*} column column element
+	 * @param {*} rowData array item
+	 */
+	editionCell(user) {
+		return html`
       <p style="display: flex; justify-content: flex-end;">
         <mwc-icon-button class="blue"
                           icon="edit"
-                          style=${this.enabledUsername === user.username ? 'display: none;': ''}
+                          style=${this.enabledUsername === user.username ? 'display: none;' : ''}
                           @click=${() => this.onEdit(user)}></mwc-icon-button>
         <mwc-icon-button class="red"
                           icon="delete"
-                          style=${this.enabledUsername === user.username ? 'display: none;': ''}
+                          style=${this.enabledUsername === user.username ? 'display: none;' : ''}
                           @click=${() => this.onDeleteUser(user)}></mwc-icon-button>
-        <mwc-button style=${this.enabledUsername !== user.username ? 'display: none;': ''}
+        <mwc-button style=${this.enabledUsername !== user.username ? 'display: none;' : ''}
                     @click=${() => this.onSaveUser(user)}>Save</mwc-button>
-        <mwc-button style=${this.enabledUsername !== user.username ? 'display: none;': ''}
+        <mwc-button style=${this.enabledUsername !== user.username ? 'display: none;' : ''}
                     @click=${this.onCancel}>Cancel</mwc-button>
       </p>
     `;
-  }
+	}
 
 	listitem(user) {
 		return html`
@@ -262,8 +264,8 @@ class AppUserManager extends connect(store)(TemplatePage) {
 	}
 
 
-  get userSection() {
-    return html`
+	get userSection() {
+		return html`
       <form class="section">
         <div class="section-header">User management</div>
         <div class="form-group">
@@ -288,15 +290,15 @@ class AppUserManager extends connect(store)(TemplatePage) {
           </div>
         </div>
       </form>`
-  }
+	}
 
-  get pageContent() {
-    return html`
+	get pageContent() {
+		return html`
     <div id="project-page">
       ${this.userSection}
     </div>
     `
-  } 
+	}
 
 }
 customElements.define('app-user-manager', AppUserManager);

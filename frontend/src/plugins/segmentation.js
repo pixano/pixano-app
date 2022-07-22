@@ -29,23 +29,23 @@ const EditionMode = {
  */
 export class PluginSegmentation extends TemplatePluginInstance {
 
-  static get properties() {
-    return {
-      ...super.properties,
-      maskVisuMode: { type: String },
-      currentEditionMode: { type: String }
-    };
-  }
+	static get properties() {
+		return {
+			...super.properties,
+			maskVisuMode: { type: String },
+			currentEditionMode: { type: String }
+		};
+	}
 
-  constructor() {
-    super();
-    this.mode = 'create';
-    this.maskVisuMode = 'SEMANTIC';
-    this.currentEditionMode = EditionMode.NEW_INSTANCE;
-  }
+	constructor() {
+		super();
+		this.mode = 'create';
+		this.maskVisuMode = 'SEMANTIC';
+		this.currentEditionMode = EditionMode.NEW_INSTANCE;
+	}
 
-  get toolDrawer() {
-    return html`
+	get toolDrawer() {
+		return html`
         <mwc-icon-button ?selected=${this.mode === 'edit'}
                          title="Select/Edit instance"
                          icon="navigation"
@@ -61,12 +61,12 @@ export class PluginSegmentation extends TemplatePluginInstance {
                          title="Add instance (Brush)"
                          @click="${() => this.mode = 'create-brush'}">
                          </mwc-icon-button>
-        <mwc-icon-button ?selected=${this.getEditionMode()===EditionMode.ADD_TO_INSTANCE}
+        <mwc-icon-button ?selected=${this.getEditionMode() === EditionMode.ADD_TO_INSTANCE}
                          title="Add to instance (Shift)"
                          @click="${() => this.setEditionMode(EditionMode.ADD_TO_INSTANCE)}">
                          ${union}
                          </mwc-icon-button>
-        <mwc-icon-button ?selected=${this.getEditionMode()===EditionMode.REMOVE_FROM_INSTANCE}
+        <mwc-icon-button ?selected=${this.getEditionMode() === EditionMode.REMOVE_FROM_INSTANCE}
                          title="Remove from instance (Ctrl)"
                          @click="${() => this.setEditionMode(EditionMode.REMOVE_FROM_INSTANCE)}">
                          ${subtract}
@@ -87,36 +87,36 @@ export class PluginSegmentation extends TemplatePluginInstance {
         <mwc-icon-button icon="face"
                          ?selected=${this.maskVisuMode === 'INSTANCE'}
                          title="Switch instance/semantic"
-                         @click="${() => this.maskVisuMode = this.maskVisuMode === 'INSTANCE' ? 'SEMANTIC': 'INSTANCE'}">
+                         @click="${() => this.maskVisuMode = this.maskVisuMode === 'INSTANCE' ? 'SEMANTIC' : 'INSTANCE'}">
                          </mwc-icon-button>
     `
-  }
+	}
 
-  initDisplay() {
-    super.initDisplay();
-    const taskName = getState('application').taskName;
-    const task = getState('application').tasks.find((t) => t.name === taskName);
-    const schema = task.spec.label_schema;
-    this.element.clsMap = new Map(
-      schema.category.map((c) => {
-          const color = colorToRGBA(c.color);
-          return [c.idx, [color[0], color[1], color[2], c.instance ? 1 : 0]]
-      })
-    );
-    if (!schema.default) {
-      schema.default = schema.category[0].name;
-    }
-    this.element.targetClass = schema.category.find((c) => c.name === schema.default).idx;
-  }
+	initDisplay() {
+		super.initDisplay();
+		const taskName = getState('application').taskName;
+		const task = getState('application').tasks.find((t) => t.name === taskName);
+		const schema = task.spec.label_schema;
+		this.element.clsMap = new Map(
+			schema.category.map((c) => {
+				const color = colorToRGBA(c.color);
+				return [c.idx, [color[0], color[1], color[2], c.instance ? 1 : 0]]
+			})
+		);
+		if (!schema.default) {
+			schema.default = schema.category[0].name;
+		}
+		this.element.targetClass = schema.category.find((c) => c.name === schema.default).idx;
+	}
 
-  	/**
+	/**
 	 * Invoked on instance selection in the canvas.
 	 * @param {CustomEvent} evt 
 	 */
 	onSelection(evt) {
 		this.selectedIds = evt.detail;
 		if (this.selectedIds) {//only one id at a time for segmentation
-			const annot = this.annotations.filter((a) => JSON.stringify(this.selectedIds)===(a.id));// search the corresponding id 
+			const annot = this.annotations.filter((a) => JSON.stringify(this.selectedIds) === (a.id));// search the corresponding id 
 			const common = commonJson(annot);
 			this.attributePicker.setAttributes(common);
 		} else {
@@ -135,7 +135,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		// 1) update the mask (always id 0)
 		let mask = frame.find((l) => l.id === 0);
 		if (!mask) {
-			mask = {id: 0, mask: this.element.getMask()};//if the mask already exists => just overwrite the previous mask
+			mask = { id: 0, mask: this.element.getMask() };//if the mask already exists => just overwrite the previous mask
 			frame.push(mask);//otherwise(first time), create it
 		} else {
 			mask.mask = this.element.getMask();
@@ -146,7 +146,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 			// nothing to do for annotation infos, only the mask has changed
 		} else {// this is a new id
 			// create the new label
-			label = {...this.attributePicker.defaultValue};
+			label = { ...this.attributePicker.defaultValue };
 			// store the stringified values
 			const value = this.attributePicker.value;
 			Object.keys(label).forEach((key) => {
@@ -156,7 +156,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 			frame.push(label)
 		}
 		// 3) store the new annotation structure
-		store.dispatch(setAnnotations({annotations: frame}));
+		store.dispatch(setAnnotations({ annotations: frame }));
 		// selectedId has also changed, update it
 		this.selectedIds = updatedIds;
 	}
@@ -167,14 +167,14 @@ export class PluginSegmentation extends TemplatePluginInstance {
 	onAttributeChanged() {
 		if (!this.selectedIds.length) {//nothing is selected
 			// only set the category acordingly to the selected attribute
-			const category =  this.attributePicker.selectedCategory;
+			const category = this.attributePicker.selectedCategory;
 			this.element.targetClass = category.idx;
 			return;
 		}
 		let frame = this.annotations;
 		// 1) update the mask (always id 0)
 		// change category in element
-		const category =  this.attributePicker.selectedCategory;
+		const category = this.attributePicker.selectedCategory;
 		this.element.targetClass = category.idx;
 		this.element.fillSelectionWithClass(category.idx);
 		// get the new mask and store it
@@ -191,7 +191,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		label.id = JSON.stringify(updatedIds);
 		this.selectedIds = updatedIds;
 		// 3) store the new annotation structure
-		store.dispatch(setAnnotations({annotations: frame}));
+		store.dispatch(setAnnotations({ annotations: frame }));
 	}
 
 	/**
@@ -208,7 +208,7 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		// 2) update annotation info (= delete corresponding id)
 		frame = frame.filter((l) => l.id !== JSON.stringify(ids))
 		// 3) store the new annotation structure
-		store.dispatch(setAnnotations({annotations: frame}));
+		store.dispatch(setAnnotations({ annotations: frame }));
 	}
 
 	refresh() {//get back annotation into element
@@ -220,25 +220,25 @@ export class PluginSegmentation extends TemplatePluginInstance {
 		if (!mask) this.element.setEmpty();
 		else this.element.setMask(mask.mask);
 	}
-  
-  getEditionMode() {
-    if (this.element) return this.element.editionMode;
-    else return undefined;
-  }
-  setEditionMode(editionMode) {
-    if (this.element) this.element.editionMode=editionMode;
-    this.currentEditionMode = editionMode;
-  }
 
-  get editor() {
-    return html`<pxn-segmentation id="main"
+	getEditionMode() {
+		if (this.element) return this.element.editionMode;
+		else return undefined;
+	}
+	setEditionMode(editionMode) {
+		if (this.element) this.element.editionMode = editionMode;
+		this.currentEditionMode = editionMode;
+	}
+
+	get editor() {
+		return html`<pxn-segmentation id="main"
                             mode=${this.mode}
                             maskVisuMode=${this.maskVisuMode}
                             @update=${this.onUpdate}
                             @selection=${this.onSelection}
                             @delete=${this.onDelete}
                             @mode=${this.onModeChange}></pxn-segmentation>`;//onCreate never really called for segmentation : the mask is updated
-  }
+	}
 
 	collect() {
 		console.log("should not be called")

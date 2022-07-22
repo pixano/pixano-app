@@ -16,6 +16,7 @@ const interfaces = os.networkInterfaces();
 const chalk = require('chalk');
 const boxen = require('boxen');
 const fs = require('fs');
+var git = require('git-rev-sync');
 
 const getNetworkAddress = () => {
 	for (const name of Object.keys(interfaces)) {
@@ -30,6 +31,18 @@ const getNetworkAddress = () => {
 
 // implement a user friendly CLI
 export function serve(workspace, port, cliOptions) {
+
+	//print release/revision
+	let pixanoRev = "";
+	if (git.isTagDirty()) {
+		if (git.isDirty()) pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch()+" (uncommited changes).";
+		else pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch();
+		pixanoRev += "\nLast tag was "+git.tag();
+	} else {
+		if (git.isDirty()) pixanoRev = "Using Pixano-app release "+git.tag()+" (uncommited changes).";
+		else pixanoRev = "Using Pixano-app release "+git.tag();
+	}
+	console.log(pixanoRev);
 
 	if (!fs.existsSync(workspace)) {
 		console.error('Please enter a valid path for workspace (\"', workspace, '\" does not exist).');
@@ -51,6 +64,7 @@ export function serve(workspace, port, cliOptions) {
 			const { db } = require(__dirname + '/config/db');
 			db.put(dbkeys.keyForCliOptions, cliOptions);
 			console.log("cli options: ",cliOptions);
+			db.put(dbkeys.keyForPixanoVersion, { app: pixanoRev });
 			const { elise_test } = require(__dirname + '/routes/elise_plugin.js');
 			elise_test(cliOptions.elise);//not fatal if it doesn't work: elise could be turned on afterwards
 

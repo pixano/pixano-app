@@ -15,144 +15,151 @@ import '@material/mwc-snackbar';
 import { AppExplore } from './app-explore';
 
 class AppLabel extends AppExplore {
-  static get properties() {
-    return {
-      pluginName: super.pluginName,
-      jobObjective: { type: String },
-      job: { type: Object }
-    };
-  }
+	static get properties() {
+		return {
+			pluginName: super.pluginName,
+			jobObjective: { type: String },
+			job: { type: Object }
+		};
+	}
 
-  constructor() {
-    super();
-    this.jobDefaultObjective = 'to_annotate';
-    this.job = {};
-    this.onDesactivate = this.onDesactivate.bind(this);
-    window.addEventListener('keydown', (evt) => {
-      if(this.active) {
-        const lowerKey = evt.key.toLowerCase();
-        if (lowerKey === 's' && evt.ctrlKey) {
-          evt.preventDefault();
-          this.save();
-        }
-      }
-    });
+	constructor() {
+		super();
+		this.jobDefaultObjective = 'to_annotate';
+		this.job = {};
+		this.onDesactivate = this.onDesactivate.bind(this);
+		window.addEventListener('keydown', (evt) => {
+			if (this.active) {
+				const lowerKey = evt.key.toLowerCase();
+				if (lowerKey === 's' && evt.ctrlKey) {
+					evt.preventDefault();
+					this.save();
+				}
+			}
+		});
 
-    window.addEventListener('keyup', (evt) => {
-      if(this.active) {
-        const lowerKey = evt.key.toLowerCase();
-        if (lowerKey === 'z' && evt.ctrlKey && evt.shiftKey) {
-          this.redo();
-        } else if (lowerKey === 'z' && evt.ctrlKey) {
-          this.undo();
-        } 
-      }
-    });
-  }
-  
-  onActivate() {
-    const paths = window.location.hash.split('/');
-    const taskName = decodeURI(paths[1]);
-    this.jobObjective = paths[2] || this.jobDefaultObjective;
-    store.dispatch(updateTaskName(taskName));
-    const task = getState('application').tasks.find((t) => t.name === taskName);
-    this.pluginName = task.spec.plugin_name;
-    this.launchPlugin(this.pluginName).then((mod) => {
-      store.dispatch(fetchNewJob(this.jobObjective)).then((j) => {
-        this.job = JSON.parse(JSON.stringify(j));
-        mod.onActivate();
-        this.dataPath = this.path;
-      }).catch((err) => {
-        this.errorPopup(err, ["home"]).then(() => this.goHome());
-      });
-    });
-    window.addEventListener('beforeunload', this.onDesactivate);
-  }
+		window.addEventListener('keyup', (evt) => {
+			if (this.active) {
+				const lowerKey = evt.key.toLowerCase();
+				if (lowerKey === 'z' && evt.ctrlKey && evt.shiftKey) {
+					this.redo();
+				} else if (lowerKey === 'z' && evt.ctrlKey) {
+					this.undo();
+				}
+			}
+		});
+	}
 
-  /**
-   * Invoked when quitting the page.
-   */
-  onDesactivate() {
-    store.dispatch(interruptJob());
-    window.removeEventListener('beforeunload', this.onDesactivate);
-  }
+	onActivate() {
+		const paths = window.location.hash.split('/');
+		const taskName = decodeURI(paths[1]);
+		this.jobObjective = paths[2] || this.jobDefaultObjective;
+		store.dispatch(updateTaskName(taskName));
+		const task = getState('application').tasks.find((t) => t.name === taskName);
+		this.pluginName = task.spec.plugin_name;
+		this.launchPlugin(this.pluginName).then((mod) => {
+			store.dispatch(fetchNewJob(this.jobObjective)).then((j) => {
+				this.job = JSON.parse(JSON.stringify(j));
+				mod.onActivate();
+				this.dataPath = this.path;
+			}).catch((err) => {
+				this.errorPopup(err, ["home"]).then(() => this.goHome());
+			});
+		});
+		window.addEventListener('beforeunload', this.onDesactivate);
+	}
 
-  /**
-   * Undo last annotation action.
-   */
-  undo() {
-    store.dispatch(undo());
-    this.el.refresh();
-  }
+	/**
+	 * Invoked when quitting the page.
+	 */
+	onDesactivate() {
+		store.dispatch(interruptJob());
+		window.removeEventListener('beforeunload', this.onDesactivate);
+	}
 
-  /**
-   * Redo next annotation action.
-   */
-  redo() {
-    store.dispatch(redo());
-    this.el.refresh();
-  }
+	/**
+	 * Undo last annotation action.
+	 */
+	undo() {
+		store.dispatch(undo());
+		this.el.refresh();
+	}
 
-  /**
-   * Save labels for a given data id.
-   */
-  save() {
-    store.dispatch(putJob()).then(() => {
-      store.dispatch(putLabels()).then(() => {
-        this.snack.show();
-      }).catch((e) => {
-        console.warn('Saving failed.', e);
-      })
-    }).catch((error) => {
-      this.errorPopup(error.message);
-    });
-  }
+	/**
+	 * Redo next annotation action.
+	 */
+	redo() {
+		store.dispatch(redo());
+		this.el.refresh();
+	}
 
-  async _submissionHelper(objective) {
-    // Try to save and update current job
-    try {
-      console.log('_submissionHelper');
-      await store.dispatch(putJob(objective));
-      await store.dispatch(putLabels());
-    } // Job has either been reassigned to someone else or is dead.
-    catch(err) { console.log('err1', err); this.errorPopup(err.message); }
+	/**
+	 * Save labels for a given data id.
+	 */
+	save() {
+		store.dispatch(putJob()).then(() => {
+			store.dispatch(putLabels()).then(() => {
+				this.snack.show();
+			}).catch((e) => {
+				console.warn('Saving failed.', e);
+			})
+		}).catch((error) => {
+			this.errorPopup(error.message);
+		});
+	}
 
-    // Try to get next job
-    try {
-      console.log('getting next job')
-      const j =  await store.dispatch(fetchNewJob(this.jobObjective));
-      this.el.newData();
-      this.dataPath = this.path;
-    }
-    catch(msg) { // End of queue
-      await this.errorPopup(msg, ['home']);
-      this.goHome();
-    }
-  }
+	async _submissionHelper(objective) {
+		// Try to save and update current job
+		try {
+			console.log('_submissionHelper');
+			await store.dispatch(putJob(objective));
+			await store.dispatch(putLabels());
+		} // Job has either been reassigned to someone else or is dead.
+		catch (err) { console.log('err1', err); this.errorPopup(err.message); }
 
-  /**
-   * Submit job.
-   */
-  submit() {
-    this._submissionHelper('to_validate');    
-  }
+		// Try to get next job
+		try {
+			console.log('getting next job')
+			const j = await store.dispatch(fetchNewJob(this.jobObjective));
+			this.el.newData();
+			this.dataPath = this.path;
+		}
+		catch (msg) { // End of queue
+			await this.errorPopup(msg, ['home']);
+			this.goHome();
+		}
+	}
 
-  /**
-   * Validate job.
-   */
-  validate() {
-    this._submissionHelper('done'); 
-  }
+	/**
+	 * Submit job.
+	 */
+	submit() {
+		this._submissionHelper('to_validate');
+	}
 
-  /**
-   * Reject job.
-   */
-  reject() {
-    this._submissionHelper('to_correct');
-  }
+	/**
+	 * Validate job.
+	 */
+	validate() {
+		this._submissionHelper('done');
+	}
 
-  get headerContent() {
-    return html`
+	/**
+	 * Reject job.
+	 */
+	reject() {
+		this._submissionHelper('to_correct');
+	}
+
+	/**
+	 * Submit job.
+	 */
+	skip() {
+		this._submissionHelper('skip');
+	}
+
+	get headerContent() {
+		return html`
       <mwc-icon-button style="margin: 0;"
                        icon="keyboard_backspace"
                        title="Back"
@@ -170,59 +177,60 @@ class AppLabel extends AppExplore {
                        @click=${() => this.save()}></mwc-icon-button>
       ${this.buttons}
     `
-  }
+	}
 
-  get jobInfo() {
-    return `
+	get jobInfo() {
+		return `
     \n
     Data id: ${this.job.data_id}\n
     Last annotated by: ${this.job.annotator}\n
     Last validated by: ${this.job.validator}\n
     Last updated at: ${timeConverter(this.job.last_update_at)}\n`
-  }
+	}
 
-  get buttons() {
-    switch(this.jobObjective) {
-      case 'to_annotate': {
-        return this.toAnnotateButtons;
-      }
-      case 'to_validate': {
-        return this.toValidateButtons;
-      }
-      case 'to_correct': {
-        return this.toCorrectButtons;
-      }
-    }
-  }
+	get buttons() {
+		switch (this.jobObjective) {
+			case 'to_annotate': {
+				return this.toAnnotateButtons;
+			}
+			case 'to_validate': {
+				return this.toValidateButtons;
+			}
+			case 'to_correct': {
+				return this.toCorrectButtons;
+			}
+		}
+	}
 
-  get toAnnotateButtons() {
-    return html`
-      <mwc-button @click=${() => this.submit()}>SUBMIT</mwc-button>
+	get toAnnotateButtons() {
+		return html`
+		<mwc-button outlined @click=${() => this.skip()}>SKIP</mwc-button>
+		<mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>SUBMIT</mwc-button>
     `
-  }
+	}
 
-  get toValidateButtons() {
-    return html`
-      <mwc-button @click=${() => this.reject()}>REJECT</mwc-button>
-      <mwc-button @click=${() => this.validate()}>VALIDATE</mwc-button>
+	get toValidateButtons() {
+		return html`
+      <mwc-button outlined style="--mdc-button-outline-color: red" @click=${() => this.reject()}>REJECT</mwc-button>
+      <mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.validate()}>VALIDATE</mwc-button>
     `
-  }
+	}
 
-  get toCorrectButtons() {
-    return html`
-      <mwc-button @click=${() => this.submit()}>RE-SUBMIT</mwc-button>
+	get toCorrectButtons() {
+		return html`
+      <mwc-button outlined style="--mdc-button-outline-color: green" @click=${() => this.submit()}>RE-SUBMIT</mwc-button>
     `
-  }
+	}
 
-  get snack() {
-    return this.shadowRoot.getElementById('infoSnack');
-  }
+	get snack() {
+		return this.shadowRoot.getElementById('infoSnack');
+	}
 
-  get body() {
-    return html`
+	get body() {
+		return html`
     ${super.body}
     <mwc-snackbar id="infoSnack" labelText="Successfully saved labels !" timeoutMs=4000></mwc-snackbar>
     `;
-  }
+	}
 }
 customElements.define('app-label', AppLabel);

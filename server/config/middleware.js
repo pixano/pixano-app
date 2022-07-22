@@ -20,46 +20,46 @@ const expiresIn = '24h';
  * @param {*} next 
  */
 const checkToken = (req, res, next) => {
-  // let token = req.headers['x-access-token'] || req.headers['authorization']; // Express headers are auto converted to lowercase
-  let token = req.cookies.token || '';
-  if (!token) {
-    return res.status(401).json({
-      failed: true,
-      message: 'Auth token is not supplied'
-    });
-  }
-  if (token.startsWith('Bearer ')) {
-    // Remove Bearer from string
-    token = token.slice(7, token.length);
-  }
+	// let token = req.headers['x-access-token'] || req.headers['authorization']; // Express headers are auto converted to lowercase
+	let token = req.cookies.token || '';
+	if (!token) {
+		return res.status(401).json({
+			failed: true,
+			message: 'Auth token is not supplied'
+		});
+	}
+	if (token.startsWith('Bearer ')) {
+		// Remove Bearer from string
+		token = token.slice(7, token.length);
+	}
 
-  if (token) {
-    jwt.verify(token, config.secret, (err, decoded) => {
-      if (err) {
-        return res.status(401).json({
-          failed: true,
-          message: 'Token is not valid'
-        });
-      } else {
-        // the token is valid
-        token = updateTokenIfAlmostDead(token, decoded);
-        req.username = decoded.username;
-        req.token = token;
-        res.cookie('token', token, {
-          expires: new Date(Date.now() + 604800000),
-          secure: false, // set to true if your using https
-          httpOnly: true,
-          sameSite: 'lax'
-        });
-        next();
-      }
-    });
-  } else {
-    return res.json({
-      failed: true,
-      message: 'Auth token is not supplied'
-    });
-  }
+	if (token) {
+		jwt.verify(token, config.secret, (err, decoded) => {
+			if (err) {
+				return res.status(401).json({
+					failed: true,
+					message: 'Token is not valid'
+				});
+			} else {
+				// the token is valid
+				token = updateTokenIfAlmostDead(token, decoded);
+				req.username = decoded.username;
+				req.token = token;
+				res.cookie('token', token, {
+					expires: new Date(Date.now() + 604800000),
+					secure: false, // set to true if your using https
+					httpOnly: true,
+					sameSite: 'lax'
+				});
+				next();
+			}
+		});
+	} else {
+		return res.json({
+			failed: true,
+			message: 'Auth token is not supplied'
+		});
+	}
 }
 
 /**
@@ -68,19 +68,19 @@ const checkToken = (req, res, next) => {
  * @param {object} decoded 
  */
 function updateTokenIfAlmostDead(token, decoded) {
-  const current_time = new Date().getTime() / 1000;
-  // remaining time before token obsolete in s.
-  const remainingTime = (decoded.exp - current_time).toFixed(1);
+	const current_time = new Date().getTime() / 1000;
+	// remaining time before token obsolete in s.
+	const remainingTime = (decoded.exp - current_time).toFixed(1);
 	if (remainingTime < 60 * 60) {
-    const newToken = jwt.sign({ username: decoded.username },
-      config.secret, { expiresIn }
-    );
-    return newToken;
-  }
-  return token;
+		const newToken = jwt.sign({ username: decoded.username },
+			config.secret, { expiresIn }
+		);
+		return newToken;
+	}
+	return token;
 }
 
 module.exports = {
-  checkToken,
-  expiresIn
+	checkToken,
+	expiresIn
 }

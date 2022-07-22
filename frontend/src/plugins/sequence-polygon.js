@@ -7,6 +7,6 @@
 import { PluginPolygon } from './polygon';
 import { sequence } from '../templates/sequence-mixin';
 
-export class PluginSequencePolygon extends sequence(PluginPolygon) {}
+export class PluginSequencePolygon extends sequence(PluginPolygon) { }
 
 customElements.define('plugin-sequence-polygon', PluginSequencePolygon);

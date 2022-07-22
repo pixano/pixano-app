@@ -10,8 +10,8 @@ import { TemplatePluginInstance } from '../templates/template-plugin-instance';
 
 export class PluginPolygon extends TemplatePluginInstance {
 
-  get toolDrawer() {
-    return html`
+	get toolDrawer() {
+		return html`
         ${super.toolDrawer}
         <mwc-icon-button icon="call_merge"
                          @click="${() => this.element.merge()}"
@@ -22,26 +22,26 @@ export class PluginPolygon extends TemplatePluginInstance {
                          title="Split polygon">
                          </mwc-icon-button>
         <mwc-icon-button icon="timeline"
-                         style="display: ${this.mode == 'create' ?  "block" : "none"}"
+                         style="display: ${this.mode == 'create' ? "block" : "none"}"
                          ?selected=${this.element && this.element.isOpenedPolygon == true}
                          @click="${() => {
-                           this.element.isOpenedPolygon = !this.element.isOpenedPolygon;
-                           this.requestUpdate();
-                           }
-                          }"
+				this.element.isOpenedPolygon = !this.element.isOpenedPolygon;
+				this.requestUpdate();
+			}
+			}"
                          title="Polyline/Polygon">
                          </mwc-icon-button>
     `
-  }
+	}
 
-  get editor() {
-    return html`<pxn-polygon id="main"
+	get editor() {
+		return html`<pxn-polygon id="main"
                         mode=${this.mode}
                         @create=${this.onCreate}
                         @update=${this.onUpdate}
                         @delete=${this.onDelete}
                         @selection=${this.onSelection}
                         @mode=${this.onModeChange}></pxn-polygon>`;
-  }
+	}
 }
 customElements.define('plugin-polygon', PluginPolygon);

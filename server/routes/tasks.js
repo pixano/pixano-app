@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
 const { db, workspace, print } = require('../config/db');
@@ -10,8 +10,8 @@ const { getOrcreateSpec } = require('./specs');
 const { getOrcreateDataset } = require('./datasets');
 const { createJob } = require('./jobs');
 const { getAllDataFromDataset,
-        getAllPathsFromDataset,
-        getDataDetails } = require('./datasets');
+	getAllPathsFromDataset,
+	getDataDetails } = require('./datasets');
 const { getSelectionFromKafka } = require('./kafka_plugin');
 const { downloadFilesFromMinio } = require('./minio_plugin');
 const fetch = require("node-fetch");
@@ -33,8 +33,8 @@ const annotation_format_version = "0.9";
  *     }]: RestTask[]
  */
 async function get_tasks(_, res) {
-    const tasks = await getAllTasksDetails();
-    res.send(tasks);
+	const tasks = await getAllTasksDetails();
+	res.send(tasks);
 }
 
 /**
@@ -52,28 +52,29 @@ async function get_tasks(_, res) {
  *     HTTP/1.1 400 Task already existing
  */
 async function post_tasks(req, res) {
-    checkAdmin(req, async () => {
-        const task = req.body;
-        const spec = await getOrcreateSpec(task.spec);
-        const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
+	checkAdmin(req, async () => {
+		const task = req.body;
+		const spec = await getOrcreateSpec(task.spec);
+		const dataset = await getOrcreateDataset({ ...task.dataset, data_type: spec.data_type }, workspace);
 
-        try {
-            await db.get(dbkeys.keyForTask(task.name));
-            return res.status(400).json({message: 'Taskname already existing'});
-        } catch(e) {}
-        
-        // Task does not exist create it
-        const newTask = {name: task.name, dataset_id: dataset.id, spec_id: spec.id}
-        await db.put(dbkeys.keyForTask(newTask.name), newTask);
-        
-        // Generate first job list
-        await generateJobResultAndLabelsLists(newTask);
+		try {
+			await db.get(dbkeys.keyForTask(task.name));
+			return res.status(400).json({ message: 'Taskname already existing' });
+		} catch (e) { }
 
-        const taskDetail = await getTaskDetails(newTask.name);
-        console.log('Task created', taskDetail.name)
-        res.status(201).json(taskDetail);
-    });
+		// Task does not exist create it
+		const newTask = { name: task.name, dataset_id: dataset.id, spec_id: spec.id }
+		await db.put(dbkeys.keyForTask(newTask.name), newTask);
+
+		// Generate first job list
+		await generateJobResultAndLabelsLists(newTask);
+
+		const taskDetail = await getTaskDetails(newTask.name);
+		console.log('Task created', taskDetail.name)
+		res.status(201).json(taskDetail);
+	});
 }
+
 
 /**
  * @api {post} /tasks/import_from_kafka Import annotation task from kafka
@@ -138,6 +139,7 @@ async function import_tasks_from_kafka(req, res) {
 	});
 }
 
+
 /**
  * @api {post} /tasks/import Import annotation task from json files
  * @apiName PostImportTasks
@@ -154,160 +156,159 @@ async function import_tasks_from_kafka(req, res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function import_tasks(req, res) {
-    checkAdmin(req, async () => {
+	checkAdmin(req, async () => {
 		if (req.body.url) {
 			return res.status(400).json({
 				error: 'url_not_implemented',
 				message: 'Import tasks from URL is not yet implemented.'
 			});
 		}
-        if (!req.body.path) {
-            return res.status(400).json({
-                error: 'wrong_path',
-                message: 'Invalid path.'
-            });
-        }
-        const importPath = path.join(workspace, req.body.path);
-        console.log('##### Importing from ', importPath);
-        if(!utils.isSubFolder(workspace, importPath)) {
-            return res.status(400).json({
-                error: 'wrong_folder',
-                message: 'Import folder should be a sub folder of the working space.'
-            });
-        }
-        if (!fs.existsSync(importPath)) {
-            return res.status(400).json({
-                error: 'wrong_folder',
-                message: 'Import folder does not exist.'
-            });
-        }
-        console.info('Importing annotation files.')  
-        const filesList = fs.readdirSync(importPath);
+		if (!req.body.path) {
+			return res.status(400).json({
+				error: 'wrong_path',
+				message: 'Invalid path.'
+			});
+		}
+		const importPath = path.join(workspace, req.body.path);
+		console.log('##### Importing from ', importPath);
+		if (!utils.isSubFolder(workspace, importPath)) {
+			return res.status(400).json({
+				error: 'wrong_folder',
+				message: 'Import folder should be a sub folder of the working space.'
+			});
+		}
+		if (!fs.existsSync(importPath)) {
+			return res.status(400).json({
+				error: 'wrong_folder',
+				message: 'Import folder does not exist.'
+			});
+		}
+		console.info('Importing annotation files.')
+		const filesList = fs.readdirSync(importPath);
 
-        // filter all json files
-        const taskJsonFiles = filesList.filter(f => f.endsWith('.json') && !f.startsWith('_'));
-        const bm = new batchManager.BatchManager(db);
+		// filter all json files
+		const taskJsonFiles = filesList.filter(f => f.endsWith('.json') && !f.startsWith('_'));
+		const bm = new batchManager.BatchManager(db);
 
-        // Create tasks  
-        // Format of task file:
-        // {
-        //  name: string
-        //  spec: { plugin_name: string, label_schema: {} },
-        //  dataset: { path: string, data_type: string }
-        // }
-        const importedTasks = [];
-        for await (const jsonf of taskJsonFiles) {
-            const taskData = utils.readJSON(path.join(importPath, jsonf));
+		// Create tasks  
+		// Format of task file:
+		// {
+		//  name: string
+		//  spec: { plugin_name: string, label_schema: {} },
+		//  dataset: { path: string, data_type: string }
+		// }
+		const importedTasks = [];
+		for await (const jsonf of taskJsonFiles) {
+			const taskData = utils.readJSON(path.join(importPath, jsonf));
 			let version = taskData.version;
 			// check annotation format version
 			if (!version) version = "0.9";//0.9 is the first versioned format
 			if (parseFloat(version) < parseFloat(annotation_format_version)) {
 				// TO BE DETERMINED when new version will arrise: solve compatibility issues
 			}
-			console.info("Annotation format version:",annotation_format_version);
-			
+			console.info("Annotation format version:", annotation_format_version);
 
-            const dataset = await getOrcreateDataset({...taskData.dataset, data_type: taskData.spec.data_type}, workspace);
-            const spec = await getOrcreateSpec(taskData.spec);
+			const dataset = await getOrcreateDataset({ ...taskData.dataset, data_type: taskData.spec.data_type }, workspace);
+			const spec = await getOrcreateSpec(taskData.spec);
 
-            let newTaskName = taskData.name;
-            try {
-                // check if task already exist and search for another name
-                let cpt = 1;
-                do {
-                    const task = await db.get(dbkeys.keyForTask(newTaskName));
-                    newTaskName = `${task.name}-${cpt}`;
-                    cpt += 1;
-                } while (true)
-            } catch (err) {
-                // task with this updated name does not exist, use this name
-                taskData.name = newTaskName;
-            }
+			let newTaskName = taskData.name;
+			try {
+				// check if task already exist and search for another name
+				let cpt = 1;
+				do {
+					const task = await db.get(dbkeys.keyForTask(newTaskName));
+					newTaskName = `${task.name}-${cpt}`;
+					cpt += 1;
+				} while (true)
+			} catch (err) {
+				// task with this updated name does not exist, use this name
+				taskData.name = newTaskName;
+			}
 
-            // Create it
-            const newTask = {name: taskData.name, dataset_id: dataset.id, spec_id: spec.id};
-            await bm.add({ type: 'put', key: dbkeys.keyForTask(newTask.name), value: newTask})
+			// Create it
+			const newTask = { name: taskData.name, dataset_id: dataset.id, spec_id: spec.id };
+			await bm.add({ type: 'put', key: dbkeys.keyForTask(newTask.name), value: newTask })
 
-            // Generate first job list
-            await generateJobResultAndLabelsLists(newTask); 
-            const dataMap = await getAllPathsFromDataset(newTask.dataset_id);
-            
-            // Read corresponding task folder
-            const taskFolder = jsonf.substring(0, jsonf.length - 5);
-            const annList = fs.readdirSync(path.join(importPath, taskFolder));
-            const annJsonFiles = annList.filter(f => f.endsWith('.json'));
-            console.info('Importing', taskFolder);
+			// Generate first job list
+			await generateJobResultAndLabelsLists(newTask);
+			const dataMap = await getAllPathsFromDataset(newTask.dataset_id);
 
-            // Format of annotation file:
-            // { 
-            //    annotations: any[],
-            //    data: { type: string, path: string | string[], children: array<{path, timestamp}>}
-            // }
-            for await (const jsonFile of annJsonFiles) {
-                // Create data
-                const fullPath = path.join(importPath, taskFolder, jsonFile);
-                const ann = utils.readJSON(fullPath);
-                let sourcePath;
-                if (ann.data.path) {
-                    // remove / to normalize path
-                    const p = Array.isArray(ann.data.path) ? ann.data.path[0] : ann.data.path;
-                    sourcePath = path.normalize(p);
-                } else {
-                    try {
-                        // try to get first children image if path is not available
-                        const children = ann.data.url || ann.data.children;
-                        let firstItemPath = children[0].path || children[0].url;
-                        firstItemPath = Array.isArray(firstItemPath) ? firstItemPath[0] : firstItemPath;
-                        sourcePath = path.normalize(path.dirname(firstItemPath));
-                    } catch(err) {
-                        console.warn('Should be: { annotations: any[], data: { type: string, path: string | string[], children: array<{path, timestamp}>} ')
-                    }
-                }
-                // get data id from data path
-                const dataId = dataMap[sourcePath];
-                if (!dataId) {
-                    console.warn(`Unknown path ${sourcePath}`);
-                    importedTasks.forEach(remove_task);
-                    return res.status(400).json({
-                        error: 'wrong_url',
-                        message: `Invalid data url in imported file.
+			// Read corresponding task folder
+			const taskFolder = jsonf.substring(0, jsonf.length - 5);
+			const annList = fs.readdirSync(path.join(importPath, taskFolder));
+			const annJsonFiles = annList.filter(f => f.endsWith('.json'));
+			console.info('Importing', taskFolder);
+
+			// Format of annotation file:
+			// { 
+			//    annotations: any[],
+			//    data: { type: string, path: string | string[], children: array<{path, timestamp}>}
+			// }
+			for await (const jsonFile of annJsonFiles) {
+				// Create data
+				const fullPath = path.join(importPath, taskFolder, jsonFile);
+				const ann = utils.readJSON(fullPath);
+				let sourcePath;
+				if (ann.data.path) {
+					// remove / to normalize path
+					const p = Array.isArray(ann.data.path) ? ann.data.path[0] : ann.data.path;
+					sourcePath = path.normalize(p);
+				} else {
+					try {
+						// try to get first children image if path is not available
+						const children = ann.data.url || ann.data.children;
+						let firstItemPath = children[0].path || children[0].url;
+						firstItemPath = Array.isArray(firstItemPath) ? firstItemPath[0] : firstItemPath;
+						sourcePath = path.normalize(path.dirname(firstItemPath));
+					} catch (err) {
+						console.warn('Should be: { annotations: any[], data: { type: string, path: string | string[], children: array<{path, timestamp}>} ')
+					}
+				}
+				// get data id from data path
+				const dataId = dataMap[sourcePath];
+				if (!dataId) {
+					console.warn(`Unknown path ${sourcePath}`);
+					importedTasks.forEach(remove_task);
+					return res.status(400).json({
+						error: 'wrong_url',
+						message: `Invalid data url in imported file.
                                 Please check consistency of "${fullPath}"
                                 Task importation aborted and cancelled at '${newTask.name}' task.
                                 If you do not wish to load ${newTask.name}, please prefix ${path.join(importPath, jsonf)},
                                 with '_' so it can be ignored. Cancelling import.`
-                    });
-                }
-            
-                // Create Labels
-                const newLabels = {
-                    task_name: newTask.name,
-                    data_id: dataId, 
-                    annotations: ann.annotations
-                };
+					});
+				}
 
-                await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels});
+				// Create Labels
+				const newLabels = {
+					task_name: newTask.name,
+					data_id: dataId,
+					annotations: ann.annotations
+				};
+
+				await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels });
 				if (ann.data.status) {//if existing, get status back
 					resultData = await db.get(dbkeys.keyForResult(newTask.name, newLabels.data_id));//get the status for this data
 					resultData.status = ann.data.status;//add the status
-					await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, newLabels.data_id), value: resultData});
+					await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, newLabels.data_id), value: resultData });
 				}
 
-                // Mark result as done
-                // const resultData = await db.get(dbkeys.keyForResult(newTask.name, dataId));
-                // if(resultData.current_job_id) {
-                //     await bm.add({ type: 'del', key: dbkeys.keyForJob(newTask.name, resultData.current_job_id)})
-                // }
-                // resultData.current_job_id = '';
-                // resultData.status = 'done';
-                // await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, dataId), value: resultData});
+				// Mark result as done
+				// const resultData = await db.get(dbkeys.keyForResult(newTask.name, dataId));
+				// if(resultData.current_job_id) {
+				//     await bm.add({ type: 'del', key: dbkeys.keyForJob(newTask.name, resultData.current_job_id)})
+				// }
+				// resultData.current_job_id = '';
+				// resultData.status = 'done';
+				// await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, dataId), value: resultData});
 
-            }
-            await bm.flush();
-            importedTasks.push(newTaskName);
-        }
-        console.log('Import done.');
-        res.sendStatus(200);
-    });
+			}
+			await bm.flush();
+			importedTasks.push(newTaskName);
+		}
+		console.log('Import done.');
+		res.sendStatus(200);
+	});
 }
 
 
@@ -356,7 +357,7 @@ async function export_tasks(req, res) {
 			const datasetId = dataset.id;
 			delete dataset.id;
 			const taskJson = { name: task.name, version: annotation_format_version, spec, dataset };
-			
+
 			// EXPORT task json
 			if (req.body.path) {//export to local file system
 				const err = utils.writeJSON(taskJson, `${exportPath}/${task.name}.json`);
@@ -367,9 +368,9 @@ async function export_tasks(req, res) {
 					});
 				}
 			} else {//export to destination URL
-                /// TODO: the task is not exported in Confiance
+				/// TODO: the task is not exported in Confiance
 				// var err = '';
-                // const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
+				// const url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
 				// await fetch(url+`/_doc`, {
 				// 	method: 'post',
 				// 	headers: { 'Content-Type': 'application/json' },
@@ -434,9 +435,9 @@ async function export_tasks(req, res) {
 				} else {//export to destination URL
 					var err = '';
 					console.log("labelsJson orig=",labelsJson);
-                    let url = req.body.url.endsWith('/') ? req.body.url+'_doc' : req.body.url+'/_doc';
+					let url = req.body.url.endsWith('/') ? req.body.url + '_doc' : req.body.url + '/_doc';
 
-                    console.log("spec.plugin_name=",spec.plugin_name);
+					console.log("spec.plugin_name=",spec.plugin_name);
 					const FORMAT_VERSION = 'MVP2022';
 					// const FORMAT_VERSION = 'MVP2021';
 					if (FORMAT_VERSION==='MVP2021') {
@@ -627,12 +628,12 @@ async function export_tasks(req, res) {
 					await fetch(url, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify( labelsJson )
+						body: JSON.stringify(labelsJson)
 					})// send POST request
-					.then(res => {
-						if (res.ok) return res.json();
-						else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
-					}).catch((e) => { err = e; });
+						.then(res => {
+							if (res.ok) return res.json();
+							else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+						}).catch((e) => { err = e; });
 					if (err) {
 						return res.status(400).json({
 							error: 'cannot_write',
@@ -663,29 +664,29 @@ async function export_tasks(req, res) {
  *     HTTP/1.1 400 Unknown task
  */
 async function put_task(req, res) {
-    checkAdmin(req, async () => {
-        const task = req.body;
-        //Invalid request ids
-        if (req.params.task_name !== task.name) {
-        return res.status(400).json({
-            type: 'bad_name',
-            message: 'Corruption in id '+req.params.task_name+' '+task.name
-        });
-        }
+	checkAdmin(req, async () => {
+		const task = req.body;
+		//Invalid request ids
+		if (req.params.task_name !== task.name) {
+			return res.status(400).json({
+				type: 'bad_name',
+				message: 'Corruption in id ' + req.params.task_name + ' ' + task.name
+			});
+		}
 
-        try {
-            const oldTask = await db.get(dbkeys.keyForTask(req.params.task_name));
-            const oldSpec = await db.get(dbkeys.keyForSpec(oldTask.spec_id));
-            const newSpec = {...oldSpec, ...task.spec};
-            await db.put(dbkeys.keyForSpec(newSpec.id), newSpec);
-            res.status(201).json({});
-        } catch (err) {
-            return res.status(400).json({
-                type: 'unknown',
-                message: 'Unknown task or spec '+req.params.task_name+' '+oldTask.spec_id
-            });
-        }
-    });
+		try {
+			const oldTask = await db.get(dbkeys.keyForTask(req.params.task_name));
+			const oldSpec = await db.get(dbkeys.keyForSpec(oldTask.spec_id));
+			const newSpec = { ...oldSpec, ...task.spec };
+			await db.put(dbkeys.keyForSpec(newSpec.id), newSpec);
+			res.status(201).json({});
+		} catch (err) {
+			return res.status(400).json({
+				type: 'unknown',
+				message: 'Unknown task or spec ' + req.params.task_name + ' ' + oldTask.spec_id
+			});
+		}
+	});
 }
 
 /**
@@ -705,14 +706,14 @@ async function put_task(req, res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function get_task(req, res) {
-    try {
-        const taskData = await db.get(dbkeys.keyForTask(req.params.task_name));
-        res.send(taskData);
-    } catch (err) {
-            res.status(400).json({
-            message: 'Unknown task '+req.params.task_name
-        });
-    }    
+	try {
+		const taskData = await db.get(dbkeys.keyForTask(req.params.task_name));
+		res.send(taskData);
+	} catch (err) {
+		res.status(400).json({
+			message: 'Unknown task ' + req.params.task_name
+		});
+	}
 }
 
 
@@ -726,11 +727,11 @@ async function get_task(req, res) {
  *     HTTP/1.1 204 No Content
  */
 function delete_task(req, res) {
-    checkAdmin(req, async () => {
-        const taskName = req.params.task_name;
-        await remove_task(taskName);
-        return res.status(204).json({});
-    });
+	checkAdmin(req, async () => {
+		const taskName = req.params.task_name;
+		await remove_task(taskName);
+		return res.status(204).json({});
+	});
 }
 
 
@@ -741,16 +742,16 @@ function delete_task(req, res) {
  * @param {Level} db 
  */
 const getAllTasksDetails = async () => {
-    let tasks = [];
-    const stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
-//    print();
-    for await (const t of stream) {
-      const spec = await db.get(dbkeys.keyForSpec(t.spec_id));
-      const dataset = await db.get(dbkeys.keyForDataset(t.dataset_id));
-      const taskDetail = {name: t.name, dataset, spec}
-      tasks.push(taskDetail);
-    }
-    return tasks;
+	let tasks = [];
+	const stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+	//    print();
+	for await (const t of stream) {
+		const spec = await db.get(dbkeys.keyForSpec(t.spec_id));
+		const dataset = await db.get(dbkeys.keyForDataset(t.dataset_id));
+		const taskDetail = { name: t.name, dataset, spec }
+		tasks.push(taskDetail);
+	}
+	return tasks;
 }
 
 /**
@@ -759,16 +760,16 @@ const getAllTasksDetails = async () => {
  * @param {String} taskName 
  */
 const getTaskDetails = async (taskName) => {
-    try {
-      const taskData = await db.get(dbkeys.keyForTask(taskName));
-      const spec = await db.get(dbkeys.keyForSpec(taskData.spec_id));
-      const dataset = await db.get(dbkeys.keyForDataset(taskData.dataset_id));
-      const taskDetail = {name: taskName, dataset, spec};
-      return taskDetail;
-    } catch (err) {
-      console.log('Error while searching task detail', err)
-      return {};
-    }
+	try {
+		const taskData = await db.get(dbkeys.keyForTask(taskName));
+		const spec = await db.get(dbkeys.keyForSpec(taskData.spec_id));
+		const dataset = await db.get(dbkeys.keyForDataset(taskData.dataset_id));
+		const taskDetail = { name: taskName, dataset, spec };
+		return taskDetail;
+	} catch (err) {
+		console.log('Error while searching task detail', err)
+		return {};
+	}
 }
 
 
@@ -778,36 +779,36 @@ const getTaskDetails = async (taskName) => {
  * @param {Object} task 
  */
 async function generateJobResultAndLabelsLists(task) {
-    const dataIdList = await getAllDataFromDataset(task.dataset_id);
-    const bm = new batchManager.BatchManager(db);
-    const bar = new cliProgress.SingleBar({
-        format: 'Jobs creation | {bar} | {percentage}% || {value}/{total} jobs'
-    });
-    bar.start(dataIdList.length, 0);
-    for await (const dataId of dataIdList) {
-        // Generate first elementary job
-        const newJob = createJob(task.name, dataId, 'to_annotate');
+	const dataIdList = await getAllDataFromDataset(task.dataset_id);
+	const bm = new batchManager.BatchManager(db);
+	const bar = new cliProgress.SingleBar({
+		format: 'Jobs creation | {bar} | {percentage}% || {value}/{total} jobs'
+	});
+	bar.start(dataIdList.length, 0);
+	for await (const dataId of dataIdList) {
+		// Generate first elementary job
+		const newJob = createJob(task.name, dataId, 'to_annotate');
 
-        // Get data path
-        const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
-        const path = utils.toRelative(dataData.path);
-        // Generate result associated with each data
-        const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path);
+		// Get data path
+		const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
+		const path = utils.toRelative(dataData.path);
+		// Generate result associated with each data
+		const newResult = createResult(task.name, dataId, newJob.id, 'to_annotate', path);
 
-        // Generate empty labels associated with each data
-        const newLabels = {
-            task_name: task.name,
-            data_id: dataId,
-            annotations: []
-        };
+		// Generate empty labels associated with each data
+		const newLabels = {
+			task_name: task.name,
+			data_id: dataId,
+			annotations: []
+		};
 
-        await bm.add({ type: 'put', key: dbkeys.keyForJob(task.name, newJob.id), value: newJob});
-        await bm.add({ type: 'put', key: dbkeys.keyForResult(task.name, newResult.data_id), value: newResult});
-        await bm.add({ type: 'put', key: dbkeys.keyForLabels(task.name, newLabels.data_id), value: newLabels});
-        bar.increment();
-    }
-    bar.stop();
-    await bm.flush();
+		await bm.add({ type: 'put', key: dbkeys.keyForJob(task.name, newJob.id), value: newJob });
+		await bm.add({ type: 'put', key: dbkeys.keyForResult(task.name, newResult.data_id), value: newResult });
+		await bm.add({ type: 'put', key: dbkeys.keyForLabels(task.name, newLabels.data_id), value: newLabels });
+		bar.increment();
+	}
+	bar.stop();
+	await bm.flush();
 }
 
 /**
@@ -818,103 +819,103 @@ async function generateJobResultAndLabelsLists(task) {
  * @param {string} currStatus 
  */
 function createResult(taskName, dataId, currJobId, currStatus, path) {
-    return {
-        task_name: taskName,
-        data_id: dataId, 
-        finished_job_ids: [],
-        current_job_id: currJobId,
-        status: currStatus,
-        in_progress: false,
-        cumulated_time: 0,
-        annotator: '',
-        validator: '',
-        path
-    };
+	return {
+		task_name: taskName,
+		data_id: dataId,
+		finished_job_ids: [],
+		current_job_id: currJobId,
+		status: currStatus,
+		in_progress: false,
+		cumulated_time: 0,
+		annotator: '',
+		validator: '',
+		path
+	};
 }
 
 async function remove_task(taskName) {
-    // delete task
-    const key = dbkeys.keyForTask(taskName);
-    const taskData = await db.get(key);
-    const bm = new batchManager.BatchManager(db);
-    await bm.add({ type: 'del', key});
-    
-    // delete associated jobs
-    const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
-    for await (const job of streamJob) {
-        await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id)});
-    }
-    
-    // delete associated result
-    const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
-    for await (const result of streamResults) {
-        await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id)});
-    }
-    
-    // delete associated labels WARNING !!!!
-    const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
-    for await (const label of streamLabels) {
-        await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id)});
-    }
+	// delete task
+	const key = dbkeys.keyForTask(taskName);
+	const taskData = await db.get(key);
+	const bm = new batchManager.BatchManager(db);
+	await bm.add({ type: 'del', key });
 
-    // delete associated user information
-    const streamUsers = utils.iterateOnDB(db, dbkeys.keyForUser(), false, true);
-    for await (const user of streamUsers) {
-        ['to_annotate', 'to_validate', 'to_correct'].forEach((obj) => {
-            // Delete assigned or queued jobs
-            delete user.curr_assigned_jobs[taskName+'/'+obj];
-            delete user.queue[taskName+'/'+obj];
-        });
-        await bm.add({ type: 'put', key: dbkeys.keyForUser(user.username), value: user})
-    }
+	// delete associated jobs
+	const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
+	for await (const job of streamJob) {
+		await bm.add({ type: 'del', key: dbkeys.keyForJob(taskName, job.id) });
+	}
+
+	// delete associated result
+	const streamResults = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
+	for await (const result of streamResults) {
+		await bm.add({ type: 'del', key: dbkeys.keyForResult(taskName, result.data_id) });
+	}
+
+	// delete associated labels WARNING !!!!
+	const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(taskName), false, true);
+	for await (const label of streamLabels) {
+		await bm.add({ type: 'del', key: dbkeys.keyForLabels(taskName, label.data_id) });
+	}
+
+	// delete associated user information
+	const streamUsers = utils.iterateOnDB(db, dbkeys.keyForUser(), false, true);
+	for await (const user of streamUsers) {
+		['to_annotate', 'to_validate', 'to_correct'].forEach((obj) => {
+			// Delete assigned or queued jobs
+			delete user.curr_assigned_jobs[taskName + '/' + obj];
+			delete user.queue[taskName + '/' + obj];
+		});
+		await bm.add({ type: 'put', key: dbkeys.keyForUser(user.username), value: user })
+	}
 
 	// delete associated spec (if not used by any other task)
-    let foundAssociation = false;
-    let stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
-    for await (const t of stream) {
-        if (t.name !== taskData.name && t.spec_id === taskData.spec_id) {
-            foundAssociation = true;
-            break; 
-        }
-    }
-    if (!foundAssociation) {
-        await bm.add({ type: 'del', key: dbkeys.keyForSpec(taskData.spec_id)});
-    }
+	let foundAssociation = false;
+	let stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+	for await (const t of stream) {
+		if (t.name !== taskData.name && t.spec_id === taskData.spec_id) {
+			foundAssociation = true;
+			break;
+		}
+	}
+	if (!foundAssociation) {
+		await bm.add({ type: 'del', key: dbkeys.keyForSpec(taskData.spec_id) });
+	}
 
-    // [temporary] if associated dataset is no longer associated
-    // to any other task, remove it as well
-    foundAssociation = false;
-    stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
-    for await (const t of stream) {
-        // console.log('task', t);
-        if (t.name !== taskData.name && t.dataset_id === taskData.dataset_id) {
-            foundAssociation = true;
-            break; 
-        }
-    }
-    if (!foundAssociation) {
+	// [temporary] if associated dataset is no longer associated
+	// to any other task, remove it as well
+	foundAssociation = false;
+	stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+	for await (const t of stream) {
+		// console.log('task', t);
+		if (t.name !== taskData.name && t.dataset_id === taskData.dataset_id) {
+			foundAssociation = true;
+			break;
+		}
+	}
+	if (!foundAssociation) {
 		// console.log("del dataset",taskData.dataset_id);
-        await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id)});
-        const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
-        for await(const dkey of stream) {
-            await bm.add({ type: 'del', key: dkey});
+		await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id) });
+		const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
+		for await (const dkey of stream) {
+			await bm.add({ type: 'del', key: dkey });
 			console.log("dkey=",dkey);// 'd:' + dataset_id + ':' + data_id;
 			elise_remove_image(dkey);
-        }
-    } else {
+		}
+	} else {
 		console.log("Dataset used by other task, nothing to delete.");
 	}
-    await bm.flush();
+	await bm.flush();
 }
 
 module.exports = {
-    get_tasks,
-    post_tasks,
-    get_task,
-    put_task,
-    delete_task,
-    import_tasks,
+	get_tasks,
+	post_tasks,
+	get_task,
+	put_task,
+	delete_task,
+	import_tasks,
 	import_tasks_from_kafka,
-    export_tasks,
-    getAllTasksDetails
+	export_tasks,
+	getAllTasksDetails
 }

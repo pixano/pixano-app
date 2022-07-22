@@ -57,7 +57,7 @@ This document lists the API of the Pixano server that enable the creation of new
 type Objective =  'to_annotate' | 'to_validate' | 'to_correct';
 
 // possible status a data item can have
-type LabellingStatus =  Objective | 'done' | 'discard';
+type LabellingStatus =  Objective | 'done' | 'discard' | 'skip';
 
 // possible types a data item can have
 type DataType =  'image' | 'pcl' | 'pcl_image' | 'sequence_pcl' | 'sequence_image' | 'sequence_pcl_image';

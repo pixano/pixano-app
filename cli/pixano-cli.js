@@ -1,6 +1,5 @@
 const args = require('args')
-//import serve from '../server/server';
-const { bidule, serve } = require('../server/server');
+const { serve } = require('../server/server');
 
 const logo =
 `

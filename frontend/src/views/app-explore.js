@@ -14,137 +14,137 @@ import '@material/mwc-icon-button';
 
 
 export class AppExplore extends TemplatePage {
-  
-    static get properties() {
-      return {
-        pluginName : { type: String },
-        dataPath: { type: String }
-      };
-    }
 
-    constructor() {
-      super();
-      installRouter(this._locationChanged.bind(this));
-      this.dataPath = '';
-    }
+	static get properties() {
+		return {
+			pluginName: { type: String },
+			dataPath: { type: String }
+		};
+	}
 
-    /**
-     * Activate from url on url change.
-     */
-    _locationChanged() {
-      if (this.active) {
-        this.onActivate();
-      }
-    }
+	constructor() {
+		super();
+		installRouter(this._locationChanged.bind(this));
+		this.dataPath = '';
+	}
 
-    onActivate() {
-      const paths = window.location.hash.split('/');
-      const taskName = decodeURI(paths[1]);
-      const dataId = decodeURI(paths[2]);
-      store.dispatch(updateTaskName(taskName));
-      const task = getState('application').tasks.find((t) => t.name === taskName);
-      this.pluginName = task.spec.plugin_name;
+	/**
+	 * Activate from url on url change.
+	 */
+	_locationChanged() {
+		if (this.active) {
+			this.onActivate();
+		}
+	}
 
-      this.launchPlugin(this.pluginName).then((mod) => {
-        store.dispatch(fetchResult(dataId)).then(() => {
-          mod.onActivate();
-          this.dataPath = this.path;
-        });
-      });
-    }
+	onActivate() {
+		const paths = window.location.hash.split('/');
+		const taskName = decodeURI(paths[1]);
+		const dataId = decodeURI(paths[2]);
+		store.dispatch(updateTaskName(taskName));
+		const task = getState('application').tasks.find((t) => t.name === taskName);
+		this.pluginName = task.spec.plugin_name;
 
-    /**
-     * Get or import and create plugin.
-     * @param {String} pluginName 
-     */
-    add(pluginName) {
-      if (this.pluginContainer.firstElementChild && 
-        this.pluginContainer.firstElementChild.tagName.toLowerCase() === `plugin-${pluginName}`.toLowerCase()) {
-        return Promise.resolve(this.pluginContainer.firstElementChild);
-      }
-      return new Promise((resolve) => {
-        if (this.pluginContainer.firstElementChild) {
-          let el = this.el;
-          el.remove();
-        }
-        const newElement = document.createElement(`plugin-${pluginName}`);
-        this.pluginContainer.appendChild(newElement);
-        newElement.addEventListener('ready', () => {
-          return resolve(newElement);
-        })
-      });
-    }
-  
-    /**
-     * Import plugin from its filename.
-     * @param {string} pluginName 
-     */
-    launchPlugin(pluginName) {
-      return new Promise((resolve) => {
-        const filename =`${pluginName}`;
-        import("../plugins/" + filename + ".js").then(() => {
-          return this.add(pluginName).then((res) => {
-            resolve(res);
-          })
-        });
-      });
-    }
+		this.launchPlugin(this.pluginName).then((mod) => {
+			store.dispatch(fetchResult(dataId)).then(() => {
+				mod.onActivate();
+				this.dataPath = this.path;
+			});
+		});
+	}
 
-    /**
-     * Generic method to handle next/previous data request.
-     * @param {*} fetchFn 
-     */
-    goNext(fetchFn) {
-      const currentDataId = getState('application').dataId;
-      store.dispatch(fetchFn()).then(() => {
-        this.el.newData();
-        // Store new url with correct id if new
-        const appState = getState('application');
-        const nextDataId = appState.dataId;
-        if (nextDataId !== currentDataId) {
-          const page = '/#explore/'+appState.taskName+'/'+nextDataId;
-          window.history.pushState({}, '', encodeURI(page));
-          this.dataPath = this.path;
-        }        
-      });
-    }
+	/**
+	 * Get or import and create plugin.
+	 * @param {String} pluginName 
+	 */
+	add(pluginName) {
+		if (this.pluginContainer.firstElementChild &&
+			this.pluginContainer.firstElementChild.tagName.toLowerCase() === `plugin-${pluginName}`.toLowerCase()) {
+			return Promise.resolve(this.pluginContainer.firstElementChild);
+		}
+		return new Promise((resolve) => {
+			if (this.pluginContainer.firstElementChild) {
+				let el = this.el;
+				el.remove();
+			}
+			const newElement = document.createElement(`plugin-${pluginName}`);
+			this.pluginContainer.appendChild(newElement);
+			newElement.addEventListener('ready', () => {
+				return resolve(newElement);
+			})
+		});
+	}
 
-    /**
-     * Go to previous data.
-     */
-    goBackward() {
-      this.goNext(fetchBackwardResult);
-    }
+	/**
+	 * Import plugin from its filename.
+	 * @param {string} pluginName 
+	 */
+	launchPlugin(pluginName) {
+		return new Promise((resolve) => {
+			const filename = `${pluginName}`;
+			import("../plugins/" + filename + ".js").then(() => {
+				return this.add(pluginName).then((res) => {
+					resolve(res);
+				})
+			});
+		});
+	}
 
-    /**
-     * Go to next data.
-     */
-    goForward() {
-      this.goNext(fetchForwardResult);
-    }
+	/**
+	 * Generic method to handle next/previous data request.
+	 * @param {*} fetchFn 
+	 */
+	goNext(fetchFn) {
+		const currentDataId = getState('application').dataId;
+		store.dispatch(fetchFn()).then(() => {
+			this.el.newData();
+			// Store new url with correct id if new
+			const appState = getState('application');
+			const nextDataId = appState.dataId;
+			if (nextDataId !== currentDataId) {
+				const page = '/#explore/' + appState.taskName + '/' + nextDataId;
+				window.history.pushState({}, '', encodeURI(page));
+				this.dataPath = this.path;
+			}
+		});
+	}
 
-    get pluginContainer() {
-      try {
-        return this.shadowRoot.getElementById('plugin-container');
-      } catch {
-        return null;
-      }
-    }
-  
-    /**
-     * Getter for faster retrieval of
-     * the plugin.
-     */
-    get el() {
-      try {
-        return this.pluginContainer.firstElementChild;
-      } catch {
-        return null;
-      }
-    }
-  
-    static get styles() {
-      return [super.styles, css`
+	/**
+	 * Go to previous data.
+	 */
+	goBackward() {
+		this.goNext(fetchBackwardResult);
+	}
+
+	/**
+	 * Go to next data.
+	 */
+	goForward() {
+		this.goNext(fetchForwardResult);
+	}
+
+	get pluginContainer() {
+		try {
+			return this.shadowRoot.getElementById('plugin-container');
+		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Getter for faster retrieval of
+	 * the plugin.
+	 */
+	get el() {
+		try {
+			return this.pluginContainer.firstElementChild;
+		} catch {
+			return null;
+		}
+	}
+
+	static get styles() {
+		return [super.styles, css`
         .header {
           display: flex;
           -webkit-touch-callout: none; /* iOS Safari */
@@ -159,16 +159,16 @@ export class AppExplore extends TemplatePage {
           height: calc(100% - 50px);
         }
       `]
-    }
+	}
 
-    get path() {
-      const media = getState('media');
-      const task = media.info.path.replace('//', '/');
-      return task;
-    }
+	get path() {
+		const media = getState('media');
+		const task = media.info.path.replace('//', '/');
+		return task;
+	}
 
-    get headerContent() {
-      return html`
+	get headerContent() {
+		return html`
       <mwc-icon-button style="margin: 0;" icon="keyboard_backspace" @click=${() => this.goHome()}></mwc-icon-button>
       <h1>${this.pluginName}-explore</h1>
       <p style="user-select: text;">${this.dataPath}</p>
@@ -179,12 +179,12 @@ export class AppExplore extends TemplatePage {
                        @click=${() => this.goForward()}
                        title="Next"></mwc-icon-button>
       `
-    }
+	}
 
-    get body() {
-      return html`
+	get body() {
+		return html`
         <div id="plugin-container"></div>
       `
-    }
+	}
 }
 customElements.define('app-explore', AppExplore);

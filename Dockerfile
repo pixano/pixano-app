@@ -4,8 +4,8 @@ FROM ubuntu:20.04
 RUN apt-get update && apt-get install -y --reinstall ca-certificates curl build-essential
 RUN curl --silent --location https://deb.nodesource.com/setup_12.x | bash -
 RUN apt-get install -y nodejs
+RUN node --version
 RUN npm install -g npm@6.10.0
-
 
 # Copy files for the frontend
 COPY frontend frontend
@@ -26,7 +26,6 @@ RUN mkdir -p /data
 COPY data-test /data/data-test
 
 # ENTRYPOINT ["node", "server/server.js"]
-#RUN echo 'pixano "$@"' > entrypoint.sh
-RUN echo 'pixano "$@" > pixano_logs 2>&1' > entrypoint.sh
-ENTRYPOINT ["sh", "entrypoint.sh"]
+RUN echo 'node cli/pixano "$@"' > entrypoint.sh
+ENTRYPOINT ["sh", "entrypoint.sh" ]
 CMD []
