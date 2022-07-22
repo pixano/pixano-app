@@ -126,6 +126,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 
 	onActivate() {
 		if (this.table) this.refreshGrid();//don't refresh if no dataset has been created for now
+		store.dispatch(updateFilters({}));//refresh filters (don't take filters last search on tasks)
 	}
 
 	/******************* BUTTONS handlers *******************/
@@ -159,7 +160,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 			const datasetId = getState('media').datasetId;
 			const tasks = getState('application').tasks;
 			const correspondingTask = tasks.find((task) => task.dataset.id === datasetId);
-			if (correspondingTask) this.errorPopup("Dataset '"+datasetId+"' is used by the task '"+correspondingTask.name+"'.\nPlease delete this task first.");
+			if (correspondingTask) this.errorPopup("Dataset '"+datasetId+"' is used by the task '"+correspondingTask.name+"'.\nPlease delete this task first.", ["TASKS"]).then(() => this.gotoPage('/#project-manager'));
 			else {
 				const dialog = this.shadowRoot.getElementById('dialog-remove-dataset');
 				if (dialog) dialog.open = true;

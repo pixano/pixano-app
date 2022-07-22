@@ -56,6 +56,7 @@ class AppDashboardAdmin extends TemplatePage {
 		this.globalCounter = 0;
 		this.doneCounter = 0;
 		this.toValidateCounter = 0;
+		this.SemanticSearchLastValue="";
 
 		// ELISE
 		this.similarityLevel = 0;//similarity in %
@@ -90,6 +91,8 @@ class AppDashboardAdmin extends TemplatePage {
 
 	onActivate() {
 		this.stateChanged(getState());
+		store.dispatch(updateFilters({}));//refresh filters (don't take filters last search on tasks)
+		this.SemanticSearchLastValue="";
 		if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
 	}
 
@@ -553,7 +556,7 @@ class AppDashboardAdmin extends TemplatePage {
 					<mwc-select label="status"
 								style="position: absolute;"
 								icon="filter_list"
-								@selected=${(evt) => this.updateFilter('status', statusList[evt.detail.index][0])}>
+								@selected=${(evt) => { if (evt.detail.index!==-1) this.updateFilter('status', statusList[evt.detail.index][0]); }}>
 					${statusList.map(([k, v]) => {
 						return html`<mwc-list-item ?selected=${filters.status == k} value=${k}>${v[0]}</mwc-list-item>`;
 					})}
@@ -572,7 +575,7 @@ class AppDashboardAdmin extends TemplatePage {
 					<mwc-select label="state"
 								icon="filter_list"
 								style="position: absolute;"
-								@selected=${(evt) => this.updateFilter('in_progress', assignedList[evt.detail.index][0])}>
+								@selected=${(evt) => { if (evt.detail.index!==-1) this.updateFilter('in_progress', assignedList[evt.detail.index][0]); }}>
 					${assignedList.map((s) => {
 						return html`<mwc-list-item ?selected=${filters.in_progress === s[0]} value=${s[0]}>${s[1]}</mwc-list-item>`;
 					})}
@@ -706,9 +709,9 @@ class AppDashboardAdmin extends TemplatePage {
 					${until(this.isEliseRunning().then(isRunning => isRunning
 						? html`
 						<div style="text-align: right; "flexDirection: 'row'">
-							<label for="eliseinput">Filter by content :</label><input type="search" id="eliseinput" name="q" placeholder="contained classe(s)" title="Use keywords 'AND','OR','<','>' to separate classes">
-							<mwc-icon-button icon="filter_list_alt" title="filter based on input keywords" @click=${() => this.onSemanticSearch(this.items.at(0).task_name,this.shadowRoot.getElementById("eliseinput").value)}></mwc-icon-button>
-							<mwc-icon-button icon="delete" title="empty filter" @click=${() => this.updateFilter('data_id', '')}></mwc-icon-button>
+							<label for="eliseinput">Filter by content :</label><input type="search" id="eliseinput" value=${this.SemanticSearchLastValue} placeholder="contained classe(s)" title="Use keywords 'AND','OR','<','>' to separate classes">
+							<mwc-icon-button icon="filter_list_alt" title="filter based on input keywords" @click=${() => { this.SemanticSearchLastValue=this.shadowRoot.getElementById("eliseinput").value; this.onSemanticSearch(this.items.at(0).task_name,this.SemanticSearchLastValue)}}></mwc-icon-button>
+							<mwc-icon-button icon="delete" title="empty filter" @click=${() => { this.SemanticSearchLastValue=""; this.updateFilter('data_id', ''); }}></mwc-icon-button>
 						</div>`
 						: html``), html``)}
 				</div>
