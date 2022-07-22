@@ -97,8 +97,8 @@ export default class TemplatePage extends LitElement {
 	 */
 	goHome() {
 		// cancel current job ?
-		const state = getState();
-		const role = (state.user && state.user) ? state.user.currentUser.role : '';
+		const user = getState('user');
+		const role = user ? user.currentUser.role : '';
 		let page = '';
 		if (role === 'admin') {
 			page = '/#dashboard-admin';
@@ -295,24 +295,24 @@ export default class TemplatePage extends LitElement {
 
 	get pageDiv() {
 		return html`
-    <div class="page">
-      ${this.pageContent}
-  </div>`
+			<div class="page">
+				${this.pageContent}
+			</div>`
 	}
 
 	get leftPanel() {
 		return html`
-      <div class="left-panel">
-        ${this.leftPanelContent}
-      </div>`
+			<div class="left-panel">
+				${this.leftPanelContent}
+			</div>`
 	}
 
 	get body() {
 		return html`
-    <div class="body">
-      ${this.leftPanel}
-      ${this.pageDiv}
-    </div>`
+			<div class="body">
+				${this.leftPanel}
+				${this.pageDiv}
+			</div>`
 	}
 
 	/**

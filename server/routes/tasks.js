@@ -15,7 +15,6 @@ const { getAllDataFromDataset,
 const { getSelectionFromKafka } = require('./kafka_plugin');
 const { downloadFilesFromMinio } = require('./minio_plugin');
 const fetch = require("node-fetch");
-const { elise_remove_image } = require('../routes/elise_plugin.js');// ELISE
 
 const annotation_format_version = "0.9";
 
@@ -50,18 +49,21 @@ async function get_tasks(_, res) {
  * 
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 400 Task already existing
+ *     HTTP/1.1 400 Data type of dataset does not correspond to plugin's one
  */
 async function post_tasks(req, res) {
 	checkAdmin(req, async () => {
 		const task = req.body;
 		const spec = await getOrcreateSpec(task.spec);
-		const dataset = await getOrcreateDataset({ ...task.dataset, data_type: spec.data_type }, workspace);
-
+		const dataset = await getOrcreateDataset(task.dataset, workspace);
+		if (spec.data_type !== dataset.data_type) {
+			//... TODO delete spec if newly created
+			return res.status(400).json({ message: 'Data type of dataset ('+dataset.data_type+') does not correspond to plugin\'s one ('+spec.data_type+')' });
+		}
 		try {
 			await db.get(dbkeys.keyForTask(task.name));
 			return res.status(400).json({ message: 'Taskname already existing' });
 		} catch (e) { }
-
 		// Task does not exist create it
 		const newTask = { name: task.name, dataset_id: dataset.id, spec_id: spec.id }
 		await db.put(dbkeys.keyForTask(newTask.name), newTask);
@@ -882,29 +884,6 @@ async function remove_task(taskName) {
 		await bm.add({ type: 'del', key: dbkeys.keyForSpec(taskData.spec_id) });
 	}
 
-	// [temporary] if associated dataset is no longer associated
-	// to any other task, remove it as well
-	foundAssociation = false;
-	stream = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
-	for await (const t of stream) {
-		// console.log('task', t);
-		if (t.name !== taskData.name && t.dataset_id === taskData.dataset_id) {
-			foundAssociation = true;
-			break;
-		}
-	}
-	if (!foundAssociation) {
-		// console.log("del dataset",taskData.dataset_id);
-		await bm.add({ type: 'del', key: dbkeys.keyForDataset(taskData.dataset_id) });
-		const stream = utils.iterateOnDB(db, dbkeys.keyForData(taskData.dataset_id), true, false);
-		for await (const dkey of stream) {
-			await bm.add({ type: 'del', key: dkey });
-			console.log("dkey=",dkey);// 'd:' + dataset_id + ':' + data_id;
-			elise_remove_image(dkey);
-		}
-	} else {
-		console.log("Dataset used by other task, nothing to delete.");
-	}
 	await bm.flush();
 }
 

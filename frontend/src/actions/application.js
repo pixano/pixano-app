@@ -100,6 +100,10 @@ export const navigate = (path) => (dispatch, getState) => {
 			import('../views/app-dashboard-admin.js').then(() => {
 			})
 			break;
+		case 'datasets-manager':
+			import('../views/app-datasets-manager.js').then(() => {
+			})
+			break;
 		case 'project-manager':
 			import('../views/app-project-manager.js').then(() => {
 			})
@@ -377,21 +381,6 @@ export const importTaskFromKafka = (task) => (dispatch) => {
 		dispatch(updateTask(newTask));
 		dispatch(updateTaskName(newTask.name));
 		return Promise.resolve(newTask);
-	});
-}
-
-/**
- * Update a dataset.
- * @param {Object} config 
- */
-export const putDataset = (config) => (dispatch) => {
-	return POST('/api/v1/datasets', config).then((data) => {
-		if (data) {
-			dispatch(updateInputPath(data['path']));
-			return Promise.resolve('success');
-		} else {
-			return Promise.resolve('failure');
-		}
 	});
 }
 
