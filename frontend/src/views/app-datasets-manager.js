@@ -281,7 +281,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	/******************* selector getters *******************/
 
 	get table() {
-		return this.shadowRoot.getElementById('table');filter-field
+		return this.shadowRoot.getElementById('table');
 	}
 
 	get tableCheckbox() {
