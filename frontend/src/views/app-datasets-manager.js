@@ -30,6 +30,7 @@ import {
 	fetchRangeDatas,
 	importDataset,
 	createDatasetFrom,
+	importFromKafka,
 	deleteDataset
 } from '../actions/media';
 
@@ -223,6 +224,18 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		const data_ids = this.items.map((item) => item.id);
 		const refDatasetId = getState('media').datasetId;//current dataset id for ref
 		store.dispatch(createDatasetFrom(ioName,refDatasetId,data_ids))
+			.then(() => {
+				this.datasetIdx = this.datasets.length;//select the newly created dataset
+				this.onActivate();
+			})
+			.catch(error => this.errorPopup(error.message));
+	}
+
+	/**
+	 * Fired when clic on import from kafka
+	 */
+	onImportFromKafka() {
+		store.dispatch(importFromKafka())
 			.then(() => {
 				this.datasetIdx = this.datasets.length;//select the newly created dataset
 				this.onActivate();
@@ -557,6 +570,14 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					title="Create a new dataset from the current selection"
 					@click="${this.onCreateDatasetFromSelection}">
 				Dataset from selection
+			</mwc-button>
+			<mwc-button outlined
+					class="newDataset"
+					type="button"
+					icon="add"
+					title="Import a new dataset from Kafka"
+					@click="${this.onImportFromKafka}">
+				Import from Kafka
 			</mwc-button>
 		`;
 	}

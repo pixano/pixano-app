@@ -12,8 +12,6 @@ const { createJob } = require('./jobs');
 const { getAllDataFromDataset,
 	getAllPathsFromDataset,
 	getDataDetails } = require('./datasets');
-const { getSelectionFromKafka } = require('./kafka_plugin');
-const { downloadFilesFromMinio } = require('./minio_plugin');
 const fetch = require("node-fetch");
 
 const annotation_format_version = "0.9";
@@ -76,71 +74,6 @@ async function post_tasks(req, res) {
 		res.status(201).json(taskDetail);
 	});
 }
-
-
-/**
- * @api {post} /tasks/import_from_kafka Import annotation task from kafka
- * @apiName PostTasks
- * @apiGroup Tasks
- * @apiPermission admin
- * 
- * @apiParam {string} [path] Relative path to tasks folder
- * 
- * @apiSuccessExample Success-Response:
- * 		HTTP/1.1 201 OK
- * 		taskDetail = {name: taskName, dataset, spec};
- * 
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Error in Kafka import
- *     HTTP/1.1 404 Error in Minio import
- *     HTTP/1.1 400 Taskname already existing
- *     HTTP/1.1 401 Unauthorized
- */
-async function import_tasks_from_kafka(req, res) {
-	checkAdmin(req, async () => {// only admin can modify tasks and datasets
-		console.log('##### Importing from KAFKA');
-		var kafkaSelection = await getSelectionFromKafka().catch((e) => {
-			console.error('Error in Kafka import\n'+e);
-			res.status(404).json({ message: 'Error in Kafka import\n'+e });
-		});
-		if ((!kafkaSelection) || (!kafkaSelection.sample_ids.length===0)) return;// if kafka failed, nothing else to do
-		console.log("kafkaSelection=",kafkaSelection);
-		console.log('##### Create a new task');
-		const task = req.body;
-        if (kafkaSelection.project_name==='Valeo') {// special case : change default plugin
-            task.spec.plugin_name = 'smart-rectangle';
-        }
-		const spec = await getOrcreateSpec(task.spec);
-		const name = kafkaSelection.selection_name;
-		task.dataset.date = kafkaSelection.date;
-		task.dataset.path += '/'+kafkaSelection.selection_name;
-		try {
-			await db.get(dbkeys.keyForTask(name));
-			return res.status(400).json({message: 'Taskname already existing'});
-		} catch(e) {}//catch === everything is ok (Taskname not in use)
-
-		console.log('# 1) Create a new dataset');
-		console.log('# 1.1) getPathFromIds');
-		task.dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name, kafkaSelection.project_name).catch((e) => {
-			console.error('Error in Minio import\n'+e);
-			res.status(404).json({ message: 'Error in Minio import\n'+e });
-		});
-		if (!task.dataset.urlList) return;// if minio failed, nothing else to do
-		console.log('# 1.2) getImagesFromPath');
-		const dataset = await getOrcreateDataset({...task.dataset, data_type: spec.data_type}, workspace);
-		console.log('# 2) Push the new task + dataset');
-		// Task does not exist create it
-		const newTask = {name: name, dataset_id: dataset.id, spec_id: spec.id}
-		await db.put(dbkeys.keyForTask(newTask.name), newTask);
-		// Generate first job list
-		await generateJobResultAndLabelsLists(newTask);
-		// Send back the created task
-		const taskDetail = await getTaskDetails(newTask.name);
-		console.log('Task created', taskDetail.name)
-		res.status(201).json(taskDetail);
-	});
-}
-
 
 /**
  * @api {post} /tasks/import Import annotation task from json files
@@ -894,7 +827,6 @@ module.exports = {
 	put_task,
 	delete_task,
 	import_tasks,
-	import_tasks_from_kafka,
 	export_tasks,
 	getAllTasksDetails
 }

@@ -47,7 +47,7 @@ export const getData = (datasetId, dataId) => (dispatch) => {
 /**
  * Update redux state with datsets list.
  */
-export const getDatasets = () => (dispatch, getState) => {
+export const getDatasets = () => (dispatch) => {
 	return GET('/api/v1/datasets').then((data) => {
 		dispatch(updateDatasets(data));
 		return Promise.resolve(data);
@@ -74,6 +74,14 @@ export const importDataset = (path, name, data_type, isURL) => (dispatch) => {
  */
 export const createDatasetFrom = (name, refDatasetId, data_ids) => (dispatch) => {
 	return POST(`/api/v1/datasets/${name}/from`, { ref_dataset_id: refDatasetId, data_ids: data_ids }, dispatch);
+}
+
+/**
+ * Import dataset from kafka.
+ */
+export const importFromKafka = () => (dispatch) => {
+	console.log("importFromKafka");
+	return GET('/api/v1/datasets/import_from_kafka', dispatch);
 }
 
 /**************************** */

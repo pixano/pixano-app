@@ -6,7 +6,8 @@ const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
 const populator = require('../helpers/data-populator');
 const { elise_remove_image } = require('../routes/elise_plugin.js');// ELISE
-
+const { getSelectionFromKafka } = require('./kafka_plugin');
+const { downloadFilesFromMinio } = require('./minio_plugin');
 
 /**
  * @api {get} /datasets Get list of datasets
@@ -35,9 +36,7 @@ async function get_datasets(req, res) {
 			}
 			return res.send(datasets);
 		} catch (err) {
-			res.status(400).json({
-				message: 'Error searching datasets'
-			});
+			return res.status(400).json({ message: 'Error searching datasets' });
 		}
 	});
 }
@@ -60,12 +59,8 @@ async function post_datasets(req, res) {
 	checkAdmin(req, async () => {
 		const dataset = req.body;
 		const newDataset = await getOrcreateDataset(dataset, workspace)
-		if (newDataset) {
-			return res.status(201).json(newDataset)
-		}
-		else {
-			return res.status(204).json({})
-		}
+		if (newDataset) return res.status(201).json(newDataset);
+		else return res.status(204).json({});
 	});
 }
 
@@ -84,7 +79,7 @@ async function post_datasets(req, res) {
  *     HTTP/1.1 204 Dataset already existing
  */
 async function post_dataset_from(req, res) {
-	checkAdmin(req, async () => {//
+	checkAdmin(req, async () => {
 		const data_ids = req.body.data_ids;
 		const ref_dataset_id = req.body.ref_dataset_id;
 		const datasetId = req.params.dataset_id;
@@ -110,6 +105,53 @@ async function post_dataset_from(req, res) {
 		}
 		await bm.flush();
 		return res.status(201).json(refDataset);
+	});
+}
+
+/**
+ * @api {post} /datasets/import_from_kafka Import a dataset from kafka+minio
+ * @apiName GetDatasetsFromKafka
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Error in Kafka import
+ *     HTTP/1.1 404 Error in Minio import
+ *     HTTP/1.1 400 Error while creating dataset
+ *     HTTP/1.1 401 Unauthorized
+ */
+async function import_dataset_from_kafka(req, res) {
+	console.log("import_dataset_from_kafka");
+	checkAdmin(req, async () => {
+		console.log('##### Importing from KAFKA');
+		var kafkaSelection = await getSelectionFromKafka().catch((e) => {
+			console.error('Error in Kafka import\n'+e);
+			return res.status(404).json({ message: 'Error in Kafka import\n'+e });
+		});
+		console.log("kafkaSelection=",kafkaSelection);
+		console.log('# 1) Create a new dataset');
+		console.log('# 1.1) get/set members');
+		let dataset = {};
+		dataset.date = kafkaSelection.date;
+		dataset.path = 'importedFromKafka/'+kafkaSelection.selection_name;
+		dataset.id = kafkaSelection.project_name + "_" + kafkaSelection.selection_name;
+		dataset.data_type = kafkaSelection.data_type ? kafkaSelection.data_type : dataset.data_type = 'image';// ... TODO : set to 'remote_image' when minio will work without local copy
+		console.log("dataset=",dataset);
+		console.log('# 1.2) getPathFromIds');
+		dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name, kafkaSelection.project_name).catch((e) => {
+			console.error('Error in Minio import\n'+e);
+			return res.status(404).json({ message: 'Error in Minio import\n'+e });
+		});
+		console.log('# 1.3) getImagesFromPath');
+		const newDataset = await getOrcreateDataset(dataset, workspace);
+		// send created dataset
+		if (newDataset) return res.status(201).json(newDataset);
+		else return res.status(400).json({ message: 'Error while creating dataset' });
 	});
 }
 
@@ -396,6 +438,7 @@ module.exports = {
 	get_datasets,
 	post_datasets,
 	post_dataset_from,
+	import_dataset_from_kafka,
 	get_dataset,
 	delete_dataset,
 	get_data,

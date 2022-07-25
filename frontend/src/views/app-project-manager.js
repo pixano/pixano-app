@@ -29,7 +29,6 @@ import {
 	snapshotProject,
 	exportTasks,
 	importTasks,
-	importTaskFromKafka,
 	deleteTask,
 	postTask,
 	putTask,
@@ -111,37 +110,6 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		this.importExportText = 'import';
 		browserElem.mode = 'import';
 		browserElem.open = true;
-	}
-
-	/**
-	 * Fired when importing from kafka
-	 */
-	onImportFromKafka() {// ... TODO : get back from 'image' to 'remote_image' when minio will work without local copy
-		// create a new task squeleton to be populated
-		const plugin_name = 'classification';//default task is classification
-		const task = {
-			name : 'importedFromKafka',
-			spec: {
-				plugin_name,
-				label_schema: defaultLabelValues(plugin_name),
-				settings: defaultSettings(plugin_name),
-				data_type: 'image'
-			},
-			dataset: { path: 'importedFromKafka'}
-		};
-
-		store.dispatch(importTaskFromKafka(task)).then((newtask) => {
-			// update local copy of Redux
-			this.tasks = getState('application').tasks;
-			this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
-			if (newtask.spec.plugin_name!==plugin_name) {//plugin has been changed on server side => we have to adapt specs
-				// adapt specs
-				newtask.spec.label_schema = defaultLabelValues(newtask.plugin_name);
-				newtask.spec.settings = defaultSettings(newtask.plugin_name);
-				this.updateDisplayedSettings();//change display
-				this.SaveOrCreateTask();//save changes (export to server and store in redux)
-			}
-		}).catch((error) => this.errorPopup(error.message));
 	}
 
 	/**
@@ -370,10 +338,6 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                         type="button"
                         title="Import annotations from json files"
                         @click="${this.onImport}">Import from files</mwc-button>
-			<mwc-button outlined
-                        type="button"
-                        title="Import annotations from Kafka"
-                        @click="${this.onImportFromKafka}">Import from Kafka</mwc-button>
         </div>
       </div>
     `;

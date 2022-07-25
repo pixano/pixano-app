@@ -17,6 +17,7 @@ const { post_login,
 const { get_datasets,
 	post_datasets,
 	post_dataset_from,
+	import_dataset_from_kafka,
 	get_dataset,
 	delete_dataset,
 	get_data,
@@ -36,7 +37,6 @@ const { get_tasks,
 	put_task,
 	delete_task,
 	import_tasks,
-		import_tasks_from_kafka,
 	export_tasks } = require('./routes/tasks');
 const { snapshot_project } = require('./routes/project');
 const { get_results,
@@ -73,6 +73,7 @@ router.get('/profile', middleware.checkToken, get_profile);
 
 router.get('/datasets', middleware.checkToken, get_datasets);
 router.post('/datasets', middleware.checkToken, post_datasets);
+router.get('/datasets/import_from_kafka', middleware.checkToken, import_dataset_from_kafka);
 router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
 router.post('/datasets/:dataset_id/from', middleware.checkToken, post_dataset_from);
 router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);
@@ -89,7 +90,6 @@ router.delete('/specs/:spec_id', middleware.checkToken, delete_spec);
 router.get('/tasks', middleware.checkToken, get_tasks);
 router.post('/tasks', middleware.checkToken, post_tasks);
 router.post('/tasks/import', middleware.checkToken, import_tasks);
-router.post('/tasks/import_from_kafka', middleware.checkToken, import_tasks_from_kafka);
 router.post('/tasks/export', middleware.checkToken, export_tasks);
 router.put('/tasks/:task_name', middleware.checkToken, put_task);
 router.get('/tasks/:task_name', middleware.checkToken, get_task);

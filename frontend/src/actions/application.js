@@ -370,21 +370,6 @@ export const importTasks = (path, isURL) => (dispatch) => {
 }
 
 /**
- * Import a new dataset from kafka and create a linked task 
- * @param {String} task squeleton of the task to be populated/created
- */
-export const importTaskFromKafka = (task) => (dispatch) => {
-	return POST('/api/v1/tasks/import_from_kafka', task, dispatch).then((newTask) => {
-		// use the newly created task as the new redux selected task
-			console.log("importTaskFromKafka resp ok")
-			console.log("importTaskFromKafka newTask=",newTask)
-		dispatch(updateTask(newTask));
-		dispatch(updateTaskName(newTask.name));
-		return Promise.resolve(newTask);
-	});
-}
-
-/**
  * Post new task.
  * @param {Object} task 
  */
