@@ -10,6 +10,9 @@ import TemplatePage from '../templates/template-page';
 import { store, getState } from '../store';
 import { logout } from '../actions/user';
 import { getValue } from '../helpers/utils';
+import { until } from '../../node_modules/lit-html/directives/until.js';
+import { GET } from '../actions/requests';
+
 
 import '@material/mwc-button';
 import '@material/mwc-icon';
@@ -19,6 +22,7 @@ import '@material/mwc-select';
 import '@material/mwc-list/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-list/mwc-check-list-item';
+import '@material/mwc-slider';
 
 import {
 	updateDatasetId,
@@ -52,6 +56,10 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		this.pathOrURL = "undetermined";
 		this.default_path = "";
 		this.nbSelectedRows = 0;
+
+		// ELISE
+		this.similarityLevel = 0;//similarity in %
+		this.SemanticSearchLastValue="";
 
 		this.pageSize = 100;
 		this.page = 1;
@@ -125,9 +133,52 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	/******************* EVENTS handlers *******************/
 
 	onActivate() {
-		if (this.table) this.refreshGrid();//don't refresh if no dataset has been created for now
 		store.dispatch(updateFilters({}));//refresh filters (don't take filters last search on tasks)
+		this.SemanticSearchLastValue="";
+		if (this.table) this.refreshGrid();//don't refresh if no dataset has been created for now
 	}
+
+ 	/********** Elise calls *************/
+	 async isEliseRunning() {// ELISE : test if running
+		return GET(`/api/v1/elise/isrunning`);
+	}
+
+	async onSearchSimilar(dataset_id, data_id) {
+		// ELISE : search for similar images
+		const resultIds = await GET(`/api/v1/elise/datasets/${dataset_id}/similarity/${data_id}/level/${this.similarityLevel}`);
+		// we get the resulting list
+		// first check
+		if (resultIds.length===0) {// impossible in the case of similarity => inconsistant database
+			this.errorPopup("inconsistant database");
+			return;// nothing else to do
+		}
+		// update filters according to this list
+		await this.updateFilter('id', resultIds.join(';'));
+		// last check
+		if (this.items.length===0) {// error 431 Request Header Fields Too Large (=resultIds.length too big)
+			this.errorPopup("Too much matching images, no filter applied.");// ... TODO : use something else then GET to handle this problem and show the real answer OR show a message to the user
+			this.updateFilter('id', '');// reinit filters for data_id
+		}
+	}
+
+	async onSemanticSearch(dataset_id, keywords) {
+		// ELISE : semantic search
+		const resultIds = await GET(`/api/v1/elise/datasets/${dataset_id}/semanticsearch/${keywords}`);
+		// we get the resulting list
+		// first check
+		if (resultIds.length===0) {
+			this.errorPopup("Nothing was found.\nDid you use existing keywords ?");
+			return;// nothing else to do
+		}
+		// update filters according to this list
+		await this.updateFilter('id', resultIds.join(';'));
+		// last check
+		if (this.items.length===0) {// error 431 Request Header Fields Too Large (=resultIds.length too big)
+			this.errorPopup("Too much matching images, no filter applied.");// ... TODO : use something else then GET to handle this problem and show the real answer OR show a message to the user
+			this.updateFilter('id', '');// reinit filters for data_id
+		}
+	}
+	/********** end of Elise calls *************/
 
 	/******************* BUTTONS handlers *******************/
 
@@ -365,6 +416,18 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 				</div>
 				<div></div>
 				<div id="time-header">Preview</div>
+				${until(this.isEliseRunning().then(isRunning => isRunning
+					? html`
+					<div style="flexDirection: 'column'">
+						Similarity Level
+						<div style="display: flex; align-items: center; flexDirection: 'row'">
+						0
+						<mwc-slider value=${this.similarityLevel} min="0" max="100" @input=${(evt) => this.similarityLevel=evt.detail.value}></mwc-slider>
+						100%
+						</div>
+						${this.similarityLevel.toFixed(2)}%
+					</div>`
+					: html``), html``)}
 				<div></div>
 			</div>
 		`;
@@ -381,6 +444,9 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					<p></p>
 					<img src="data:image/jpg;base64,${item.thumbnail}">
 					<p></p>
+					${until(this.isEliseRunning().then(isRunning => isRunning
+						? html`<p><mwc-icon-button icon="search_off" @click=${() => this.onSearchSimilar(item.dataset_id, item.data_id)}></mwc-icon-button></p>`
+						: html``), html``)}
 				</div>
 			</mwc-check-list-item>
 			<li divider role="separator"></li>
@@ -477,6 +543,14 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 			<div id="dataset-page">
 				${this.datasetSelectionSection}
 				${this.addDatasetSection}
+				${until(this.isEliseRunning().then(isRunning => isRunning
+					? html`
+					<div style="text-align: right; "flexDirection: 'row'">
+						<label for="eliseinput">Filter by content :</label><input type="search" id="eliseinput" value=${this.SemanticSearchLastValue} placeholder="contained classe(s)" title="Use keywords 'AND','OR','<','>' to separate classes">
+						<mwc-icon-button icon="filter_list_alt" title="filter based on input keywords" @click=${() => { this.SemanticSearchLastValue=this.shadowRoot.getElementById("eliseinput").value; this.onSemanticSearch(this.items.at(0).dataset_id,this.SemanticSearchLastValue)}}></mwc-icon-button>
+						<mwc-icon-button icon="delete" title="empty filter" @click=${() => { this.SemanticSearchLastValue=""; this.updateFilter('id', ''); }}></mwc-icon-button>
+					</div>`
+					: html``), html``)}
 				${this.datasetsGridSection}
 			</div>
 			${this.dialogNewDataset}

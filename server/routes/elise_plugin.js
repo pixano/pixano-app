@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 var FormData=new require('form-data');
 const fs = require('fs');
 const path = require('path');
-const { workspaceToMount, MOUNTED_WORKSPACE_PATH } = require('../helpers/utils');
+const { MOUNTED_WORKSPACE_PATH } = require('../helpers/utils');
 
 
 /**
@@ -75,7 +75,7 @@ async function elise_index_image(url,id,datasetId,f) {
 }
 
 /**
- * @api {get} /elise/tasks/:task_name/similarity/:data_id/level/:similarity_level Request list of results similar to given image
+ * @api {get} /elise/datasets/:dataset_id/similarity/:data_id/level/:similarity_level Request list of results similar to given image
  * @apiName GetResults
  * @apiGroup Results
  * 
@@ -89,9 +89,7 @@ async function elise_search_similar_images(req, res) {
 	const similarity_level = req.params.similarity_level;
 	const dataId = req.params.data_id;
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
-	const taskName = req.params.task_name;
-	const task = await db.get(dbkeys.keyForTask(taskName));
-	const datasetId = task.dataset_id;
+	const datasetId = req.params.dataset_id;
 	// const queries = req.query;
 	// delete queries.page;
 	// delete queries.count;
@@ -99,7 +97,7 @@ async function elise_search_similar_images(req, res) {
 
 	// 2) call Elise
 	// get image path from id
-	const dataData = await db.get(dbkeys.keyForData(task.dataset_id, dataId));
+	const dataData = await db.get(dbkeys.keyForData(datasetId, dataId));
 	var relUrl = '';
 	var exportPath = '';
 	var buffer = '';
@@ -154,7 +152,7 @@ async function elise_search_similar_images(req, res) {
 }
 
 /**
- * @api {get} /elise/tasks/:task_name/similarity/:data_id/level/:similarity_level Request list of results similar to given image
+ * @api {get} /elise/datasets/:dataset_id/similarity/:data_id/level/:similarity_level Request list of results similar to given image
  * @apiName GetResults
  * @apiGroup Results
  * 
@@ -166,9 +164,7 @@ async function elise_search_similar_images(req, res) {
  async function elise_semantic_search(req, res) {
 	// 1) initialisation
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
-	const taskName = req.params.task_name;
-	const task = await db.get(dbkeys.keyForTask(taskName));
-	const datasetId = task.dataset_id;
+	const datasetId = req.params.dataset_id;
 	const keywords = req.params.keywords;
 	let resultIds = [];
 
@@ -192,12 +188,9 @@ async function elise_search_similar_images(req, res) {
 			// else console.log("searchresults.imagesinfo.imageinfo=",resultat.searchresults.imagesinfo.imageinfo);
 			//extract list of ids (externalid) that correspond to the current dataset
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
-				console.log("found=",idscore);
 				const datasetid_id = decodeURI(idscore.externalid).split(':');//'d:' + dataset_id + ':' + data_id;
-				console.log("datasetid_id=",datasetid_id);
 				//verify datasetid
-				if (datasetid_id[1] != datasetId) continue;// don't return ids from other datasets
-				// console.log("add id",datasetid_id[2]);
+				if (datasetid_id[1] !== datasetId) continue;// don't return ids from other datasets
 				resultIds.push(datasetid_id[2]);
 			}
 		}).catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));

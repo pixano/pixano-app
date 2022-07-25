@@ -56,10 +56,10 @@ class AppDashboardAdmin extends TemplatePage {
 		this.globalCounter = 0;
 		this.doneCounter = 0;
 		this.toValidateCounter = 0;
-		this.SemanticSearchLastValue="";
 
 		// ELISE
 		this.similarityLevel = 0;//similarity in %
+		this.SemanticSearchLastValue="";
 
 		this.statusMap = new Map([['', ['', '', '']],
 		['to_annotate', ['to annotate', 'create', 'blue']],
@@ -289,7 +289,9 @@ class AppDashboardAdmin extends TemplatePage {
 
 	async onSearchSimilar(task_name, data_id) {
 		// ELISE : search for similar images
-		const resultIds = await GET(`/api/v1/elise/tasks/${task_name}/similarity/${data_id}/level/${this.similarityLevel}`);
+		const tasks = getState('application').tasks;
+		const task = tasks.find((task) => task.name === task_name);
+		const resultIds = await GET(`/api/v1/elise/datasets/${task.dataset.id}/similarity/${data_id}/level/${this.similarityLevel}`);
 		// we get the resulting list
 		// first check
 		if (resultIds.length===0) {// impossible in the case of similarity => inconsistant database
@@ -307,9 +309,9 @@ class AppDashboardAdmin extends TemplatePage {
 
 	async onSemanticSearch(task_name, keywords) {
 		// ELISE : semantic search
-		// console.log("task_name=",task_name);
-		// console.log("keywords=",keywords);
-		const resultIds = await GET(`/api/v1/elise/tasks/${task_name}/semanticsearch/${keywords}`);
+		const tasks = getState('application').tasks;
+		const task = tasks.find((task) => task.name === task_name);
+		const resultIds = await GET(`/api/v1/elise/datasets/${task.dataset.id}/semanticsearch/${keywords}`);
 		// we get the resulting list
 		// first check
 		if (resultIds.length===0) {

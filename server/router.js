@@ -110,8 +110,8 @@ router.put('/tasks/:task_name/labels/:data_id', middleware.checkToken, put_label
 
 // For ELISE
 router.get('/elise/isrunning', middleware.checkToken, elise_isRunning);
-router.get('/elise/tasks/:task_name/similarity/:data_id/level/:similarity_level', middleware.checkToken, elise_search_similar_images);
-router.get('/elise/tasks/:task_name/semanticsearch/:keywords', middleware.checkToken, elise_semantic_search);
+router.get('/elise/datasets/:dataset_id/similarity/:data_id/level/:similarity_level', middleware.checkToken, elise_search_similar_images);
+router.get('/elise/datasets/:dataset_id/semanticsearch/:keywords', middleware.checkToken, elise_semantic_search);
 
 
 module.exports = router;
