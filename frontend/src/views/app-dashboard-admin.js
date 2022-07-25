@@ -83,6 +83,7 @@ class AppDashboardAdmin extends TemplatePage {
 
 	onActivate() {
 		this.stateChanged(getState());
+		store.dispatch(updateFilters({}));//refresh filters (don't take filters last search on tasks)
 		if (this.table) this.refreshGrid();//don't refresh if no task has been created for now
 	}
 
@@ -499,7 +500,7 @@ class AppDashboardAdmin extends TemplatePage {
 					<mwc-select label="status"
 								style="position: absolute;"
 								icon="filter_list"
-								@selected=${(evt) => this.updateFilter('status', statusList[evt.detail.index][0])}>
+								@selected=${(evt) => { if (evt.detail.index!==-1) this.updateFilter('status', statusList[evt.detail.index][0]); }}>
 					${statusList.map(([k, v]) => {
 						return html`<mwc-list-item ?selected=${filters.status == k} value=${k}>${v[0]}</mwc-list-item>`;
 					})}
@@ -518,7 +519,7 @@ class AppDashboardAdmin extends TemplatePage {
 					<mwc-select label="state"
 								icon="filter_list"
 								style="position: absolute;"
-								@selected=${(evt) => this.updateFilter('in_progress', assignedList[evt.detail.index][0])}>
+								@selected=${(evt) => { if (evt.detail.index!==-1) this.updateFilter('in_progress', assignedList[evt.detail.index][0]); }}>
 					${assignedList.map((s) => {
 						return html`<mwc-list-item ?selected=${filters.in_progress === s[0]} value=${s[0]}>${s[1]}</mwc-list-item>`;
 					})}

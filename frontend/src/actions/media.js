@@ -66,6 +66,16 @@ export const importDataset = (path, name, data_type, isURL) => (dispatch) => {
 	else return POST('/api/v1/datasets', { path: path, id: name, data_type: data_type }, dispatch);
 }
 
+/**
+ * Create dataset from selection.
+ * @param {String} name name / id associated to this new dataset
+ * @param {String} refDatasetId name / id of the reference dataset
+ * @param {String} data_ids list of selected ids that will be used to create this new sub-dataset
+ */
+export const createDatasetFrom = (name, refDatasetId, data_ids) => (dispatch) => {
+	return POST(`/api/v1/datasets/${name}/from`, { ref_dataset_id: refDatasetId, data_ids: data_ids }, dispatch);
+}
+
 /**************************** */
 
 /**
