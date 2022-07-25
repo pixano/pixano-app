@@ -29,6 +29,7 @@ import {
 	getDatasets,
 	fetchRangeDatas,
 	importDataset,
+	createDatasetFrom,
 	deleteDataset
 } from '../actions/media';
 
@@ -88,7 +89,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 				this.datasets = datasets
 				// refresh displayed items
 				if (this.datasets.length) {
-					if (this.datasetIdx===-1) this.datasetIdx = this.datasets.length-1;//select the last one if nothing was selected
+					if (this.datasetIdx===-1) this.datasetIdx = 0;//select the first one if nothing was selected
 					store.dispatch(updateDatasetId(this.datasets[this.datasetIdx].id));
 					store.dispatch(fetchRangeDatas(this.page, this.pageSize))
 						.then((data) => {
@@ -136,6 +137,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		store.dispatch(updateFilters({}));//refresh filters (don't take filters last search on tasks)
 		this.SemanticSearchLastValue="";
 		if (this.table) this.refreshGrid();//don't refresh if no dataset has been created for now
+		this.shadowRoot.getElementById('filter-field').value = "";
 	}
 
  	/********** Elise calls *************/
@@ -189,7 +191,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		const browserElem = this.shadowRoot.getElementById('dialog-new-dataset');
 		browserElem.open = true;
 	}
-
 	/**
 	 * Fired when adding a new dataset
 	 */
@@ -198,7 +199,34 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		const ioName = this.shadowRoot.getElementById('io-name').value;
 		const iodata_type = this.shadowRoot.getElementById('io-data_type').value;
 		store.dispatch(importDataset(ioPath,ioName,iodata_type, this.pathOrURL === 'URL'))
-			.then(() => this.refreshGrid())
+			.then(() => {
+				this.datasetIdx = this.datasets.length;//select the newly created dataset
+				this.onActivate();
+			})
+			.catch(error => this.errorPopup(error.message));
+	}
+
+	/**
+	 * Fired when clic on new dataset from current selection
+	 */
+	onCreateDatasetFromSelection() {
+		// get name dialog
+		const browserElem = this.shadowRoot.getElementById('dialog-new-dataset-name');
+		browserElem.open = true;
+	}
+	/**
+	 * Fired when creating new dataset from current selection
+	 */
+	createDatasetFromSelection() {
+		const ioName = this.shadowRoot.getElementById('io-name2').value;
+		// get data_ids from selection
+		const data_ids = this.items.map((item) => item.id);
+		const refDatasetId = getState('media').datasetId;//current dataset id for ref
+		store.dispatch(createDatasetFrom(ioName,refDatasetId,data_ids))
+			.then(() => {
+				this.datasetIdx = this.datasets.length;//select the newly created dataset
+				this.onActivate();
+			})
 			.catch(error => this.errorPopup(error.message));
 	}
 
@@ -226,7 +254,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		store.dispatch(deleteDataset(getState('media').datasetId))
 			.then(() => {
 				this.datasetIdx = -1;
-				this.refreshGrid();
+				this.onActivate();
 			})
 			.catch(error => this.errorPopup(error.message));
 	}
@@ -412,7 +440,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 				<mwc-checkbox id="table-checkbox" @change=${this.onTableGlobalCheckboxChange.bind(this)}></mwc-checkbox>
 				<div></div>
 				<div>
-					<mwc-textfield label="Path" icon="filter_list" @input=${(evt) => this.updateFilter('path', getValue(evt))}></mwc-textfield>
+					<mwc-textfield label="Path" icon="filter_list" id="filter-field" @input=${(evt) => this.updateFilter('path', getValue(evt))}></mwc-textfield>
 				</div>
 				<div></div>
 				<div id="time-header">Preview</div>
@@ -437,7 +465,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	*/
 	listitem(item) {
 		return html`
-			<mwc-check-list-item left id=${item.data_id}>
+			<mwc-check-list-item left id=${item.id}>
 				<div class="list-item">
 					<p></p>
 					<div title=${item.path}><span>${item.path}</span></div>
@@ -522,6 +550,14 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					@click="${this.onAddDataset}">
 				New Dataset
 			</mwc-button>
+			<mwc-button outlined
+					class="newDataset"
+					type="button"
+					icon="add"
+					title="Create a new dataset from the current selection"
+					@click="${this.onCreateDatasetFromSelection}">
+				Dataset from selection
+			</mwc-button>
 		`;
 	}
 
@@ -554,6 +590,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 				${this.datasetsGridSection}
 			</div>
 			${this.dialogNewDataset}
+			${this.dialogNewDatasetName}
 		`;
 	}
 
@@ -622,6 +659,22 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					<div>
 						<mwc-button slot="primaryAction" dialogAction="close" @click=${() => { this.addDataset(); this.shadowRoot.getElementById('mwc-select').select(-1); }}> Ok </mwc-button>
 						<mwc-button slot="secondaryAction" dialogAction="close" @click=${() => this.shadowRoot.getElementById('mwc-select').select(-1)}> Cancel </mwc-button>
+					</div>
+				</div>
+				<p></p>
+			</mwc-dialog></div>
+		`;
+	}
+
+	get dialogNewDatasetName() {
+		return html`
+			<mwc-dialog heading="Add a new Dataset" id="dialog-new-dataset-name"><div style="text-align: center;">
+					<div> Enter a name for this dataset </div>
+					<div><mwc-textfield id="io-name2" label="dataset name" value="my_dataset"></mwc-textfield></div>
+					<p></p>
+					<div>
+						<mwc-button slot="primaryAction" dialogAction="close" @click=${() => this.createDatasetFromSelection()}> Ok </mwc-button>
+						<mwc-button slot="secondaryAction" dialogAction="close"> Cancel </mwc-button>
 					</div>
 				</div>
 				<p></p>

@@ -70,6 +70,50 @@ async function post_datasets(req, res) {
 }
 
 /**
+ * @api {post} /datasets/:dataset_id/from Create a sub-dataset from a selection inside an existing one
+ * @apiName PostDatasetsFrom
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 204 Dataset already existing
+ */
+async function post_dataset_from(req, res) {
+	checkAdmin(req, async () => {//
+		const data_ids = req.body.data_ids;
+		const ref_dataset_id = req.body.ref_dataset_id;
+		const datasetId = req.params.dataset_id;
+		// verify that the new dataset id does not exist
+		const existingDatasetId = await getDatasetFromId(db, datasetId);
+		if (existingDatasetId) return res.status(204).json({});
+		// create the sub-dataset
+		let refDataset = await db.get(dbkeys.keyForDataset(ref_dataset_id));
+		refDataset.id = datasetId;
+		refDataset.ref_dataset_id = ref_dataset_id;
+		await db.put(dbkeys.keyForDataset(datasetId), refDataset);
+		// populate the dataset
+		const bm = new batchManager.BatchManager(db);
+		const stream = utils.iterateOnDB(db, dbkeys.keyForData(ref_dataset_id), true, true);
+		for await (const { key, value } of stream) {
+			if (key.split(':').length === 3) {
+				if (data_ids.includes(value.id)) {
+					let newValue = {...value};
+					newValue.dataset_id = datasetId;
+					await bm.add({ type: 'put', key: dbkeys.keyForData(datasetId, newValue.id), value: newValue });
+				}
+			}
+		}
+		await bm.flush();
+		return res.status(201).json(refDataset);
+	});
+}
+
+/**
  * @api {get} /datasets/:dataset_id Get dataset detail
  * @apiName GetDataset
  * @apiGroup Dataset
@@ -244,15 +288,15 @@ const getDataDetails = async (dataset_id, data_id, relative = false) => {
  */
 async function getOrcreateDataset(dataset, workspace) {
 	//return existing dataset if true
-	if (dataset.path) {
-		dataset.path = path.normalize(dataset.path + '/');//normalize path in order to not duplicate datasets because of a typo error
-		const existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
-		if (existingDataset) return existingDataset;
-	}
 	if (dataset.id) {
 		const existingDataset = await getDatasetFromId(db, dataset.id);
 		if (existingDataset) return existingDataset;
 	} else {
+		if (dataset.path) {// for retro compatibility only
+			dataset.path = path.normalize(dataset.path + '/');//normalize path in order to not duplicate datasets because of a typo error
+			const existingDataset = await getDatasetFromPath(db, dataset.path, dataset.data_type);
+			if (existingDataset) return existingDataset;
+		}
 		dataset.id = utils.generateKey();//if id not existing, generate it
 	}
 	// verify if data_type is available
@@ -351,6 +395,7 @@ function getAllPathsFromDataset(dataset_id) {
 module.exports = {
 	get_datasets,
 	post_datasets,
+	post_dataset_from,
 	get_dataset,
 	delete_dataset,
 	get_data,

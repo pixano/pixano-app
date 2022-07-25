@@ -16,6 +16,7 @@ const { post_login,
 	get_profile } = require('./routes/users');
 const { get_datasets,
 	post_datasets,
+	post_dataset_from,
 	get_dataset,
 	delete_dataset,
 	get_data,
@@ -73,6 +74,7 @@ router.get('/profile', middleware.checkToken, get_profile);
 router.get('/datasets', middleware.checkToken, get_datasets);
 router.post('/datasets', middleware.checkToken, post_datasets);
 router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
+router.post('/datasets/:dataset_id/from', middleware.checkToken, post_dataset_from);
 router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);
 
 router.get('/datasets/:dataset_id/data/:data_id', middleware.checkToken, get_data);
