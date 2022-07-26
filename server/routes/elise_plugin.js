@@ -118,7 +118,7 @@ async function elise_search_similar_images(req, res) {
 	formData.append('action', 'search');
 	if (dataData.path.includes('http:')) formData.append('image', buffer, relUrl);
 	else formData.append('image', fs.readFileSync(exportPath), relUrl);
-	formData.append('save', '0');
+	formData.append('save', '0');//... TODO: use save=1 and use pagination implemented in Elise
 	// send and wait for answer
 	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request //TODO : add shorter timeout
 		.then(res => {
@@ -152,7 +152,7 @@ async function elise_search_similar_images(req, res) {
 }
 
 /**
- * @api {get} /elise/datasets/:dataset_id/similarity/:data_id/level/:similarity_level Request list of results similar to given image
+ * @api {get} /elise/datasets/:dataset_id/semanticsearch/:keywords Request list of results similar to given image
  * @apiName GetResults
  * @apiGroup Results
  * 
@@ -174,7 +174,7 @@ async function elise_search_similar_images(req, res) {
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'txtsearch');
 	formData.append('query', keywords);
-	formData.append('save', '0');
+	formData.append('save', '0');//... TODO: use save=1 and use pagination implemented in Elise
 	// send and wait for answer
 	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request //TODO : add shorter timeout
 		.then(res => {

@@ -311,7 +311,46 @@ class AppDashboardAdmin extends TemplatePage {
 		// ELISE : semantic search
 		const tasks = getState('application').tasks;
 		const task = tasks.find((task) => task.name === task_name);
-		const resultIds = await GET(`/api/v1/elise/datasets/${task.dataset.id}/semanticsearch/${keywords}`);
+		const dataset_id = task.dataset.id;
+		// traduce keywords to be usable by Elise // TODO: when Elise will implement them directly, delete this part
+		let keywords4Elise = '';
+		let resultIds = [];
+		// Keyword AND
+		const k_and = keywords.replaceAll(" AND ", " ");// ELISE interpretes natively spaces as and
+		// Keyword >
+		let k_repeat = k_and.split(">");// "car car" will be interpreted by Elise as at list two cars
+		for (let r=0; r<k_repeat.length-1; r++) {
+			if (k_repeat.length<=r+1) {
+				this.errorPopup("Error while interpreting a '>' sign.");
+				return;// nothing else to do
+			}
+			const before = k_repeat[r].split(" ").filter(o=>o);
+			const after = k_repeat[r+1].split(" ").filter(o=>o);
+			const repeat = parseInt(after[0]);
+			const word = before[before.length-1];
+			after.shift();//consume
+			before.pop();
+			if (!repeat) {
+				this.errorPopup("Error while interpreting a '>' sign.");
+				return;// nothing else to do
+			}
+			keywords4Elise = before.join(' ')+' ';
+			keywords4Elise += (word+' ').repeat(repeat)+' ';
+			keywords4Elise += after.join(' ');
+			k_repeat[r+1] = keywords4Elise;
+		}
+		if (k_repeat.length===1) keywords4Elise = k_and;
+		// Keyword OR
+		const k_div = keywords4Elise.split(" OR ");// divide in as much requests as needed
+		for (let i=0; i<k_div.length; i++) {// using OR is like dividing the request in peaces
+			const results = await GET(`/api/v1/elise/datasets/${dataset_id}/semanticsearch/${k_div[i]}`).catch(err => {
+					this.errorPopup("Error in semantic search\n",err);
+					return;// nothing else to do
+				});
+			resultIds.push(...results);
+				
+		}
+		resultIds = [...new Set(resultIds)];//supress doubles
 		// we get the resulting list
 		// first check
 		if (resultIds.length===0) {
@@ -711,7 +750,7 @@ class AppDashboardAdmin extends TemplatePage {
 					${until(this.isEliseRunning().then(isRunning => isRunning
 						? html`
 						<div style="text-align: right; "flexDirection: 'row'">
-							<label for="eliseinput">Filter by content :</label><input type="search" id="eliseinput" value=${this.SemanticSearchLastValue} placeholder="contained classe(s)" title="Use keywords 'AND','OR','<','>' to separate classes">
+							<label for="eliseinput">Filter by content :</label><input type="search" id="eliseinput" value=${this.SemanticSearchLastValue} placeholder="contained classe(s)" title="Use keywords 'AND','OR','>' to separate classes">
 							<mwc-icon-button icon="filter_list_alt" title="filter based on input keywords" @click=${() => { this.SemanticSearchLastValue=this.shadowRoot.getElementById("eliseinput").value; this.onSemanticSearch(this.items.at(0).task_name,this.SemanticSearchLastValue)}}></mwc-icon-button>
 							<mwc-icon-button icon="delete" title="empty filter" @click=${() => { this.SemanticSearchLastValue=""; this.updateFilter('data_id', ''); }}></mwc-icon-button>
 						</div>`
