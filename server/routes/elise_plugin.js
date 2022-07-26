@@ -4,8 +4,7 @@ const fetch = require("node-fetch");
 var FormData=new require('form-data');
 const fs = require('fs');
 const path = require('path');
-const { MOUNTED_WORKSPACE_PATH } = require('../helpers/utils');
-
+const utils = require('../helpers/utils');
 
 /**
  * Test connection to elise server
@@ -109,7 +108,7 @@ async function elise_search_similar_images(req, res) {
 		const arrayBuffer = await blob.arrayBuffer();
 		buffer = Buffer.from(arrayBuffer);
 	} else {
-		relUrl = path.normalize(dataData.path.replace(MOUNTED_WORKSPACE_PATH, ''));
+		relUrl = path.normalize(utils.toRelative(dataData.path));
 		exportPath = path.join(workspace, relUrl);
 	}
 	// define the message
