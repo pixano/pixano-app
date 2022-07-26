@@ -380,7 +380,7 @@ function getAllPathsFromDataset(dataset_id) {
 	return new Promise((resolve) => {
 		stream.on('data', (value) => {
 			const p = Array.isArray(value.path) ? value.path[0] : value.path;
-			const relUrl = path.normalize(p.replace(utils.MOUNTED_WORKSPACE_PATH, ''));
+			const relUrl = path.normalize(utils.toRelative(p));
 			// console.log('relUrl', relUrl);
 			dataMap[relUrl] = value.id;
 		}).on('end', () => {
