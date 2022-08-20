@@ -86,7 +86,7 @@ export const navigate = (path) => (dispatch, getState) => {
             path = '/#login';
         }
     }
-    const page = path.slice(2).split('/')[0];
+    let page = path.slice(2).split('/')[0];
     switch(page) {
       case 'login':
           import('../views/app-login.js').then(() => {
@@ -114,6 +114,10 @@ export const navigate = (path) => (dispatch, getState) => {
         break;
       case 'explore':
         import('../views/app-explore.js').then(() => {
+        })
+        break;
+      case 'kpi':
+        import('../views/app-kpi.js').then(() => {
         })
         break;
       default:
@@ -190,6 +194,7 @@ const _fetchNextResult = (forward=true) => (dispatch, getState) => {
             }
         }
         return GET(url, dispatch).then((result) => {
+            console.log('get next', result)
             if (result.data_id) {
                 return dispatch(updateResult(result));
             }

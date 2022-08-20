@@ -8,17 +8,17 @@
 const path = require('path');
 const semver = require('semver');
 const dbkeys = require('./db-keys');
-const utils = require('../helpers/utils');
-const { toRelative } = require('../helpers/data-populator');
+const db = require('../config/db-firestore');
 const pkg = require('../../package');
 
 const REFERENCE_DB_VERSION = ['0.2.0', '0.1.0', '0.0.0'];
 
-async function convert_0_0_0_to_0_1_0(db) {
+async function convert_0_0_0_to_0_1_0() {
   console.log('Upgrading DB from version 0.0.0 to 0.1.0');
 
   const ops = [];
-  const stream = utils.iterateOnDB(db, dbkeys.keyForAllResults(), true, true);
+  console.log("db ", db)
+  const stream = db.stream(dbkeys.keyForAllResults(), true, true);
   for await(const pair of stream) {
     const key = pair.key;
     const result = pair.value;
@@ -30,10 +30,10 @@ async function convert_0_0_0_to_0_1_0(db) {
   await db.batch(ops);
 }
 
-async function convert_0_1_0_to_0_2_0(db) {
+async function convert_0_1_0_to_0_2_0() {
   console.log('Upgrading DB from version 0.1.0 to 0.2.0');
 
-  const stream = utils.iterateOnDB(db, dbkeys.keyForDataset(), true, true);
+  const stream = db.stream(dbkeys.keyForDataset(), true, true);
   for await(const pair of stream) {
     const key = pair.key;
     const data = pair.value;
@@ -63,7 +63,7 @@ async function convert_0_1_0_to_0_2_0(db) {
       }
     }
   }
-  const stream2 = utils.iterateOnDB(db, dbkeys.keyForSpec(), true, true);
+  const stream2 = db.stream(dbkeys.keyForSpec(), true, true);
   for await (const pair of stream2) {
     pair.value.plugin_name = pair.value.plugin_name.replace('video', 'sequence');
     db.put(pair.key, pair.value);
@@ -86,7 +86,7 @@ const checkDbVersion = (version) => {
  * Check database validity. Return true version is recent enough, otherwise return false.
  * @param {String} version version of database to be updated
  */
-async function updateDbVersion(db, db_version) {
+async function updateDbVersion(db_version) {
   console.log('Checking DB version', db_version);
   let idx;
   for (idx = 0; idx < REFERENCE_DB_VERSION.length; idx++) {

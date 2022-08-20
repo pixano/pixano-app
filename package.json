@@ -10,6 +10,7 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
+    "start": "node server/server.js PIXANO-DB6",
     "deps": "rm -f package-lock.json && npm i && cd frontend && rm -f package-lock.json && npm i",
     "clearall": "rm -rf node_modules/ package-lock.json frontend/node_modules/ frontend/package-lock.json",
     "build": "cd frontend && npm run build",
@@ -26,8 +27,10 @@
     "cli-progress": "^3.6.0",
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
+    "firebase-admin": "10.0.1",
     "fs": "0.0.1-security",
     "glob": "^7.1.6",
+    "got": "^9.6.0",
     "image-thumbnail": "1.0.14",
     "jsonwebtoken": "^8.5.1",
     "level": "^6.0.1",

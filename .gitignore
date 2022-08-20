@@ -1,4 +1,6 @@
 node_modules/
+frontend/node_modules/
 build/
 package-lock.json
 *-bundle.js
+server/config/firebaseServiceAccount.json

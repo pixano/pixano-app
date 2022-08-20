@@ -1,4 +1,4 @@
-const { db } = require('../config/db');
+const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
@@ -23,12 +23,11 @@ const { checkAdmin } = require('./users');
 async function get_specs(_, res) {
     try {
         const specs = [];
-        const stream = utils.iterateOnDB(db, dbkeys.keyForSpec(), false, true)
-        stream.on('data', (value) => {
+        const stream = db.stream(dbkeys.keyForSpec(), false, true);
+        for await (const {value} of stream) {
             specs.push(value);
-        }).on('end', () => {
-            return res.send([...specs]);
-        });
+        }
+        return res.send([...specs]);
     } catch (err) {
         res.status(400).json({
             message: 'Error searching specs'
@@ -161,7 +160,7 @@ async function delete_spec(req, res) {
  * @param {Object} spec 
  */
 async function getOrcreateSpec(spec) {
-    const existingSpec = await getSpecFromContent(db, spec);
+    const existingSpec = await getSpecFromContent(spec);
     if (!existingSpec) {
       const newSpec = {...spec, id:  utils.generateKey()};
       await db.put(dbkeys.keyForSpec(newSpec.id), newSpec);
@@ -176,23 +175,19 @@ async function getOrcreateSpec(spec) {
  * @param {Level} db 
  * @param {Object} spec 
  */
-const getSpecFromContent = (db, spec) => {
+const getSpecFromContent = async (spec) => {
     let foundSpec = null;
-    return new Promise((resolve, reject) => {
-      // update datasets if previously unknown data path is given
-      const s1 = utils.iterateOnDB(db, dbkeys.keyForSpec(), false, true);
-      s1.on('data', (value) => {
+    // update datasets if previously unknown data path is given
+    const s = db.stream(dbkeys.keyForSpec(), false, true);
+    for await (const {value} of s) {
         // remove id to only compare other keys
-        const data =  {...value};
-        delete data.id;
+        const {id, ...data} =  value;
         if (utils.isEqual(data, spec)) {
-          foundSpec = value;
-          s1.destroy();
-        }   
-      }).on('close', () => {
-        resolve(foundSpec);   
-      });
-    });
+            foundSpec = value;
+            break;
+        }
+    }
+    return foundSpec;
 }
 
 module.exports = {

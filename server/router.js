@@ -42,8 +42,8 @@ const { get_results,
         get_previous_result,
         get_next_result,
         put_results } = require('./routes/results');
-const { print,
-        dump } = require('./config/db');
+// const { print,
+//         dump } = require('./config/db');
 
 /**
  * Router handling the HTTP requests
@@ -52,55 +52,56 @@ const { print,
  */
 
 const router = express.Router();
-router.get('/print', print);
-router.get('/dump', dump);
+// router.get('/print', print);
+// router.get('/dump', dump);
 
-router.post('/project/snapshot', middleware.checkToken, snapshot_project);
+const auth = middleware.checkWhoGoogle;
+router.post('/project/snapshot', auth, snapshot_project);
 
 router.post('/login', post_login);
-router.get('/logout', middleware.checkToken, get_logout);
-router.post('/users', middleware.checkToken, post_users);
-router.get('/users', middleware.checkToken, get_users);
-router.put('/users/:username', middleware.checkToken, put_user);
-router.delete('/users/:username', middleware.checkToken, delete_user);
+router.get('/logout', auth, get_logout);
+router.post('/users', auth, post_users);
+router.get('/users', auth, get_users);
+router.put('/users/:username', auth, put_user);
+router.delete('/users/:username', auth, delete_user);
 
-router.get('/profile', middleware.checkToken, get_profile);
+router.get('/profile', auth, get_profile);
 
-router.get('/datasets', middleware.checkToken, get_datasets);
-router.post('/datasets', middleware.checkToken, post_datasets);
-router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
-router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);
+router.get('/datasets', auth, get_datasets);
+router.post('/datasets', auth, post_datasets);
+router.get('/datasets/:dataset_id', auth, get_dataset);
+router.delete('/datasets/:dataset_id', auth, delete_dataset);
 
-router.get('/datasets/:dataset_id/data/:data_id', middleware.checkToken, get_data);
-router.get('/datasets/:dataset_id/data/', middleware.checkToken, get_datas);
+router.get('/datasets/:dataset_id/data/:data_id', auth, get_data);
+router.get('/datasets/:dataset_id/data/', auth, get_datas);
 
-router.get('/specs', middleware.checkToken, get_specs);
-router.post('/specs', middleware.checkToken, post_specs);
-router.get('/specs/:spec_id', middleware.checkToken, get_spec);
-router.put('/specs/:spec_id', middleware.checkToken, put_spec);
-router.delete('/specs/:spec_id', middleware.checkToken, delete_spec);
+router.get('/specs', auth, get_specs);
+router.post('/specs', auth, post_specs);
+router.get('/specs/:spec_id', auth, get_spec);
+router.put('/specs/:spec_id', auth, put_spec);
+router.delete('/specs/:spec_id', auth, delete_spec);
 
-router.get('/tasks', middleware.checkToken, get_tasks);
-router.post('/tasks', middleware.checkToken, post_tasks);
-router.post('/tasks/import', middleware.checkToken, import_tasks);
-router.post('/tasks/export', middleware.checkToken, export_tasks);
-router.put('/tasks/:task_name', middleware.checkToken, put_task);
-router.get('/tasks/:task_name', middleware.checkToken, get_task);
-router.delete('/tasks/:task_name', middleware.checkToken, delete_task);
+router.get('/tasks', auth, get_tasks);
+router.post('/tasks', auth, post_tasks);
+router.post('/tasks/import', auth, import_tasks);
+router.post('/tasks/export', auth, export_tasks);
+router.put('/tasks/:task_name', auth, put_task);
+router.get('/tasks/:task_name', auth, get_task);
+router.delete('/tasks/:task_name', auth, delete_task);
 
 // For labelling jobs
-router.get('/tasks/:task_name/jobs/next', middleware.checkToken, get_next_job);
-router.put('/tasks/:task_name/jobs/:job_id', middleware.checkToken, put_job);
+router.get('/tasks/:task_name/jobs/next', auth, get_next_job);
+router.put('/tasks/:task_name/jobs/:job_id', auth, put_job);
 
 // For explore
-router.get('/tasks/:task_name/results', middleware.checkToken, get_results);
-router.get('/tasks/:task_name/results/:data_id', middleware.checkToken, get_result);
-router.get('/tasks/:task_name/results/:data_id/previous', middleware.checkToken, get_previous_result);
-router.get('/tasks/:task_name/results/:data_id/next', middleware.checkToken, get_next_result);
-router.put('/tasks/:task_name/results', middleware.checkToken, put_results);
+router.get('/tasks/:task_name/results', auth, get_results);
+router.get('/tasks/:task_name/results/:data_id', auth, get_result);
+router.get('/tasks/:task_name/results/:data_id/previous', auth, get_previous_result);
+router.get('/tasks/:task_name/results/:data_id/next', auth, get_next_result);
+router.put('/tasks/:task_name/results', auth, put_results);
 
 // For label
-router.get('/tasks/:task_name/labels/:data_id', middleware.checkToken, get_labels);
-router.put('/tasks/:task_name/labels/:data_id', middleware.checkToken, put_labels);
+router.get('/tasks/:task_name/labels/:data_id', auth, get_labels);
+router.put('/tasks/:task_name/labels/:data_id', auth, put_labels);
 
 module.exports = router;
