@@ -10,8 +10,8 @@ import annotations from "../reducers/annotations";
 import media from "../reducers/media";
 
 export const staticReducers = {
-  application,
-  user,
-  media,
-  annotations
+	application,
+	user,
+	media,
+	annotations
 }

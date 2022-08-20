@@ -7,6 +7,6 @@
 import { PluginRectangle } from './rectangle';
 import { sequence } from '../templates/sequence-mixin';
 
-export class PluginSequenceRectangle extends sequence(PluginRectangle) {}
+export class PluginSequenceRectangle extends sequence(PluginRectangle) { }
 
 customElements.define('plugin-sequence-rectangle', PluginSequenceRectangle);

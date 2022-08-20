@@ -25,9 +25,9 @@ export class PluginClassification extends TemplatePlugin {
 	refresh() {
 		if (!this.element) return;
 		this.attributePicker.showDetail = true;// exception for classification: always show details
-		if (this.annotations.length===0) {// initialize to default
+		if (this.annotations.length === 0) {// initialize to default
 			this.attributePicker.setAttributes(this.attributePicker.defaultValue);
-			store.dispatch(setAnnotations({annotations: [this.attributePicker.value]}));//Save current state to redux database (to keep history)
+			store.dispatch(setAnnotations({ annotations: [this.attributePicker.value] }));//Save current state to redux database (to keep history)
 		} else {
 			this.element.annotations = JSON.parse(JSON.stringify(this.annotations));
 			this.attributePicker.setAttributes(this.element.annotations[0]);
@@ -40,7 +40,7 @@ export class PluginClassification extends TemplatePlugin {
 	 */
 	onAttributeChanged() {
 		const value = this.attributePicker.value;
-		store.dispatch(setAnnotations({annotations: [value]}));//Save current state to redux database (to keep history)
+		store.dispatch(setAnnotations({ annotations: [value] }));//Save current state to redux database (to keep history)
 	}
 
 	/**

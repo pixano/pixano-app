@@ -19,46 +19,46 @@ import '@material/mwc-list/mwc-list-item.js';
 // we would not need it in case we only dispatch actions
 class AppDashboardUser extends TemplatePage {
 
-  constructor() {
-    super();
-    this.globalCounter = 0;
-    this.doneCounter = 0;
-  }
-  static get properties() {
-    return {
-      doneCounter: { type: Number },
-      globalCounter: { type: Number }
-    };
-  }
+	constructor() {
+		super();
+		this.globalCounter = 0;
+		this.doneCounter = 0;
+	}
+	static get properties() {
+		return {
+			doneCounter: { type: Number },
+			globalCounter: { type: Number }
+		};
+	}
 
-  async getResults() {
-    try {
-      const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
-      this.globalCounter = data.globalCounter;
-      this.doneCounter = data.doneCounter;
-      return data.results;
-    } catch (err) {
-      return [];
-    } 
-  }
+	async getResults() {
+		try {
+			const data = await store.dispatch(fetchRangeResults(this.page, this.pageSize));
+			this.globalCounter = data.globalCounter;
+			this.doneCounter = data.doneCounter;
+			return data.results;
+		} catch (err) {
+			return [];
+		}
+	}
 
-  onActivate() {
-    this.getResults();
-  }
+	onActivate() {
+		this.getResults();
+	}
 
-  startAnnotating() {
-    const taskName = getState('application').taskName;
-    const jobObjective = 'to_annotate';
-    this.gotoPage(`/#label/${taskName}/${jobObjective}`);
-  }
-  
-  logOut() {
-    const labelPath = '/#login';
-    this.gotoPage(labelPath);
-  }
-  
-  static get styles() {
-    return [super.styles, css`
+	startAnnotating() {
+		const taskName = getState('application').taskName;
+		const jobObjective = 'to_annotate';
+		this.gotoPage(`/#label/${taskName}/${jobObjective}`);
+	}
+
+	logOut() {
+		const labelPath = '/#login';
+		this.gotoPage(labelPath);
+	}
+
+	static get styles() {
+		return [super.styles, css`
     .body {
       flex-flow: wrap;
       display: flex;
@@ -98,27 +98,27 @@ class AppDashboardUser extends TemplatePage {
       transform-origin: left top;
     }
     `]
-  }
+	}
 
-  get headerContent() {
-    return html`
+	get headerContent() {
+		return html`
       <h1 class="display-4">Dashboard</h1>
       <mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}>Start Annotating</mwc-button>
       <mwc-icon-button icon="exit_to_app"
                        @click=${() => store.dispatch(logout())}
                        title="Log out"></mwc-icon-button>
     `
-  }
+	}
 
-  get leftSection() {
-    return html`
+	get leftSection() {
+		return html`
     <div id="left-panel" class="section">
       <mwc-icon-button icon="refresh"
                   style="margin-left: auto; margin-right: auto;"
                   @click="${this.getResults.bind(this)}"
                   title="Refresh">
       </mwc-icon-button>
-      <mwc-linear-progress progress="${this.doneCounter/this.globalCounter}"></mwc-linear-progress>
+      <mwc-linear-progress progress="${this.doneCounter / this.globalCounter}"></mwc-linear-progress>
       <div style="margin: auto;">
         <p>${this.doneCounter}</p>
         <p>-</p>
@@ -126,36 +126,35 @@ class AppDashboardUser extends TemplatePage {
       </div>
     </div>
     `;
-  }
+	}
 
-  get topSection() {
-    const taskName = getState('application').taskName;
-    const tasks = getState('application').tasks;
-    return html`
+	get topSection() {
+		const taskName = getState('application').taskName;
+		const tasks = getState('application').tasks;
+		return html`
     <div id="overview" class="section">
       <h1 class="display-4" style="margin: auto;">Select a task: </h1>
       <mwc-select label='Task' @selected=${(e) => {
-        if (tasks[e.detail.index] && tasks[e.detail.index].name !== taskName) {
-          store.dispatch(updateTaskName(tasks[e.detail.index].name));
-          this.getResults();
-        }
-      }}>
-        ${
-          tasks.map((p) => html`<mwc-list-item value=${p.name}
+				if (tasks[e.detail.index] && tasks[e.detail.index].name !== taskName) {
+					store.dispatch(updateTaskName(tasks[e.detail.index].name));
+					this.getResults();
+				}
+			}}>
+        ${tasks.map((p) => html`<mwc-list-item value=${p.name}
                                                 ?selected=${taskName === p.name}>${p.name}</mwc-list-item>`)
-        }
+			}
       </mwc-select>
     </div>
     `;
-  }
+	}
 
-  get body() {
-    return html`
+	get body() {
+		return html`
       <div class="body">
           ${this.leftSection}
           ${this.topSection}
       </div>
     `
-  }
+	}
 }
 customElements.define('app-dashboard-user', AppDashboardUser);

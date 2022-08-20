@@ -22,10 +22,10 @@ export const INIT_ANNOTATIONS = 'INIT_ANNOTATIONS';
  * @param {any} annotations 
  */
 export const setAnnotations = (annotations) => {
-    return {
-        type: SET_ANNOTATIONS,
-        annotations
-    };
+	return {
+		type: SET_ANNOTATIONS,
+		annotations
+	};
 };
 
 /**
@@ -33,22 +33,22 @@ export const setAnnotations = (annotations) => {
  * @param {*} annotations 
  */
 export const initAnnotations = (annotations) => {
-    return {
-        type: INIT_ANNOTATIONS,
-        annotations
-    };
+	return {
+		type: INIT_ANNOTATIONS,
+		annotations
+	};
 };
 
 export const undo = () => (dispatch) => {
-    dispatch(ActionCreators.undo()) // undo the last action
+	dispatch(ActionCreators.undo()) // undo the last action
 }
-  
+
 export const redo = () => (dispatch) => {
-    dispatch(ActionCreators.redo()) // undo the last action
+	dispatch(ActionCreators.redo()) // undo the last action
 }
 
 export const clearHistory = () => (dispatch) => {
-    dispatch(ActionCreators.clearHistory()) // undo the last action
+	dispatch(ActionCreators.clearHistory()) // undo the last action
 }
 
 /**
@@ -57,36 +57,36 @@ export const clearHistory = () => (dispatch) => {
  * @param {String} dataId 
  */
 export const getLabels = (taskName, dataId) => (dispatch, getState) => {
-    if(taskName == undefined && dataId == undefined){
-        const ret = dispatch(initAnnotations({}))
-        dispatch(clearHistory());
-        return Promise.resolve(ret);
-    } else {
-        return GET(`/api/v1/tasks/${taskName}/labels/${dataId}`)
-            .then((labels = {}) => {
-                // { annotations: any, data_id: string, task_name: string}
-                // apart from data_id and task_name, the rest of the object is of any format:
-                // ex.1: { annotations: [], tags: {}, classification: []}
-                // ex.2: { annotations: { detections: [], tracks: {}}}
-                const { data_id, task_name, ...content } = labels;
-                const ret = dispatch(initAnnotations(content))
-                dispatch(clearHistory());
-                return Promise.resolve(ret);        
-            });
-    }
+	if (taskName == undefined && dataId == undefined) {
+		const ret = dispatch(initAnnotations({}))
+		dispatch(clearHistory());
+		return Promise.resolve(ret);
+	} else {
+		return GET(`/api/v1/tasks/${taskName}/labels/${dataId}`)
+			.then((labels = {}) => {
+				// { annotations: any, data_id: string, task_name: string}
+				// apart from data_id and task_name, the rest of the object is of any format:
+				// ex.1: { annotations: [], tags: {}, classification: []}
+				// ex.2: { annotations: { detections: [], tracks: {}}}
+				const { data_id, task_name, ...content } = labels;
+				const ret = dispatch(initAnnotations(content))
+				dispatch(clearHistory());
+				return Promise.resolve(ret);
+			});
+	}
 }
 
 /**
  * Send current labels to server.
  */
 export const putLabels = () => (dispatch, getState) => {
-    const taskName = getState().application.taskName;
-    const annotations = getState().annotations.present;
-    const dataId = getState().media.info.id;
-    const labels = {
-        task_name: taskName,
-        data_id: dataId,
-        ...annotations
-    };
-    return PUT(`/api/v1/tasks/${taskName}/labels/${dataId}`, labels);
+	const taskName = getState().application.taskName;
+	const annotations = getState().annotations.present;
+	const dataId = getState().media.info.id;
+	const labels = {
+		task_name: taskName,
+		data_id: dataId,
+		...annotations
+	};
+	return PUT(`/api/v1/tasks/${taskName}/labels/${dataId}`, labels);
 }

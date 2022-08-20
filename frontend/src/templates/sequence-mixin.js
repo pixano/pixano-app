@@ -12,56 +12,56 @@ import { setAnnotations } from '../actions/annotations';
  * @param {TemplatePlugin} baseElement 
  */
 export const sequence = (baseElement) =>
-  class extends baseElement {
+	class extends baseElement {
 
-    static dataType() {
-      return `sequence_${super.dataType}`;
-    }
+		static dataType() {
+			return `sequence_${super.dataType}`;
+		}
 
-    /**
-     * Handle new media to display
-     */
-    newData() {
-      const mediaInfo = getState('media').info;
-      if (!mediaInfo.children) {
-        return;
-      }
-      const paths = mediaInfo.children.map((c) => c.path);
-      this.element.input = paths;
-      this.element.addEventListener('load', () => {
-        // refresh annoations on media loaded
-        this.refresh();
-      });
-    }
+		/**
+		 * Handle new media to display
+		 */
+		newData() {
+			const mediaInfo = getState('media').info;
+			if (!mediaInfo.children) {
+				return;
+			}
+			const paths = mediaInfo.children.map((c) => c.path);
+			this.element.input = paths;
+			this.element.addEventListener('load', () => {
+				// refresh annoations on media loaded
+				this.refresh();
+			});
+		}
 
-    get isSequence() {
-      return true;
-    }
+		get isSequence() {
+			return true;
+		}
 
-    get targetFrameIdx() {
-      return this.element.frameIdx;
-    }
+		get targetFrameIdx() {
+			return this.element.frameIdx;
+		}
 
-    /**
-     * Getter of redux store annotations filtered
-     * by current timestamp.
-     */
-    get annotations() {
-      const labels = getAnnotations().annotations || [];
-      return labels.filter((l) => l.timestamp === this.targetFrameIdx);
-    }
+		/**
+		 * Getter of redux store annotations filtered
+		 * by current timestamp.
+		 */
+		get annotations() {
+			const labels = getAnnotations().annotations || [];
+			return labels.filter((l) => l.timestamp === this.targetFrameIdx);
+		}
 
-    /**
-     * Save current state to redux database (to keep history)
-     * Overwrite because elements generally only trace the current
-     * frame content.
-     * @param {CustomEvent} evt 
-     */
-    collect() {
-      const shapes = [...this.element.shapes].map(({color, ...s}) => s);
-      let allAnnotations = getAnnotations().annotations || [];
-      allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
-      allAnnotations = [...allAnnotations, ...shapes];
-      store.dispatch(setAnnotations({ annotations: allAnnotations }));
-    }
-};
+		/**
+		 * Save current state to redux database (to keep history)
+		 * Overwrite because elements generally only trace the current
+		 * frame content.
+		 * @param {CustomEvent} evt 
+		 */
+		collect() {
+			const shapes = [...this.element.shapes].map(({ color, ...s }) => s);
+			let allAnnotations = getAnnotations().annotations || [];
+			allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
+			allAnnotations = [...allAnnotations, ...shapes];
+			store.dispatch(setAnnotations({ annotations: allAnnotations }));
+		}
+	};

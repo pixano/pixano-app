@@ -5,7 +5,7 @@
  * @license CECILL-C
 */
 
-import {css} from 'lit-element';
+import { css } from 'lit-element';
 
 export const PluginStyle = css`
     :host {

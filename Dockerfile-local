@@ -18,11 +18,11 @@ COPY cli cli
 EXPOSE 3000
 
 # default files and folders (usefull when no volume can be mounted with this image)
+COPY config config
 RUN mkdir -p /data
 COPY data-test /data/data-test
 
 # ENTRYPOINT ["node", "server/server.js"]
 RUN echo 'node cli/pixano "$@"' > entrypoint.sh
-#RUN echo 'node cli/pixano "$@" > pixano_logs 2>&1' > entrypoint.sh
-ENTRYPOINT ["sh", "entrypoint.sh" ]
+ENTRYPOINT ["sh", "entrypoint.sh"]
 CMD []

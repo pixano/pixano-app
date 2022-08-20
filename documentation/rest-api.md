@@ -40,6 +40,7 @@ This document lists the API of the Pixano server that enable the creation of new
 | Key | Value | Description |
 |:-------|:---- |:--- |
 | v | `DbVersion` | Code version that generate this database |
+| pv: |{ app: string } | Pixano version infos |
 | u:{username} |`DbUser` | User info |
 | d:{dataset_id} | `DbDataset` | Dataset info (relative path folder) |
 | d:{dataset_id}:{data_id} | `DbData` | DataImage info |
@@ -47,8 +48,9 @@ This document lists the API of the Pixano server that enable the creation of new
 | t:{task_name} | `DbTask` |  A task consists of label specifications and a dataset. |
 | j:{task_name}:{job_id} | `DbJob` | Element of an annotation process. Its objective is immutable. Data_id corresponds to either an image, pcl, a sequence of pcl, a sequence of image. |
 | r:{task_name}:{data_id} | `DbResult` | Annotation results for a data. History of elementary job already done and next job. Define also current status and cumulated time |
+| r: |  | All annotation results. |
 | l:{task_name}:{data_id} | `DbLabel` | Labels for an image |
-| ls:{task_name}:{data_id} | `DbLabelStatistics` | Labels statistic for an image |
+| o: | {flags} | Command line options |
 
 ## Interfaces
 
@@ -57,7 +59,7 @@ This document lists the API of the Pixano server that enable the creation of new
 type Objective =  'to_annotate' | 'to_validate' | 'to_correct';
 
 // possible status a data item can have
-type LabellingStatus =  Objective | 'done' | 'discard';
+type LabellingStatus =  Objective | 'done' | 'discard' | 'skip';
 
 // possible types a data item can have
 type DataType =  'image' | 'pcl' | 'pcl_image' | 'sequence_pcl' | 'sequence_image' | 'sequence_pcl_image';
@@ -97,7 +99,7 @@ interface DbUser {
 
 // Dataset info
 interface DbDataset {
-    id: string;
+    id: string;//generated id OR user chosen name
     // relative to workspace
     path: string;
     data_type: DataType

@@ -21,6 +21,7 @@ RUN npm run deps && npm run build && rm -rf frontend
 EXPOSE 3000
 
 # default files and folders (usefull when no volume can be mounted with this image)
+COPY config config
 RUN mkdir -p /data
 COPY data-test /data/data-test
 

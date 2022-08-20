@@ -15,40 +15,40 @@ import { setAnnotations } from '../actions/annotations';
  */
 export class PluginSequenceSegmentation extends sequence(PluginSegmentation) {
 
-      /**
-       * Save current state to redux database (to keep history)
-       * Overwrite because mask api is different from instances.
-       * @param {CustomEvent} evt 
-       */
-      collect() {
-        const mask = {
-          id: this.targetFrameIdx,
-          mask: this.element.getMask(),
-          timestamp: this.targetFrameIdx
-        }
-        let allAnnotations = getAnnotations().annotations;
-        allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
-        allAnnotations = [...allAnnotations, mask];
-        store.dispatch(setAnnotations({ annotations: allAnnotations }));
-      }
+	/**
+	 * Save current state to redux database (to keep history)
+	 * Overwrite because mask api is different from instances.
+	 * @param {CustomEvent} evt 
+	 */
+	collect() {
+		const mask = {
+			id: this.targetFrameIdx,
+			mask: this.element.getMask(),
+			timestamp: this.targetFrameIdx
+		}
+		let allAnnotations = getAnnotations().annotations;
+		allAnnotations = allAnnotations.filter((a) => a.timestamp !== this.targetFrameIdx);
+		allAnnotations = [...allAnnotations, mask];
+		store.dispatch(setAnnotations({ annotations: allAnnotations }));
+	}
 
-      onUpdate() {
-        this.collect();
-      }
+	onUpdate() {
+		this.collect();
+	}
 
-      refresh() {
-        if (!this.element) {
-          return;
-        }
-        const curr = this.annotations.find((l) => l.timestamp === this.targetFrameIdx);
-        if (!curr) {
-          this.element.setEmpty();
-          return;
-        }
-        if (curr.mask != this.element.getMask()) {
-          this.element.setMask(curr.mask);
-        }
-      }
+	refresh() {
+		if (!this.element) {
+			return;
+		}
+		const curr = this.annotations.find((l) => l.timestamp === this.targetFrameIdx);
+		if (!curr) {
+			this.element.setEmpty();
+			return;
+		}
+		if (curr.mask != this.element.getMask()) {
+			this.element.setMask(curr.mask);
+		}
+	}
 
 }
 

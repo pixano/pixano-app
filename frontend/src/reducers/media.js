@@ -5,20 +5,34 @@
 */
 
 import {
-    SET_MEDIA_INFO
-  } from '../actions/media';
+	SET_MEDIA_INFO,
+	UPDATE_DATASETS,
+	UPDATE_DATASET_ID
+} from '../actions/media';
 
 const INITIAL_MEDIA_STATE = {
-    info: {}
+	info: {},
+	datasets: [],
+	datasetId: ''
 };
 
 const media = (state = INITIAL_MEDIA_STATE, action) => {
-    switch (action.type) {
-        case SET_MEDIA_INFO:
-            return {...action.info}
-        default:
-            return state
-    }
+	switch (action.type) {
+		case SET_MEDIA_INFO:
+			return { ...action.info }
+		case UPDATE_DATASETS:
+			return {
+				...state,
+				datasets: [...action.datasets]
+			};
+		case UPDATE_DATASET_ID:
+			return {
+				...state,
+				datasetId: action.datasetId
+			};
+		default:
+			return state
+	}
 };
 
 export default media;

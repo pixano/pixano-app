@@ -10,18 +10,18 @@ import { PluginTracking } from './tracking';
 
 export class PluginSmartTracking extends PluginTracking {
 
-    get element() {
-        return this.shadowRoot.querySelector('pxn-smart-tracking');
-    }
+	get element() {
+		return this.shadowRoot.querySelector('pxn-smart-tracking');
+	}
 
-    render() {
-        return html`<pxn-smart-tracking
+	render() {
+		return html`<pxn-smart-tracking
                               .tracks = ${this.tracks}
                               @create-track=${this.onUpdate}
                               @selection-track=${(e) => console.log('selection track', e.detail)}
                               @update-tracks=${this.onUpdate}
                               @delete-track=${this.onUpdate}></pxn-smart-tracking>`;
-    }
+	}
 }
 
 customElements.define('plugin-smart-tracking', PluginSmartTracking);

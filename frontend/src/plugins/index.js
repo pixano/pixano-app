@@ -12,20 +12,20 @@
  */
 export const pluginsList = [
 	'classification',
-    'rectangle',
-    'polygon',
-    'cuboid',
-    'segmentation',
-    'tracking',
-    'keypoints',
-    'smart-rectangle',
-    'smart-segmentation',
-    'smart-tracking',
-    'sequence-rectangle',
-    'sequence-cuboid',
-    'sequence-polygon',
-    'sequence-keypoints',
-    'sequence-segmentation'
+	'rectangle',
+	'polygon',
+	'cuboid',
+	'segmentation',
+	'tracking',
+	'keypoints',
+	'smart-rectangle',
+	'smart-segmentation',
+	'smart-tracking',
+	'sequence-rectangle',
+	'sequence-cuboid',
+	'sequence-polygon',
+	'sequence-keypoints',
+	'sequence-segmentation'
 ];
 
 /**
@@ -34,18 +34,18 @@ export const pluginsList = [
  */
 export const getDataType = (pluginName) => {
 
-    switch (pluginName) {
-        case 'sequence-keypoints':
-        case 'sequence-rectangle':
-        case 'sequence-polygon':
-        case 'tracking':
-        case 'smart-tracking':
-        case 'sequence-segmentation': return 'sequence_image';
-        case 'sequence-cuboid': return 'sequence_pcl';
-        case 'cuboid': return 'pcl';
-        default:
-        case 'rectangle':  return 'image'; // PluginRectangle.dataType;
-    }
+	switch (pluginName) {
+		case 'sequence-keypoints':
+		case 'sequence-rectangle':
+		case 'sequence-polygon':
+		case 'tracking':
+		case 'smart-tracking':
+		case 'sequence-segmentation': return 'sequence_image';
+		case 'sequence-cuboid': return 'sequence_pcl';
+		case 'cuboid': return 'pcl';
+		default:
+		case 'rectangle': return 'image'; // PluginRectangle.dataType;
+	}
 }
 
 /**
@@ -57,11 +57,11 @@ export const getDataType = (pluginName) => {
  * @param {string} pluginName
  */
 export const defaultLabelValues = (pluginName) => {
-    switch(pluginName) {
-        case 'sequence-segmentation':
-        case 'smart-segmentation':
-        case 'segmentation':
-            return {
+	switch (pluginName) {
+		case 'sequence-segmentation':
+		case 'smart-segmentation':
+		case 'segmentation':
+			return {
 				category: [
 					{ name: 'class1', color: "blue", idx: 1, instance: true, properties: [] },
 					{ name: 'class2', color: "#eca0a0", idx: 2, instance: false, properties: [] },
@@ -76,22 +76,22 @@ export const defaultLabelValues = (pluginName) => {
 				default: 'class1'
 			};
 
-        case 'smart-tracking':
-        case 'tracking':
-            return {
-					category: [
-						{ name: 'class1', color: "blue", properties: [] },
-						{ name: 'class2', color: "#eca0a0", properties: [] },
-						{
-							name: 'class3', color: "green", properties: [
-								{ name: 'checkbox example', type: 'checkbox', default: false, persistent: true },
-								{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something', persistent: false },
-								{ name: 'textfield example', type: 'textfield', default: 'some text' }
-							]
-						}
-					],
-					default: 'class1'
-				};
+		case 'smart-tracking':
+		case 'tracking':
+			return {
+				category: [
+					{ name: 'class1', color: "blue", properties: [] },
+					{ name: 'class2', color: "#eca0a0", properties: [] },
+					{
+						name: 'class3', color: "green", properties: [
+							{ name: 'checkbox example', type: 'checkbox', default: false, persistent: true },
+							{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something', persistent: false },
+							{ name: 'textfield example', type: 'textfield', default: 'some text' }
+						]
+					}
+				],
+				default: 'class1'
+			};
 
 		case 'classification':
 			return {
@@ -109,46 +109,46 @@ export const defaultLabelValues = (pluginName) => {
 
 		case 'sequence-rectangle':
 		case 'smart-rectangle':
-        case 'rectangle':
-        default:
-            return {
-					category: [
-						{ name: 'class1', color: "blue", properties: [] },
-						{ name: 'class2', color: "#eca0a0", properties: [] },
-						{
-							name: 'class3', color: "green", properties: [
-								{ name: 'checkbox example', type: 'checkbox', default: false },
-								{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
-								{ name: 'textfield example', type: 'textfield', default: 'some text' }
-							]
-						}
-					],
-					default: 'class1'
-				};
-    }
+		case 'rectangle':
+		default:
+			return {
+				category: [
+					{ name: 'class1', color: "blue", properties: [] },
+					{ name: 'class2', color: "#eca0a0", properties: [] },
+					{
+						name: 'class3', color: "green", properties: [
+							{ name: 'checkbox example', type: 'checkbox', default: false },
+							{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
+							{ name: 'textfield example', type: 'textfield', default: 'some text' }
+						]
+					}
+				],
+				default: 'class1'
+			};
+	}
 }
 
 export const defaultSettings = (pluginName) => {
-    switch(pluginName) {
-        case 'sequence-keypoints':
-        case 'keypoints': {
-            return {
-                radius: 3,
-                colorFillType: "order",
-                vertexNames: [
-                    'nose', 'leye','reye','lshoulder','rshoulder','lelbow','relbow','lwrist','rwrist',
-                    'lhip','rhip','lknee','rknee','lankle','rankle','lfoot','rfoot'
-                ],
-                edges: [[0,1],[0,2],[0,3],[3,4],[3,5],[4,6],[5,7],[6,8],[3,9],[4,10],[10,11],[9,11],[10,12],[11,13],[12,14],[13,15],[14,16]],
-                edgeColorType: "node"
-            }
-        }
-        case 'smart-segmentation':
-            return {
-                model: 'https://raw.githubusercontent.com/pixano/pixano.github.io/master/models/box_model/model.json'
-            }
-        default: {
-            return {}
-        }
-    }
+	switch (pluginName) {
+		case 'sequence-keypoints':
+		case 'keypoints': {
+			return {
+				radius: 3,
+				colorFillType: "order",
+				vertexNames: [
+					'nose', 'leye', 'reye', 'lshoulder', 'rshoulder', 'lelbow', 'relbow', 'lwrist', 'rwrist',
+					'lhip', 'rhip', 'lknee', 'rknee', 'lankle', 'rankle', 'lfoot', 'rfoot'
+				],
+				edges: [[0, 1], [0, 2], [0, 3], [3, 4], [3, 5], [4, 6], [5, 7], [6, 8], [3, 9], [4, 10], [10, 11], [9, 11], [10, 12], [11, 13], [12, 14], [13, 15], [14, 16]],
+				edgeColorType: "node"
+			}
+		}
+		case 'smart-segmentation':
+			return {
+				model: 'https://raw.githubusercontent.com/pixano/pixano.github.io/master/models/box_model/model.json'
+			}
+		default: {
+			return {}
+		}
+	}
 }

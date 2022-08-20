@@ -11,14 +11,14 @@ const dbkeys = require('../config/db-keys');
  *     []: any[]
  */
 async function get_labels(req, res) {
-    const taskName = req.params.task_name;
-    const dataId = req.params.data_id;
-    try {
-        const labelData = await db.get(dbkeys.keyForLabels(taskName, dataId));
-        return res.send(labelData);
-    } catch (err) {
-        return res.send({});      
-    }
+	const taskName = req.params.task_name;
+	const dataId = req.params.data_id;
+	try {
+		const labelData = await db.get(dbkeys.keyForLabels(taskName, dataId));
+		return res.send(labelData);
+	} catch (err) {
+		return res.send({});
+	}
 }
 
 /**
@@ -35,22 +35,22 @@ async function get_labels(req, res) {
  *     HTTP/1.1 400 Invalid id
  */
 async function put_labels(req, res) {
-    const taskName = req.params.task_name;
-    const dataId = req.params.data_id;
-    const newLabels = req.body;
+	const taskName = req.params.task_name;
+	const dataId = req.params.data_id;
+	const newLabels = req.body;
 
-    // Invalid request ids
-    if (taskName !== newLabels.task_name || dataId !== newLabels.data_id) {
-        return res.status(400).json({
-            type: 'bad_ids',
-            message: 'Corruption in ids : ' + taskName + ' ' + newLabels.name + ' or ' + dataId + ' ' + newLabels.data_id
-        });
-    }
-    await db.put(dbkeys.keyForLabels(taskName, dataId), newLabels);
-    return res.status(204).json({});
+	// Invalid request ids
+	if (taskName !== newLabels.task_name || dataId !== newLabels.data_id) {
+		return res.status(400).json({
+			type: 'bad_ids',
+			message: 'Corruption in ids : ' + taskName + ' ' + newLabels.name + ' or ' + dataId + ' ' + newLabels.data_id
+		});
+	}
+	await db.put(dbkeys.keyForLabels(taskName, dataId), newLabels);
+	return res.status(204).json({});
 }
 
 module.exports = {
-    get_labels,
-    put_labels
+	get_labels,
+	put_labels
 }

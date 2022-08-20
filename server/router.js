@@ -8,42 +8,46 @@ const express = require('express');
 const middleware = require('./config/middleware');
 
 const { post_login,
-        get_logout,
-        post_users,
-        get_users,
-        put_user,
-        delete_user,
-        get_profile } = require('./routes/users');
+	get_logout,
+	post_users,
+	get_users,
+	put_user,
+	delete_user,
+	get_profile } = require('./routes/users');
 const { get_datasets,
-        post_datasets,
-        get_dataset,
-        delete_dataset,
-        get_data,
-        get_datas } = require('./routes/datasets');
+	post_datasets,
+	post_dataset_from,
+	import_dataset_from_kafka,
+	get_dataset,
+	delete_dataset,
+	get_data,
+	get_datas } = require('./routes/datasets');
 const { get_specs,
-        post_specs,
-        get_spec,
-        put_spec,
-        delete_spec } = require('./routes/specs');
+	post_specs,
+	get_spec,
+	put_spec,
+	delete_spec } = require('./routes/specs');
 const { get_next_job,
-        put_job } = require('./routes/jobs');
+	put_job } = require('./routes/jobs');
 const { get_labels,
-        put_labels } = require('./routes/labels');
+	put_labels } = require('./routes/labels');
 const { get_tasks,
-        post_tasks,
-        get_task,
-        put_task,
-        delete_task,
-        import_tasks,
-        export_tasks } = require('./routes/tasks');
+	post_tasks,
+	get_task,
+	put_task,
+	delete_task,
+	import_tasks,
+	export_tasks } = require('./routes/tasks');
 const { snapshot_project } = require('./routes/project');
 const { get_results,
-        get_result,
-        get_previous_result,
-        get_next_result,
-        put_results } = require('./routes/results');
+	get_result,
+	get_previous_result,
+	get_next_result,
+	put_results } = require('./routes/results');
 const { print,
-        dump } = require('./config/db');
+	dump,
+	get_pixano_version } = require('./config/db');
+const { elise_isRunning, elise_search_similar_images, elise_semantic_search } = require('./routes/elise_plugin');	
 
 /**
  * Router handling the HTTP requests
@@ -54,6 +58,7 @@ const { print,
 const router = express.Router();
 router.get('/print', print);
 router.get('/dump', dump);
+router.get('/pixanoappversion', get_pixano_version);
 
 router.post('/project/snapshot', middleware.checkToken, snapshot_project);
 
@@ -68,11 +73,13 @@ router.get('/profile', middleware.checkToken, get_profile);
 
 router.get('/datasets', middleware.checkToken, get_datasets);
 router.post('/datasets', middleware.checkToken, post_datasets);
+router.get('/datasets/import_from_kafka', middleware.checkToken, import_dataset_from_kafka);
 router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
+router.post('/datasets/:dataset_id/from', middleware.checkToken, post_dataset_from);
 router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);
 
 router.get('/datasets/:dataset_id/data/:data_id', middleware.checkToken, get_data);
-router.get('/datasets/:dataset_id/data/', middleware.checkToken, get_datas);
+router.get('/datasets/:dataset_id/data', middleware.checkToken, get_datas);
 
 router.get('/specs', middleware.checkToken, get_specs);
 router.post('/specs', middleware.checkToken, post_specs);
@@ -102,5 +109,11 @@ router.put('/tasks/:task_name/results', middleware.checkToken, put_results);
 // For label
 router.get('/tasks/:task_name/labels/:data_id', middleware.checkToken, get_labels);
 router.put('/tasks/:task_name/labels/:data_id', middleware.checkToken, put_labels);
+
+// For ELISE
+router.get('/elise/isrunning', middleware.checkToken, elise_isRunning);
+router.get('/elise/datasets/:dataset_id/similarity/:data_id/level/:similarity_level', middleware.checkToken, elise_search_similar_images);
+router.get('/elise/datasets/:dataset_id/semanticsearch/:keywords', middleware.checkToken, elise_semantic_search);
+
 
 module.exports = router;

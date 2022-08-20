@@ -158,7 +158,7 @@ Our [plugins' guide](./plugins-guide.md) will help you in the use of your curren
 Get your annotations and use them for any external application easily:
 
 - as an admin, go to the tasks tab
-- press the "EXPORT TO FILES" button
+- press the "EXPORT" button
 - you will find the exported annotations in the root of your workspace (find more information on annotation format [bellow](#importexport-annotation-format))
 
 ### Standalone vs distributed usage
