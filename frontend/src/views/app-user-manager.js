@@ -202,9 +202,7 @@ class AppUserManager extends connect(store)(TemplatePage) {
     return html`
       <mwc-icon-button style="margin: 0;" icon="keyboard_backspace" @click=${() => this.goHome()}></mwc-icon-button>
       <h1 class="display-4">User Manager</h1>
-      <mwc-icon-button icon="exit_to_app"
-                       @click=${() => store.dispatch(logout())}
-                       title="Log out"></mwc-icon-button>
+      ${super.headerContent}
     `
   }
 

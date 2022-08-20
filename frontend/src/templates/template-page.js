@@ -12,6 +12,7 @@
 import { LitElement, html, css } from 'lit-element';
 import { navigate } from '../actions/application';
 import { store, getState } from '../store';
+import { logout } from '../actions/user';
 
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
@@ -284,8 +285,12 @@ export default class TemplatePage extends LitElement {
     return html``
   }
 
+  // get headerContent() {
+  //   return html`<mwc-icon-button icon="exit_to_app" @click=${() => store.dispatch(logout())} title="Log out"></mwc-icon-button>`
+  // }
+
   get headerContent() {
-    return html` `
+    return html``
   }
 
   get pageContent() {

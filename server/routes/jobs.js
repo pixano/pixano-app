@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { db } = require('../config/db');
+const db = require('../config/db-firestore');
 const dbkeys = require('../config/db-keys');
 const utils = require('../helpers/utils');
 
@@ -88,30 +88,30 @@ async function get_next_job(req, res) {
         }
     }
     // (3) Loop through available jobs
-    const streamA = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
-    for await(const result of streamA) {
-        if (objectiveList.includes(result.status) && !result.in_progress) {
+    const streamA = db.stream(dbkeys.keyForResult(taskName), false, true);
+    for await(const {value} of streamA) {
+        if (objectiveList.includes(value.status) && !value.in_progress) {
             let job;
             var error=false;
             try { job = await db.get(dbkeys.keyForJob(taskName, result.current_job_id)); }
             catch (err) { error=true; console.log('\tjob no longer exist', err); }
             if (!error && isJobValid(job, result) && await isJobAvailableForUser(job, user)) {
                 await _assignJob(job, user);
-                return res.send({...job, annotator: result.annotator, validator: result.validator});
+                return res.send({...job, annotator: value.annotator, validator: value.validator});
             }
         }
     }
     // (3b) Assign less jobs with less priority
-    const streamB = utils.iterateOnDB(db, dbkeys.keyForResult(taskName), false, true);
-    for await(const result of streamB) {
-        if (objectiveList.includes(result.status) && !result.in_progress) {
+    const streamB = db.stream(dbkeys.keyForResult(taskName), false, true);
+    for await(const {value} of streamB) {
+        if (objectiveList.includes(value.status) && !value.in_progress) {
             let job;
             var error=false;
             try { job = await db.get(dbkeys.keyForJob(taskName, result.current_job_id)); }
             catch (err) { error=true; console.log('\tjob no longer exist', err); }
             if (!error && isJobValid(job, result) && await isJobAvailableForUser(job, user, true)) {
                 await _assignJob(job, user);
-                return res.send({...job, annotator: result.annotator, validator: result.validator});
+                return res.send({...job, annotator: value.annotator, validator: value.validator});
             }
         }
     }
@@ -144,6 +144,7 @@ async function put_job(req, res) {
     const jobId = req.params.job_id;
     const interrupt = req.body.interrupt;
     const newObjective = req.body.status; // new status for data item
+
     let user;
     let jobData; // current state of job
     let resultData; // global view of the image status
@@ -232,7 +233,7 @@ async function put_job(req, res) {
         nextUser.queue[taskName+'/'+newJob.objective].push(newJob.id);
         ops.push({ type: 'put', key: dbkeys.keyForUser(nextUser.username), value: nextUser});
     }
-    ops.push({ type: 'put', key: dbkeys.keyForJob(taskName, newJob.id), value: newJob});
+    ops.push({ type: 'post', key: dbkeys.keyForJob(taskName, newJob.id), value: newJob});
     ops.push({ type: 'put', key: dbkeys.keyForResult(taskName, resultData.data_id), value: resultData});
     await db.batch(ops);
     return res.status(204).json({});
@@ -315,10 +316,10 @@ async function isJobAvailableForUser(job, targetUser, isPermissive = false) {
     } else if (!job.assigned_to && targetUser.queue[qKey] && targetUser.queue[qKey].includes(job.id)) {
         return true;
     } else if (!job.assigned_to && !isPermissive) {
-        const streamUsers = utils.iterateOnDB(db, dbkeys.keyForUser(), false, true);
-        for await (const user of streamUsers) {
-            if (user.username == targetUser.username) { continue; }
-            if (user.queue && user.queue[qKey] && user.queue[qKey].includes(job.id)) {
+        const streamUsers = db.stream(dbkeys.keyForUser(), false, true);
+        for await (const {value} of streamUsers) {
+            if (value.username == targetUser.username) { continue; }
+            if (value.queue && value.queue[qKey] && value.queue[qKey].includes(job.id)) {
                 return false;
             }
         }

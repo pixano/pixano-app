@@ -163,7 +163,7 @@ export class AppExplore extends TemplatePage {
 
     get path() {
       const media = getState('media');
-      const task = media.info.path.replace('//', '/');
+      const task = media.info.path; //.replace('//', '/');
       return task;
     }
 

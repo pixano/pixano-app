@@ -10,43 +10,43 @@ const path = require('path');
 const archiver = require('archiver');
 const fs = require('fs');
 
-const generateKey = () => {
-  return crypto.randomBytes(8).toString('hex');
+const generateKey = (prefix = '') => {
+  return prefix + crypto.randomBytes(8).toString('hex');
 }
 
-/**
- * Create a database stream interator.
- * @param {Level} db 
- * @param {String} prefix 
- * @param {Boolean} keys 
- * @param {Boolean} values 
- * @param {Boolean} reverse 
- */
-const iterateOnDB = (db, prefix, keys=true, values=true, reverse=false) => {
-  const params = {gte: `${prefix}!`, lte: `${prefix}~`, keys, values, reverse};
-  return db.createReadStream(params);
-}
+// /**
+//  * Create a database stream interator.
+//  * @param {Level} db 
+//  * @param {String} prefix 
+//  * @param {Boolean} keys 
+//  * @param {Boolean} values 
+//  * @param {Boolean} reverse 
+//  */
+// const iterateOnDB = (db, prefix, keys=true, values=true, reverse=false) => {
+//   const params = {gte: `${prefix}!`, lte: `${prefix}~`, keys, values, reverse};
+//   return db.createReadStream(params);
+// }
 
-/**
- * Create a database stream interator with a starting key.
- * @param {Level} db 
- * @param {String} from starting key
- * @param {String} prefix 
- * @param {Boolean} keys 
- * @param {Boolean} values 
- * @param {Boolean} reverse 
- */
-const iterateOnDBFrom = (db, from, prefix, keys=true, values=true, reverse=false) => {
-  let params = {keys, values, reverse}
-  if (reverse) {
-    params.gte = `${prefix}!`;
-    params.lt = from;
-  } else {
-    params.gt = from;
-    params.lte = `${prefix}~`;
-  }  
-  return db.createReadStream(params);
-}
+// /**
+//  * Create a database stream interator with a starting key.
+//  * @param {Level} db 
+//  * @param {String} from starting key
+//  * @param {String} prefix 
+//  * @param {Boolean} keys 
+//  * @param {Boolean} values 
+//  * @param {Boolean} reverse 
+//  */
+// const iterateOnDBFrom = (db, from, prefix, keys=true, values=true, reverse=false) => {
+//   let params = {keys, values, reverse}
+//   if (reverse) {
+//     params.gte = `${prefix}!`;
+//     params.lt = from;
+//   } else {
+//     params.gt = from;
+//     params.lte = `${prefix}~`;
+//   }  
+//   return db.createReadStream(params);
+// }
 
 /**
  * Utility function to parse recursively a directory.
@@ -87,7 +87,7 @@ const removeDir = function(path) {
   if (fs.existsSync(path)) {
     const files = fs.readdirSync(path)
     if (files.length > 0) {
-      files.forEach(function(filename) {
+      files.forEach((filename) => {
         if (fs.statSync(path + "/" + filename).isDirectory()) {
           removeDir(path + "/" + filename)
         } else {
@@ -103,7 +103,7 @@ const removeDir = function(path) {
   }
 }
 
-const isSubFolder = function(parent, dir) {
+const isSubFolder = (parent, dir) => {
   const relative = path.relative(parent, dir);
   return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
@@ -227,6 +227,10 @@ const pathToFilename = (path, removeExt = true) => {
   // path with no leading or trailing slashes
   let filename = path.slice(idx0, idx1);
   filename = filename.replace(new RegExp('/', 'g'), '_');
+   // add by Tom
+  filename = filename.split("\\");
+  filename = filename.join("_")
+  //filename = filename.replace(new RegExp('\\', 'g'), '_'); // TO CHANGE TOM
   if (removeExt) {
     const exts = ['.jpg', '.jpeg', '.png', '.bin'];
     exts.forEach((e) => filename = filename.replace(e, ''));
@@ -234,17 +238,25 @@ const pathToFilename = (path, removeExt = true) => {
   return filename;
 }
 
+/**
+ * Normalize path in POSIX in order to not duplicate datasets because of a path convention
+ * @param {*} url 
+ * @returns 
+ */
+ const toNormalizedPath = (url) => {
+  return path.normalize(url).split(path.sep).join(path.posix.sep);
+}
+
 
 
 module.exports = {
   generateKey,
-  iterateOnDB,
-  iterateOnDBFrom,
   isEqual,
   zipDirectory,
   removeDir,
   readJSON,  
   writeJSON,
   isSubFolder,
-  pathToFilename
+  pathToFilename,
+  toNormalizedPath
 }

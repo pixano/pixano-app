@@ -104,9 +104,7 @@ class AppDashboardUser extends TemplatePage {
     return html`
       <h1 class="display-4">Dashboard</h1>
       <mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}>Start Annotating</mwc-button>
-      <mwc-icon-button icon="exit_to_app"
-                       @click=${() => store.dispatch(logout())}
-                       title="Log out"></mwc-icon-button>
+      ${super.headerContent}
     `
   }
 
