@@ -116,6 +116,11 @@ export const navigate = (path) => (dispatch, getState) => {
         import('../views/app-explore.js').then(() => {
         })
         break;
+        //add by Tom
+        case 'kpi':
+            import('../views/app-kpi.js').then(() => {
+            })
+        break;
       default:
         page = 'view404';
         import('../views/app-404.js');

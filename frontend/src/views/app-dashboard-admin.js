@@ -58,8 +58,8 @@ class AppDashboardAdmin extends TemplatePage {
                               ['to_annotate', ['to annotate', 'create', 'blue']], 
                               ['to_validate', ['to validate', 'youtube_searched_for', 'orange']],
                               ['to_correct', ['to correct', 'thumb_down', 'red']], 
+                              ['discard', ['do NOT annotate', 'highlight_off', 'red']],
                               ['done', ['done', 'done', 'green']]]);
-
     this.assignedMap = new Map([['', ''], 
                                 ['true', 'in progress'], 
                                 ['false', 'idle']]);
@@ -180,6 +180,11 @@ class AppDashboardAdmin extends TemplatePage {
   explore(id) {
     const taskName = getState('application').taskName;
     this.gotoPage(`/#explore/${taskName}/${id}`);
+  }
+
+  //add by Tom
+  gotoKPI() {
+    this.gotoPage('/#kpi');
   }
   
   gotoProjectManager() {
@@ -445,12 +450,14 @@ class AppDashboardAdmin extends TemplatePage {
   }
 
   get headerContent() {
+    // KPI add by Tom
     return html`
       <h1 class="display-4">Dashboard Admin</h1>
       <mwc-button theme="primary" class="dark" @click=${() => this.startValidating()}>Start Validating</mwc-button>
       <mwc-button theme="primary" class="dark" @click=${() => this.startAnnotating()}>Start Annotating</mwc-button>
       
       <div class="right-header-content">
+        <mwc-button theme="primary" class="dark" @click=${() => this.gotoKPI()}>KPI</mwc-button>
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoProjectManager()}>Tasks</mwc-button>
         <mwc-button theme="primary" class="dark" @click=${() => this.gotoUserManager()}>Users</mwc-button>
         <div class="unselectable" style="margin: 10px;">${this.username}</div>
@@ -467,7 +474,7 @@ class AppDashboardAdmin extends TemplatePage {
 
   /**
    * Display table row
-   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail | Launch
+   * Status | Data Id | Annotator | Validator | State | Time | Thumbnail
    */
   listitem(item) {
     const v = this.statusMap.get(item.status);
@@ -483,8 +490,8 @@ class AppDashboardAdmin extends TemplatePage {
         <p>${item.validator}</p>
         <p>${this.assignedMap.get(item.in_progress.toString())}</p>
         <p>${format(item.cumulated_time)}</p>
-		<p><img src="data:image/jpg;base64,${item.thumbnail}" ></p>
-        <p><mwc-icon-button class="launch" icon="launch" @click=${(evt) => this.onExplore(evt, item.data_id)}></mwc-icon-button></p>
+		<p><img src="data:image/jpg;base64,${item.thumbnail}" @click=${(evt) => this.onExplore(evt, item.data_id)}></p>
+		<p></p>
       </div>
     </mwc-check-list-item>
     <li divider role="separator"></li>
