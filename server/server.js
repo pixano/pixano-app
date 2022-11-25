@@ -33,16 +33,20 @@ const getNetworkAddress = () => {
 export function serve(workspace, port, cliOptions) {
 
 	//print release/revision
-	let pixanoRev = "";
-	if (git.isTagDirty()) {
-		if (git.isDirty()) pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch()+" (uncommited changes).";
-		else pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch();
-		pixanoRev += "\nLast tag was "+git.tag();
-	} else {
-		if (git.isDirty()) pixanoRev = "Using Pixano-app release "+git.tag()+" (uncommited changes).";
-		else pixanoRev = "Using Pixano-app release "+git.tag();
+	try {
+		let pixanoRev = "";
+		if (git.isTagDirty()) {
+			if (git.isDirty()) pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch()+" (uncommited changes).";
+			else pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch();
+			pixanoRev += "\nLast tag was "+git.tag();
+		} else {
+			if (git.isDirty()) pixanoRev = "Using Pixano-app release "+git.tag()+" (uncommited changes).";
+			else pixanoRev = "Using Pixano-app release "+git.tag();
+		}
+		console.log(pixanoRev);
+	} catch (e) {
+		console.log("Probably running within Docker - Git revision history not available");
 	}
-	console.log(pixanoRev);
 
 	if (!fs.existsSync(workspace)) {
 		console.error('Please enter a valid path for workspace (\"', workspace, '\" does not exist).');
