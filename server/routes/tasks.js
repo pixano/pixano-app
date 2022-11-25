@@ -578,7 +578,7 @@ async function export_tasks(req, res) {
 					console.log("labelsJson=", labelsJson);
 					//BR url foireuse pendant tests --on va arreter d'inonder le rezo irt ;p 
 					//await fetch("http://nowhere", {
-						await fetch(url, {
+					await fetch(url, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify(labelsJson)
@@ -590,11 +590,10 @@ async function export_tasks(req, res) {
 						}
 					}).catch((e) => { err = e; });
 					if (err) {
-							return res.status(400).json({
-								error: 'cannot_write',
-								message: `Cannot write json file '${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
-							});
-						}
+						return res.status(400).json({
+							error: 'cannot_write',
+							message: `Cannot write json file '${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
+						});
 					}
 				}
 			} //END for labels
