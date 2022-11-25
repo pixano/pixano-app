@@ -17,7 +17,9 @@ const getSelectionFromKafka = async () => {
 	var date = "";
 
 	if (JSON.parse(CONFIG.fake)) {
-		sample_ids = [{id:"191120-0954_1597536_ - C65_OK.jpgImage"},{id:"191003-2237_6318756_ - C10_OK.jpgImage"},{id:"191003-2237_2953236_ - C101_OK.jpgImage"},{id:"191120-0954_3034415_ - C34_OK.jpgImage"}];
+		//BR sample_ids = [{id:"191120-0954_1597536_ - C65_OK.jpgImage"},{id:"191003-2237_6318756_ - C10_OK.jpgImage"},{id:"191003-2237_2953236_ - C101_OK.jpgImage"},{id:"191120-0954_3034415_ - C34_OK.jpgImage"}];
+		//BR autres samples, ceux ci dessus n'ont pas l'air de fonctionner
+		sample_ids = [{id:"190923-1923_2934278_ - C101_OK.jpg"},{id:"190925-0102_2934389_ - C101_OK.jpg"}];
 		// project_name = "my project";
 		project_name = 'Valeo';
 		if (num<=3) selection_name = num.toString();
@@ -58,13 +60,19 @@ const getSelectionFromKafka = async () => {
 	const kafkaConsumer = kafka.consumer({ groupId: CONFIG.groupId });
 
 	// 2) get ids (with timeout)
+	//BR
+	console.log("BR 1 brocker:", kafkaBrocker);
 	await kafkaConsumer.connect().catch((e) => { throw e; });
+	console.log("BR 2");
 	await kafkaConsumer.subscribe({ topic: CONFIG.topicName, fromBeginning: true}).catch((e) => { throw e; });//fromBeginning has to be true in order to be able to get messages sent before calling this function
+	console.log("BR 3 consumer:", kafkaConsumer);
 	
 	var resolveOnConsumption = () => { console.log("resolveOnConsumption"); };
 	var consumePromise = new Promise((resolve, reject) => { resolveOnConsumption = resolve });
-	const timeoutms = 5000;
+	console.log("BR 4");
+	const timeoutms = 5000;    //BR from 5000 to 15000
 	var timeOutPromise = new Promise((resolve, reject) => { setTimeout(reject,timeoutms) }); 
+	console.log("BR 5");
 	
 	kafkaConsumer.run({
 		eachMessage: async ({ message }) => {
@@ -74,15 +82,19 @@ const getSelectionFromKafka = async () => {
 			project_name = val.project_name;
 			selection_name = val.selection_name;
 			date = val.date;
+			console.log("BR 6.1");
 			resolveOnConsumption();
+			console.log("BR 6.2");
 		}
 	}).catch((e) => { throw "Kafka: run: "+e; });
-	
+	console.log("BR 7");
+
 	var timeout=false;
 	await Promise.race([consumePromise,timeOutPromise])
 		.then(res => { console.log("promise race ok");})
 		.catch(res => { timeout = true; })
 		.finally(() => kafkaConsumer.disconnect());
+	console.log("BR 8");
 	
 //	console.log("sample_ids===",sample_ids);
 	if (timeout) throw "Kafka: timeout, no data found";

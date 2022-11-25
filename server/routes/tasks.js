@@ -56,7 +56,7 @@ async function post_tasks(req, res) {
 		const dataset = await getOrcreateDataset(task.dataset, workspace);
 		if (spec.data_type !== dataset.data_type) {
 			//... TODO delete spec if newly created
-			return res.status(400).json({ message: 'Data type of dataset ('+dataset.data_type+') does not correspond to plugin\'s one ('+spec.data_type+')' });
+			return res.status(400).json({ message: 'Data type of dataset (' + dataset.data_type + ') does not correspond to plugin\'s one (' + spec.data_type + ')' });
 		}
 		try {
 			await db.get(dbkeys.keyForTask(task.name));
@@ -167,6 +167,9 @@ async function import_tasks(req, res) {
 			// Generate first job list
 			await generateJobResultAndLabelsLists(newTask);
 			const dataMap = await getAllPathsFromDataset(newTask.dataset_id);
+			//BR
+			console.log("BR newTask", newTask);
+			console.log("BR newTask.dataset_id", newTask.dataset_id);
 
 			// Read corresponding task folder
 			const taskFolder = jsonf.substring(0, jsonf.length - 5);
@@ -200,6 +203,10 @@ async function import_tasks(req, res) {
 					}
 				}
 				// get data id from data path
+				//BR
+				console.log("BR sourcePath (images): ", sourcePath);
+				console.log("BR fullPath (jsonFile): ", fullPath);
+				console.log("BR dataMap: ", dataMap);
 				const dataId = dataMap[sourcePath];
 				if (!dataId) {
 					console.warn(`Unknown path ${sourcePath}`);
@@ -344,6 +351,9 @@ async function export_tasks(req, res) {
 
 			// Write annotations
 			const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
+			//BR
+			console.log("BR streamLabels arg = ", dbkeys.keyForLabels(task.name));
+			//console.log("BR streamLabels = ", streamLabels);
 			for await (const labels of streamLabels) {
 				resultData = await db.get(dbkeys.keyForResult(task.name, labels.data_id));//get the status for this data
 				const data = await getDataDetails(datasetId, labels.data_id, true);
@@ -369,15 +379,16 @@ async function export_tasks(req, res) {
 					}
 				} else {//export to destination URL
 					var err = '';
-					console.log("labelsJson orig=",labelsJson);
+					console.log("labelsJson orig=", labelsJson);
 					let url = req.body.url.endsWith('/') ? req.body.url + '_doc' : req.body.url + '/_doc';
 
-					console.log("spec.plugin_name=",spec.plugin_name);
-					const FORMAT_VERSION = 'MVP2022';
-					// const FORMAT_VERSION = 'MVP2021';
-					if (FORMAT_VERSION==='MVP2021') {
+					console.log("spec.plugin_name=", spec.plugin_name);
+					//BR pour le moment on reste en MVP2021
+					//const FORMAT_VERSION = 'MVP2022';
+					const FORMAT_VERSION = 'MVP2021';
+					if (FORMAT_VERSION === 'MVP2021') {
 						console.log("FORMAT_VERSION=2021");
-						if (spec.plugin_name==='classification') {// CONFIANCE specific: adapt Body to temporary
+						if (spec.plugin_name === 'classification') {// CONFIANCE specific: adapt Body to temporary
 							// real data:
 							// {
 							//     "task_name": "1",
@@ -415,19 +426,19 @@ async function export_tasks(req, res) {
 									name: 'blurred'
 								},
 								actorId: 'pixano_annotator1',
-								atorType: 'annotator'
+								actorType: 'annotator'
 							};
-							console.log("labelsJson_confiance=",JSON.stringify( labelsJson_confiance ));
+							console.log("labelsJson_confiance=", JSON.stringify(labelsJson_confiance));
 							// CONFIANCE: recompose url in order to use the same identifier then in elastic (enabling versionning)
 							//     Exemple : PUT https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v2_test/_doc/190923-1805_2934305_ - C101_OK.jpgImage blurred totoPixano/
 							//     data.id: 190923-1805_2934305_ - C101_OK.jpgImage
 							//     state.name: Blurred
 							//     annotation.actorId: totoPixano
 							const url_confiance = url + '/' + labelsJson_confiance.id_data + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
-							console.log("url_confiance=",url_confiance);
+							console.log("url_confiance=", url_confiance);
 							url = url_confiance;
 							labelsJson = labelsJson_confiance;
-						} else if (spec.plugin_name==='smart-rectangle') {// CONFIANCE specific: adapt Body to temporary and publish separately each annotation
+						} else if (spec.plugin_name === 'smart-rectangle') {// CONFIANCE specific: adapt Body to temporary and publish separately each annotation
 							// wanted output:
 							// {
 							//     "id_data": "Nom_imageImage",
@@ -450,10 +461,10 @@ async function export_tasks(req, res) {
 							//     "actorId": "pixano_annotator1",
 							//     "atorType": "Annotator"
 							// }
-							console.log("labelsJson.annotations=",labelsJson.annotations);
+							console.log("labelsJson.annotations=", labelsJson.annotations);
 							for (const annotation of labelsJson.annotations) {
 								const labelsJson_confiance = {
-									id_data: labelsJson.data_id+'Image',
+									id_data: labelsJson.data_id + 'Image',
 									value: {
 										value: annotation,
 										name: 'detection'
@@ -462,24 +473,24 @@ async function export_tasks(req, res) {
 									actorId: 'pixano_annotator1',
 									atorType: 'annotator'
 								};
-								console.log("labelsJson_confiance=",JSON.stringify( labelsJson_confiance ));
+								console.log("labelsJson_confiance=", JSON.stringify(labelsJson_confiance));
 								// CONFIANCE: recompose url in order to use the same identifier then in elastic (enabling versionning)
 								//     Exemple : PUT https://elasticsearch-ec5.confiance.irtsystemx.org/annotation_v4_valeo_test/_doc/Nom_image0.zve5sdgj9hfImage detection pixano_annotator1/
 								//     data.id: Nom_image0.zve5sdgj9hfImage
 								//     state.name: detection
 								//     annotation.actorId: pixano_annotator1
-								const url_confiance = url + '/' + labelsJson.data_id+annotation.id+'Image' + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
-								console.log("url_confiance=",url_confiance);
+								const url_confiance = url + '/' + labelsJson.data_id + annotation.id + 'Image' + ' ' + labelsJson_confiance.value.name + ' ' + labelsJson_confiance.actorId;
+								console.log("url_confiance=", url_confiance);
 								// CONFIANCE: exception, publish separately each annotation
 								await fetch(url_confiance, {
 									method: 'PUT',
 									headers: { 'Content-Type': 'application/json' },
-									body: JSON.stringify( labelsJson_confiance )
+									body: JSON.stringify(labelsJson_confiance)
 								})// send POST request
-								.then(res => {
-									if (res.ok) return res.json();
-									else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
-								}).catch((e) => { err += e; });
+									.then(res => {
+										if (res.ok) return res.json();
+										else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+									}).catch((e) => { err += e; });
 								if (err) console.log(`Could not write annotation ${annotation.id}`);
 							}
 							if (err) {
@@ -490,7 +501,7 @@ async function export_tasks(req, res) {
 							}
 							continue;//we already published the annotations
 						}
-					} else if (FORMAT_VERSION==='MVP2022') {
+					} else if (FORMAT_VERSION === 'MVP2022') {
 						console.log("FORMAT_VERSION=2022");
 						for (const annotation of labelsJson.annotations) {// CONFIANCE: exception, publish separately each annotation
 							// wanted output:
@@ -521,7 +532,7 @@ async function export_tasks(req, res) {
 							// }
 							const labelsJson_confiance = {
 								id: annotation.id,
-								id_data: labelsJson.data_id+'Image',
+								id_data: labelsJson.data_id + 'Image',
 								selectionName: task.name,
 								actorId: 'pixano_annotator1',
 								actorType: 'annotator',
@@ -531,24 +542,29 @@ async function export_tasks(req, res) {
 									geometry: annotation.geometry,
 								},
 							};
-							console.log("labelsJson_confiance=",JSON.stringify( labelsJson_confiance ));
+							console.log("labelsJson_confiance=", JSON.stringify(labelsJson_confiance));
 							// CONFIANCE: recompose url in order to use the same identifier then in elastic (enabling versionning)
 							//     Exemple : PUT https://opensearch-ec5.confiance.irtsystemx.org/annotation_v1/_doc/Nom_image0.zve5sdgj9hfImage detection pixano_annotator1/
 							//     data.id: Nom_image0.zve5sdgj9hfImage
 							//     state.name: detection
 							//     annotation.actorId: pixano_annotator1
-							const url_confiance = url + '/' + labelsJson.data_id+annotation.id+'Image' + ' ' + taskJson.spec.plugin_name + ' ' + labelsJson_confiance.actorId;
-							console.log("url_confiance=",url_confiance);
+
+							//BR si annotation.id n'existe pas, ne rien mettre (?)
+							//BR TODO formaliser les différents exports en fonctions plugins
+							const url_confiance = url + '/' + labelsJson.data_id + ((annotation.id === undefined) ? '' : annotation.id) + 'Image' + ' ' + taskJson.spec.plugin_name + ' ' + labelsJson_confiance.actorId;
+							//const url_confiance = url + '/' + labelsJson.data_id+annotation.id+'Image' + ' ' + taskJson.spec.plugin_name + ' ' + labelsJson_confiance.actorId;
+							console.log("url_confiance=", url_confiance);
 							// CONFIANCE: exception, publish separately each annotation
+
 							await fetch(url_confiance, {
 								method: 'PUT',
 								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify( labelsJson_confiance )
+								body: JSON.stringify(labelsJson_confiance)
 							})// send POST request
-							.then(res => {
-								if (res.ok) return res.json();
-								else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
-							}).catch((e) => { err += e; });
+								.then(res => {
+									if (res.ok) return res.json();
+									else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+								}).catch((e) => { err += e; });
 							if (err) console.log(`Could not write annotation ${annotation.id}`);
 						}
 						if (err) {
@@ -559,25 +575,30 @@ async function export_tasks(req, res) {
 						}
 						continue;//we already published the annotations
 					}
-					console.log("labelsJson=",labelsJson);
-					await fetch(url, {
+					console.log("labelsJson=", labelsJson);
+					//BR url foireuse pendant tests --on va arreter d'inonder le rezo irt ;p 
+					//await fetch("http://nowhere", {
+						await fetch(url, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify(labelsJson)
 					})// send POST request
-						.then(res => {
-							if (res.ok) return res.json();
-							else throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
-						}).catch((e) => { err = e; });
+					.then(res => {
+						if (res.ok) return res.json();
+						else {
+							throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+						}
+					}).catch((e) => { err = e; });
 					if (err) {
-						return res.status(400).json({
-							error: 'cannot_write',
-							message: `Cannot write json file '${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
-						});
+							return res.status(400).json({
+								error: 'cannot_write',
+								message: `Cannot write json file '${filename}.json'.\n\nERROR while calling ELASTIC:${err}`
+							});
+						}
 					}
 				}
-			}
-		}
+			} //END for labels
+		} //END for tasks
 		res.send();
 	});
 }

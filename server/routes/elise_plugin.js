@@ -174,6 +174,7 @@ async function elise_search_similar_images(req, res) {
 	formData.append('action', 'txtsearch');
 	formData.append('query', keywords);
 	formData.append('save', '0');//... TODO: use save=1 and use pagination implemented in Elise
+	console.log("formData=",formData);
 	// send and wait for answer
 	await fetch(eliseUrl, { method: 'post', body: formData })// send POST request //TODO : add shorter timeout
 		.then(res => {
@@ -182,9 +183,9 @@ async function elise_search_similar_images(req, res) {
 		})
 		.then(res => {
 			const resultat=JSON.parse(JSON.stringify(res));
-			// console.log("resultat=",resultat);
-			// if (resultat.searchresults.error) console.log("erreur : ",resultat.searchresults.error);
-			// else console.log("searchresults.imagesinfo.imageinfo=",resultat.searchresults.imagesinfo.imageinfo);
+			console.log("resultat=",resultat);
+			if (resultat.error) console.log("erreur : ",resultat.error.message);
+			else console.log("searchresults.imagesinfo.imageinfo=",resultat.searchresults.imagesinfo.imageinfo);
 			//extract list of ids (externalid) that correspond to the current dataset
 			for(var idscore of resultat.searchresults.imagesinfo.imageinfo) {
 				const datasetid_id = decodeURI(idscore.externalid).split(':');//'d:' + dataset_id + ':' + data_id;

@@ -3,3 +3,5 @@ build/
 package-lock.json
 *-bundle.js
 .vscode/
+data/*
+db.ldb

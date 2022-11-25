@@ -133,7 +133,7 @@ async function import_dataset_from_kafka(req, res) {
 			console.error('Error in Kafka import\n'+e);
 			return res.status(404).json({ message: 'Error in Kafka import\n'+e });
 		});
-		console.log("kafkaSelection=",kafkaSelection);
+		//BR tpo (trop long pour le log qd ca bug!!) console.log("kafkaSelection=",kafkaSelection);
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) get/set members');
 		let dataset = {};
@@ -149,6 +149,9 @@ async function import_dataset_from_kafka(req, res) {
 		});
 		console.log('# 1.3) getImagesFromPath');
 		const newDataset = await getOrcreateDataset(dataset, workspace);
+		//BR task ?
+		console.log("BR import_dataset_from_kafka req:", req.body);
+
 		// send created dataset
 		if (newDataset) return res.status(201).json(newDataset);
 		else return res.status(400).json({ message: 'Error while creating dataset' });
