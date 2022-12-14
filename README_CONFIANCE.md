@@ -77,7 +77,10 @@ sudo docker load -i /data/pixano-confiance.tar
 # modifier le tag et pousser
 sudo docker tag pixano/pixano-app:confiance-v1.7.0 pixano/pixano-dev:confiance-v1.7.0
 sudo docker push pixano/pixano-dev:confiance-v1.7.0
+# si erreur "denied: requested access to the resource is denied" lors du push: 
+sudo docker login -u "myusername" -p "mypassword" docker.io
 ```
+
 ### connexion
 ```
 sudo ipsec up IRT_Client

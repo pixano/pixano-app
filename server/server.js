@@ -33,8 +33,8 @@ const getNetworkAddress = () => {
 export function serve(workspace, port, cliOptions) {
 
 	//print release/revision
+	let pixanoRev = "";
 	try {
-		let pixanoRev = "";
 		if (git.isTagDirty()) {
 			if (git.isDirty()) pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch()+" (uncommited changes).";
 			else pixanoRev = "Using Pixano-app rev "+git.short()+" on branch "+git.branch();
@@ -45,6 +45,7 @@ export function serve(workspace, port, cliOptions) {
 		}
 		console.log(pixanoRev);
 	} catch (e) {
+		pixanoRev = "Pixano - (Git revision history not available)";
 		console.log("Probably running within Docker - Git revision history not available");
 	}
 

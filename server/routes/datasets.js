@@ -133,7 +133,9 @@ async function import_dataset_from_kafka(req, res) {
 			console.error('Error in Kafka import\n'+e);
 			return res.status(404).json({ message: 'Error in Kafka import\n'+e });
 		});
-		//BR tpo (trop long pour le log qd ca bug!!) console.log("kafkaSelection=",kafkaSelection);
+		//BR tpo (trop long pour le log qd ca bug!!) 
+		console.log("kafkaSelection=",kafkaSelection);
+		
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) get/set members');
 		let dataset = {};

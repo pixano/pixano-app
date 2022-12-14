@@ -33,14 +33,14 @@ export function cli(argv) {
 		.option('port', 'The port on which the app will be running', process.env.PORT || 3000)
 		.option('workspace', 'Your workspace: it must contain all of the data you want to use', '/data/')
 //BR tmp disconnect elise	
-	.option('elise', 'Full address of elise server', 'http://localhost:8081')
-//		.option('kafka', 'Kafka brocker', 'kafka.ec5-dev.svc.cluster.local:9092')
+		.option('elise', 'Full address of elise server', 'http://localhost:8081')
+//		.option('kafka', 'Kafka broker', 'kafka.ec5-dev.svc.cluster.local:9092')
 //BR test
-//		.option('kafka', 'Kafka brocker', '10.106.171.154:9092')
-		.option('kafka', 'Kafka brocker', 'localhost:8000')
+//pour version locale (mais de tte facon kafka phase2 marche pas en local!) -- dans le docker, c'est ecrasé par args fournis
+		.option('kafka', 'Kafka broker', 'localhost:8000')
 		.example('pixano /path/to/workspace','The most common way to use Pixano:')
 		.example('pixano --workspace /path/to/workspace --port 5001','Run on a specific port:')
-		.example('pixano --elise=htth://specifiurl --kafka=kafka_brocker','Launch in confiance environment:')
+		.example('pixano --elise=htth://specifiurl --kafka=kafka_broker','Launch in confiance environment:')
 
 	const flags = args.parse(argv);
 	

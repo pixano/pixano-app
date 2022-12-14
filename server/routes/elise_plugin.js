@@ -33,6 +33,9 @@ async function elise_isRunning(req, res) {
  * @param f: not used if url is a remote address, the absolute path to the image otherwise
  */
 async function elise_index_image(url,id,datasetId,f) {
+	//BR
+	console.log("BR Elise indexing");
+	
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'index');

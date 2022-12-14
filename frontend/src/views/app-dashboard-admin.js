@@ -58,8 +58,10 @@ class AppDashboardAdmin extends TemplatePage {
 		this.toValidateCounter = 0;
 
 		// ELISE
-		this.similarityLevel = 0;//similarity in %
-		this.SemanticSearchLastValue="";
+		this.similarityLevel = 80;//similarity in %
+		this.SemanticSearchLastValue = "";
+		this.elise_running_check_requested = true;
+		this.elise_isRunning_val = false;
 
 		this.statusMap = new Map([['', ['', '', '']],
 		['to_annotate', ['to annotate', 'create', 'blue']],
@@ -283,8 +285,12 @@ class AppDashboardAdmin extends TemplatePage {
 	}
 
  	/********** Elise calls *************/
-	async isEliseRunning() {// ELISE : test if running
-		return GET(`/api/v1/elise/isrunning`);
+	async isEliseRunning() {// ELISE : test if running ... perform GET only if check requested (checking every times causes UI freeze...)
+		if (this.elise_running_check_requested) {
+			this.elise_isRunning_val = GET(`/api/v1/elise/isrunning`);
+			this.elise_running_check_requested = false;
+		}
+		return this.elise_isRunning_val;
 	}
 
 	async onSearchSimilar(task_name, data_id) {
