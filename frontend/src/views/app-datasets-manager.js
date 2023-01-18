@@ -31,6 +31,7 @@ import {
 	importDataset,
 	createDatasetFrom,
 	importFromKafka,
+	importFromDP,
 	deleteDataset
 } from '../actions/media';
 
@@ -274,6 +275,18 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	 */
 	onImportFromKafka() {
 		store.dispatch(importFromKafka())
+			.then(() => {
+				this.datasetIdx = this.datasets.length;//select the newly created dataset
+				this.onActivate();
+			})
+			.catch(error => this.errorPopup(error.message));
+	}
+
+	/**
+	 * Fired when clic on import from DP
+	 */
+	onImportFromDP() {
+		store.dispatch(importFromDP())
 			.then(() => {
 				this.datasetIdx = this.datasets.length;//select the newly created dataset
 				this.onActivate();
@@ -609,6 +622,14 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					title="Import a new dataset from Kafka"
 					@click="${this.onImportFromKafka}">
 				Import from Kafka
+			</mwc-button>
+			<mwc-button outlined
+					class="newDataset"
+					type="button"
+					icon="add"
+					title="Import a new dataset from DebiAI DP"
+					@click="${this.onImportFromDP}">
+				Import from DebiAI
 			</mwc-button>
 		`;
 	}

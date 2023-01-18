@@ -8,6 +8,7 @@ const populator = require('../helpers/data-populator');
 const { elise_remove_image } = require('../routes/elise_plugin.js');// ELISE
 const { getSelectionFromKafka } = require('./kafka_plugin');
 const { downloadFilesFromMinio } = require('./minio_plugin');
+const fetch = require("node-fetch");
 
 /**
  * @api {get} /datasets Get list of datasets
@@ -109,6 +110,94 @@ async function post_dataset_from(req, res) {
 }
 
 /**
+ * @api {post} /datasets/import_from_dataprovider Import a dataset from confiance dp+minio
+ * @apiName GetDatasetsFromDP
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Error in DP import
+ *     HTTP/1.1 404 Error in Minio import
+ *     HTTP/1.1 400 Error while creating dataset
+ *     HTTP/1.1 401 Unauthorized
+ */
+async function import_dataset_from_dataprovider(req, res) {
+	console.log("import_dataset_from_dataprovider");
+	// tmp : a recup dans config ou cli ou ?
+	const dp_host = "http://127.0.0.1:3011"
+	checkAdmin(req, async () => {
+		console.log('##### Importing from dataprovider');
+		const projs = await get_project_list(dp_host).then(res => {return res});
+
+		//project selector 
+		//tmp :p
+		const proj = projs['vdp_v4_test_2_new_struct_60k']
+		console.log("BR1", proj.name);
+
+		const selections = await get_selection_list(dp_host, proj.name).then(res => {return res});
+
+		//selection selector 
+		//tmp :p
+		const sel = selections[0]
+		console.log("BR2", sel);
+
+		const ids = await get_id_list(dp_host, proj.name, sel.id).then(res => {return res});
+		console.log("BR3", ids);
+
+		const uris = await get_minio_uris(dp_host, proj.name, ids).then(res => {return res});
+		console.log("BR4", uris);
+
+	});
+
+	return res.status(400).json({ message: 'Not fully implemented yet' });
+}
+
+async function get_project_list(dp_host) {
+	return await fetch(dp_host+"/debiai/info", { method: 'get', headers: { 'Content-Type': 'application/json' } })
+	.then(res => {
+		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
+		else return res.status(200).json({ message: 'Response error: '+res });
+	})
+	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+}
+
+async function get_selection_list(dp_host, proj_name) {
+	return await fetch(dp_host+"/debiai/view/"+proj_name+"/selections", { method: 'get', headers: { 'Content-Type': 'application/json' } })
+	.then(res => {
+		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
+		else return res.status(200).json({ message: 'Response error: '+res });
+	})
+	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+}
+
+async function get_id_list(dp_host, proj_name, sel_id) {
+	return await fetch(dp_host+"/debiai/view/"+proj_name+"/selection/"+sel_id+"/selectedDataIdList", { method: 'get', headers: { 'Content-Type': 'application/json' } })
+	.then(res => {
+		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
+		else return res.status(200).json({ message: 'Response error: '+res });
+	})
+	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+}
+
+async function get_minio_uris(dp_host, proj_name, ids) {
+	return await fetch(dp_host+"/project/"+proj_name+"/data", { 
+		method: 'POST', 
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(ids)
+	 })
+	.then(res => {
+		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
+		else return res.status(200).json({ message: 'Response error: '+res });
+	})
+	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+}
+
+/**
  * @api {post} /datasets/import_from_kafka Import a dataset from kafka+minio
  * @apiName GetDatasetsFromKafka
  * @apiGroup Dataset
@@ -129,13 +218,28 @@ async function import_dataset_from_kafka(req, res) {
 	console.log("import_dataset_from_kafka");
 	checkAdmin(req, async () => {
 		console.log('##### Importing from KAFKA');
-		var kafkaSelection = await getSelectionFromKafka().catch((e) => {
-			console.error('Error in Kafka import\n'+e);
-			return res.status(404).json({ message: 'Error in Kafka import\n'+e });
-		});
+		var kafkaSelection;
+		const in_confiance = false;
+		if (!in_confiance) {
+			//BR fake Kafka (actually real one but faked import) for dev outside Confiance
+			kafkaSelection = { sample_ids:
+				[ { id: 'tjczulrnsy' },
+				  { id: 'toljohjgfu' },
+				  { id: 'eltounnrud' },
+				  { id: 'eygrusipxu' } ],
+			   project_name: 'vdp_v4_demo_test',
+			   selection_name: 'DebiAI Selection VDP 75',
+			   date: 1670510023.6422513 }
+		} else {
+			kafkaSelection = await getSelectionFromKafka().catch((e) => {
+				console.error('Error in Kafka import\n'+e);
+				return res.status(404).json({ message: 'Error in Kafka import\n'+e });
+			});
+		}
 		//BR tpo (trop long pour le log qd ca bug!!) 
-		console.log("kafkaSelection=",kafkaSelection);
+		//console.log("kafkaSelection=",kafkaSelection);
 		
+
 		console.log('# 1) Create a new dataset');
 		console.log('# 1.1) get/set members');
 		let dataset = {};
@@ -145,10 +249,70 @@ async function import_dataset_from_kafka(req, res) {
 		dataset.data_type = kafkaSelection.data_type ? kafkaSelection.data_type : dataset.data_type = 'image';// ... TODO : set to 'remote_image' when minio will work without local copy
 		console.log("dataset=",dataset);
 		console.log('# 1.2) getPathFromIds');
-		dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name, kafkaSelection.project_name).catch((e) => {
-			console.error('Error in Minio import\n'+e);
-			return res.status(404).json({ message: 'Error in Minio import\n'+e });
-		});
+
+		/*** BR: format (actuel, peut-être sujet à modifs)
+		 * 
+{
+    "date": 1665576743.3672486,
+    "origine": "Active Learning init_al",
+    "project_name": "AL yolov5",
+    "sample_ids": [
+        {
+            "id": "000000000436.jpgImage"
+        },
+        {
+            "id": "000000000400.jpgImage"
+        }
+    ],
+    "selection_name": "AL__50_init_al",
+    "storage": {
+        "type": "minio", # NFS , Local, etc.
+        "path": "bucket_name"    # peut-etre deviendra: bucket_name et bucket_path (chemin dans le bucket)
+    },
+    "destination": "Pixano",
+    "task": {
+        "name": "object detection", # segmentation, classification, etc. 
+        "task_information": [
+            {
+                "classe": "A"
+            },
+            {
+                "classe": "B"
+            },
+            {
+                "classe": "C"
+            },
+            {
+                "classe": "D"
+            }
+        ]
+    }
+}
+		 * 
+		 * a noter que dans le cas d'un import de selection provenant de DebiAI
+		 * on a pas la propriete "task" (a priori), vu que DebiAI n'a pas vraiment de raison de la connaitre
+		 * (et peut être pas "storage" non plus)
+		 * ---> d'apres mail Ahmed du 12/10, si...
+		 * DU COUP(?), il faut trouver un moyen pour avoir la correspondance (avec "project_name" ?)
+		 * => il faut que ces infos aient été stockées qqpart au préalable
+		 * (LevelDB? OpenSearch?)
+		 * 
+		 * ----> le bucket n'est plus fixe, mais indiqué dans "storage"
+
+		TODO: tout à remanier...
+
+		 */
+
+
+		//BR tmp minio vide, we fake some url
+		if (/*!in_confiance*/false) {
+			dataset.urlList = ""; //???
+		} else {
+			dataset.urlList = await downloadFilesFromMinio(kafkaSelection.sample_ids,workspace,kafkaSelection.selection_name, kafkaSelection.project_name).catch((e) => {
+				console.error('Error in Minio import\n'+e);
+				return res.status(404).json({ message: 'Error in Minio import\n'+e });
+			});
+		}
 		console.log('# 1.3) getImagesFromPath');
 		const newDataset = await getOrcreateDataset(dataset, workspace);
 		//BR task ?
@@ -444,6 +608,7 @@ module.exports = {
 	post_datasets,
 	post_dataset_from,
 	import_dataset_from_kafka,
+	import_dataset_from_dataprovider,
 	get_dataset,
 	delete_dataset,
 	get_data,

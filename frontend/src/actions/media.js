@@ -84,6 +84,14 @@ export const importFromKafka = () => (dispatch) => {
 	return GET('/api/v1/datasets/import_from_kafka', dispatch);
 }
 
+/**
+ * Import dataset from Data Provider (Confiance).
+ */
+export const importFromDP = () => (dispatch) => {
+	console.log("importFromDP");
+	return GET('/api/v1/datasets/import_from_dataprovider', dispatch);
+}
+
 /**************************** */
 
 /**

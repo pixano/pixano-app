@@ -18,6 +18,7 @@ const { get_datasets,
 	post_datasets,
 	post_dataset_from,
 	import_dataset_from_kafka,
+	import_dataset_from_dataprovider,
 	get_dataset,
 	delete_dataset,
 	get_data,
@@ -74,6 +75,7 @@ router.get('/profile', middleware.checkToken, get_profile);
 router.get('/datasets', middleware.checkToken, get_datasets);
 router.post('/datasets', middleware.checkToken, post_datasets);
 router.get('/datasets/import_from_kafka', middleware.checkToken, import_dataset_from_kafka);
+router.get('/datasets/import_from_dataprovider', middleware.checkToken, import_dataset_from_dataprovider);
 router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
 router.post('/datasets/:dataset_id/from', middleware.checkToken, post_dataset_from);
 router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);

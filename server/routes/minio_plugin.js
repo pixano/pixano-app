@@ -89,7 +89,7 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name,project_n
 	if (project_name==='Valeo') bucket_name = 'pixanovaleousecase';// special case : different bucket
 	var exists = await minioClient.bucketExists(bucket_name).catch((e) => {throw "Minio: Bucket does not exist\n"+e;});
 	if (!exists) throw "Minio: Bucket "+bucket_name+" does not exist";
-	console.log(`Bucket ${bucket_name} exists.`)
+	console.log(`Bucket ${bucket_name} exists.`);
 
 	// Extract the list of image from the bucket
 	var data = [];
