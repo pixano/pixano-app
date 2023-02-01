@@ -38,6 +38,8 @@ export function cli(argv) {
 //BR test
 //pour version locale (mais de tte facon kafka phase2 marche pas en local!) -- dans le docker, c'est ecrasé par args fournis
 		.option('kafka', 'Kafka broker', 'localhost:8000')
+		.option('minio', 'Minio url', 'https://minio-storage-console.apps.confianceai-public.irtsysx.fr:9000')
+		.option('data-provider', 'Data Provider url', 'https://debiai-data-provider-os.confianceai-public.irtsysx.fr:3011')  //BR TODO check this url
 		.example('pixano /path/to/workspace','The most common way to use Pixano:')
 		.example('pixano --workspace /path/to/workspace --port 5001','Run on a specific port:')
 		.example('pixano --elise=htth://specifiurl --kafka=kafka_broker','Launch in confiance environment:')

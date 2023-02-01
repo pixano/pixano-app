@@ -237,7 +237,7 @@ async function put_user(req, res) {
 const checkAdmin = async (req, action) => {
 	const user = await db.get(dbkeys.keyForUser(req.username));
 	if (user.role === 'admin') {
-		action();
+		return action();
 	} else {
 		res.status(401).json({});
 	}

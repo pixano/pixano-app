@@ -85,12 +85,37 @@ export const importFromKafka = () => (dispatch) => {
 }
 
 /**
- * Import dataset from Data Provider (Confiance).
+ * get project list from Data Provider (Confiance).
  */
-export const importFromDP = () => (dispatch) => {
-	console.log("importFromDP");
-	return GET('/api/v1/datasets/import_from_dataprovider', dispatch);
+export const projsFromDP = () => (dispatch) => {	
+	//console.log("projsFromDP");
+	return GET('/api/v1/dataprovider/projects_from_dataprovider', dispatch);
 }
+
+/**
+ * get selection list from Data Provider (Confiance).
+ */
+export const selectionsFromDP = (project_name) => (dispatch) => {	
+	//console.log("selectionsFromDP", project_name);
+	return GET('/api/v1/dataprovider/selections_from_dataprovider/'+project_name, dispatch);
+}
+
+/**
+ * get id list from Data Provider (Confiance).
+ */
+export const id_listFromDP = (project_name, sel_id) => (dispatch) => {	
+	//console.log("id_listFromDP", project_name, sel_id);
+	return GET('/api/v1/dataprovider/id_list_from_dataprovider/'+project_name+'/'+sel_id, dispatch);
+}
+
+/**
+ * get Minio uris from Data Provider (Confiance).
+ */
+export const minio_urisFromDP = (project_name, ids) => (dispatch) => {	
+	//console.log("minio_urisFromDP", project_name, ids);
+	return POST('/api/v1/dataprovider/minio_uris_from_dataprovider/'+project_name, ids, dispatch);
+}
+
 
 /**************************** */
 

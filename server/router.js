@@ -18,7 +18,10 @@ const { get_datasets,
 	post_datasets,
 	post_dataset_from,
 	import_dataset_from_kafka,
-	import_dataset_from_dataprovider,
+	projects_from_dataprovider,
+	selections_from_dataprovider,
+	id_list_from_dataprovider,
+	minio_uris_from_dataprovider,
 	get_dataset,
 	delete_dataset,
 	get_data,
@@ -50,6 +53,8 @@ const { print,
 	get_pixano_version } = require('./config/db');
 const { elise_isRunning, elise_search_similar_images, elise_semantic_search } = require('./routes/elise_plugin');	
 
+
+
 /**
  * Router handling the HTTP requests
  * from the client.
@@ -72,10 +77,15 @@ router.delete('/users/:username', middleware.checkToken, delete_user);
 
 router.get('/profile', middleware.checkToken, get_profile);
 
+//for Confiance data provider
+router.get('/dataprovider/projects_from_dataprovider', middleware.checkToken, projects_from_dataprovider);
+router.get('/dataprovider/selections_from_dataprovider/:project_name', middleware.checkToken, selections_from_dataprovider);
+router.get('/dataprovider/id_list_from_dataprovider/:project_name/:sel_id', middleware.checkToken, id_list_from_dataprovider);
+router.post('/dataprovider/minio_uris_from_dataprovider/:project_name', middleware.checkToken, minio_uris_from_dataprovider);
+
 router.get('/datasets', middleware.checkToken, get_datasets);
 router.post('/datasets', middleware.checkToken, post_datasets);
 router.get('/datasets/import_from_kafka', middleware.checkToken, import_dataset_from_kafka);
-router.get('/datasets/import_from_dataprovider', middleware.checkToken, import_dataset_from_dataprovider);
 router.get('/datasets/:dataset_id', middleware.checkToken, get_dataset);
 router.post('/datasets/:dataset_id/from', middleware.checkToken, post_dataset_from);
 router.delete('/datasets/:dataset_id', middleware.checkToken, delete_dataset);

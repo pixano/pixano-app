@@ -10,6 +10,10 @@ const { getSelectionFromKafka } = require('./kafka_plugin');
 const { downloadFilesFromMinio } = require('./minio_plugin');
 const fetch = require("node-fetch");
 
+// tmp : a recup dans config ou cli ou ?
+// const dp_host = "http://127.0.0.1:3011"
+const dp_host = "https://debiai-data-provider-os-ec5.apps.confianceai-public.irtsysx.fr"
+
 /**
  * @api {get} /datasets Get list of datasets
  * @apiName GetDatasets
@@ -126,75 +130,154 @@ async function post_dataset_from(req, res) {
  *     HTTP/1.1 400 Error while creating dataset
  *     HTTP/1.1 401 Unauthorized
  */
-async function import_dataset_from_dataprovider(req, res) {
+async function old_import_dataset_from_dataprovider(req, res) {
 	console.log("import_dataset_from_dataprovider");
-	// tmp : a recup dans config ou cli ou ?
-	const dp_host = "http://127.0.0.1:3011"
 	checkAdmin(req, async () => {
 		console.log('##### Importing from dataprovider');
-		const projs = await get_project_list(dp_host).then(res => {return res});
+		const projs = await get_dp(dp_host+"/debiai/info").then(res => {return res});
 
 		//project selector 
 		//tmp :p
 		const proj = projs['vdp_v4_test_2_new_struct_60k']
 		console.log("BR1", proj.name);
 
-		const selections = await get_selection_list(dp_host, proj.name).then(res => {return res});
+		const selections = await get_dp(dp_host+"/debiai/view/"+proj.name+"/selections").then(res => {return res});
 
 		//selection selector 
 		//tmp :p
 		const sel = selections[0]
 		console.log("BR2", sel);
 
-		const ids = await get_id_list(dp_host, proj.name, sel.id).then(res => {return res});
+		const ids = await get_dp(dp_host+"/debiai/view/"+proj.name+"/selection/"+sel.id+"/selectedDataIdList").then(res => {return res});
 		console.log("BR3", ids);
 
-		const uris = await get_minio_uris(dp_host, proj.name, ids).then(res => {return res});
+		const uris = await get_dp_minio_uris(dp_host, proj.name, ids).then(res => {return res});
 		console.log("BR4", uris);
-
 	});
 
 	return res.status(400).json({ message: 'Not fully implemented yet' });
 }
 
-async function get_project_list(dp_host) {
-	return await fetch(dp_host+"/debiai/info", { method: 'get', headers: { 'Content-Type': 'application/json' } })
-	.then(res => {
-		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
-		else return res.status(200).json({ message: 'Response error: '+res });
+/**
+ * @api {post} /datasets/projects_from_dataprovider get projects list from confiance dp
+ * @apiName GetProjsFromDP
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Error in DP import
+ *     HTTP/1.1 401 Unauthorized
+ */
+async function projects_from_dataprovider(req, res) {
+	await checkAdmin(req, async () => {
+		console.log('##### Importing project list from dataprovider');
+		return await get_dp(dp_host+"/debiai/info").then(res => res);
 	})
-	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+	.then(projs=>{return res.status(200).send(projs);})
+	.catch(err => {return res.status(400).send(err);})
 }
 
-async function get_selection_list(dp_host, proj_name) {
-	return await fetch(dp_host+"/debiai/view/"+proj_name+"/selections", { method: 'get', headers: { 'Content-Type': 'application/json' } })
-	.then(res => {
-		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
-		else return res.status(200).json({ message: 'Response error: '+res });
+/**
+ * @api {post} /datasets/selections_from_dataprovider get projects list from confiance dp
+ * @apiName GetSelectionsFromDP
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Error in DP import
+ *     HTTP/1.1 401 Unauthorized
+ */
+async function selections_from_dataprovider(req, res) {
+	await checkAdmin(req, async () => {
+		console.log('##### Importing selections from dataprovider');
+		//console.log('##### BR req.params:', req.params);
+		return await get_dp(dp_host+"/debiai/view/"+req.params.project_name+"/selections").then(res => res);
 	})
-	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+	.then((selections)=>{return res.status(200).send(selections);})
+	.catch(err => {return res.status(400).send(err);})
 }
 
-async function get_id_list(dp_host, proj_name, sel_id) {
-	return await fetch(dp_host+"/debiai/view/"+proj_name+"/selection/"+sel_id+"/selectedDataIdList", { method: 'get', headers: { 'Content-Type': 'application/json' } })
-	.then(res => {
-		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
-		else return res.status(200).json({ message: 'Response error: '+res });
+/**
+ * @api {post} /datasets/id_list_from_dataprovider get id list from confiance dp
+ * @apiName GetIdListFromDP
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Error in DP import
+ *     HTTP/1.1 401 Unauthorized
+ */
+async function id_list_from_dataprovider(req, res) {
+	await checkAdmin(req, async () => {
+		console.log('##### Importing id list from dataprovider');
+		//console.log('##### BR req.params:', req.params);
+		return await get_dp(dp_host+"/debiai/view/"+req.params.project_name+"/selection/"+req.params.sel_id+"/selectedDataIdList").then(res => res);
 	})
-	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+	.then((selections)=>{return res.status(200).send(selections);})
+	.catch(err => { return res.status(400).send(err);})
 }
 
-async function get_minio_uris(dp_host, proj_name, ids) {
-	return await fetch(dp_host+"/project/"+proj_name+"/data", { 
+/**
+ * @api {post} /datasets/minio_uris_from_dataprovider get minio uris from confiance dp
+ * @apiName GetMinioUrisFromDP
+ * @apiGroup Dataset
+ * @apiPermission admin
+ * 
+ * @apiParam {RestDataset} body
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 201 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Error in DP import
+ *     HTTP/1.1 401 Unauthorized
+ */
+async function minio_uris_from_dataprovider(req, res) {
+	await checkAdmin(req, async () => {
+		console.log('##### Importing Minio uris from dataprovider');
+		//console.log('##### BR req.params:', req.params);  //OK
+		//console.log('##### BR req.body:', req.body); //OK
+		return await get_dp_minio_uris(dp_host, req.params.project_name, req.body).then(res => {return res});
+	})
+	.then((selections)=>{return res.status(200).send(selections);})
+	.catch(err => { return res.status(400).send(err);})
+}
+
+async function get_dp(url) {
+	return await fetch(url, { method: 'get', headers: { 'Content-Type': 'application/json' } })
+	.then(res => {
+		if (res.statusText == 'OK') { return res.json().then(data => Promise.resolve(data)); }
+		else { return res.status(200).json({ message: 'Response error: '+res });}
+	})
+	.catch(err => {	return Promise.reject(err);});
+}
+
+async function get_dp_minio_uris(dp_host, project_name, ids) {
+	return await fetch(dp_host+"/project/"+project_name+"/data", { 
 		method: 'POST', 
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(ids)
 	 })
 	.then(res => {
-		if (res.statusText == 'OK') {return res.json().then(data => {return data})}
+		if (res.statusText == 'OK') {return res.json().then(data => Promise.resolve(data))}
 		else return res.status(200).json({ message: 'Response error: '+res });
 	})
-	.catch(res => { return res.status(200).json({ message: 'Network error: '+res })});
+	.catch(err => {	return Promise.reject(err);});
 }
 
 /**
@@ -608,7 +691,10 @@ module.exports = {
 	post_datasets,
 	post_dataset_from,
 	import_dataset_from_kafka,
-	import_dataset_from_dataprovider,
+	projects_from_dataprovider,
+	selections_from_dataprovider,
+	id_list_from_dataprovider,
+	minio_uris_from_dataprovider,
 	get_dataset,
 	delete_dataset,
 	get_data,
