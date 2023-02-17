@@ -103,9 +103,9 @@ export const selectionsFromDP = (project_name) => (dispatch) => {
 /**
  * get id list from Data Provider (Confiance).
  */
-export const id_listFromDP = (project_name, sel_id) => (dispatch) => {	
-	//console.log("id_listFromDP", project_name, sel_id);
-	return GET('/api/v1/dataprovider/id_list_from_dataprovider/'+project_name+'/'+sel_id, dispatch);
+export const id_listFromDP = (project_name, sel) => (dispatch) => {	
+	//console.log("id_listFromDP", project_name, sel);
+	return GET('/api/v1/dataprovider/id_list_from_dataprovider/'+project_name+'/'+sel.id+'/'+sel.name, dispatch);
 }
 
 /**

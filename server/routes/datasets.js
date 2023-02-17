@@ -7,12 +7,9 @@ const { checkAdmin } = require('./users');
 const populator = require('../helpers/data-populator');
 const { elise_remove_image } = require('../routes/elise_plugin.js');// ELISE
 const { getSelectionFromKafka } = require('./kafka_plugin');
-const { downloadFilesFromMinio } = require('./minio_plugin');
+const { downloadFilesFromMinio } = require('./minio_plugin').default;
+const { createTasksFromDPImport } = require('./tasks');
 const fetch = require("node-fetch");
-
-// tmp : a recup dans config ou cli ou ?
-// const dp_host = "http://127.0.0.1:3011"
-const dp_host = "https://debiai-data-provider-os-ec5.apps.confianceai-public.irtsysx.fr"
 
 /**
  * @api {get} /datasets Get list of datasets
@@ -114,51 +111,6 @@ async function post_dataset_from(req, res) {
 }
 
 /**
- * @api {post} /datasets/import_from_dataprovider Import a dataset from confiance dp+minio
- * @apiName GetDatasetsFromDP
- * @apiGroup Dataset
- * @apiPermission admin
- * 
- * @apiParam {RestDataset} body
- * 
- * @apiSuccessExample Success-Response:
- *     HTTP/1.1 201 OK
- * 
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Error in DP import
- *     HTTP/1.1 404 Error in Minio import
- *     HTTP/1.1 400 Error while creating dataset
- *     HTTP/1.1 401 Unauthorized
- */
-async function old_import_dataset_from_dataprovider(req, res) {
-	console.log("import_dataset_from_dataprovider");
-	checkAdmin(req, async () => {
-		console.log('##### Importing from dataprovider');
-		const projs = await get_dp(dp_host+"/debiai/info").then(res => {return res});
-
-		//project selector 
-		//tmp :p
-		const proj = projs['vdp_v4_test_2_new_struct_60k']
-		console.log("BR1", proj.name);
-
-		const selections = await get_dp(dp_host+"/debiai/view/"+proj.name+"/selections").then(res => {return res});
-
-		//selection selector 
-		//tmp :p
-		const sel = selections[0]
-		console.log("BR2", sel);
-
-		const ids = await get_dp(dp_host+"/debiai/view/"+proj.name+"/selection/"+sel.id+"/selectedDataIdList").then(res => {return res});
-		console.log("BR3", ids);
-
-		const uris = await get_dp_minio_uris(dp_host, proj.name, ids).then(res => {return res});
-		console.log("BR4", uris);
-	});
-
-	return res.status(400).json({ message: 'Not fully implemented yet' });
-}
-
-/**
  * @api {post} /datasets/projects_from_dataprovider get projects list from confiance dp
  * @apiName GetProjsFromDP
  * @apiGroup Dataset
@@ -174,9 +126,9 @@ async function old_import_dataset_from_dataprovider(req, res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function projects_from_dataprovider(req, res) {
-	await checkAdmin(req, async () => {
+	return await checkAdmin(req, async () => {
 		console.log('##### Importing project list from dataprovider');
-		return await get_dp(dp_host+"/debiai/info").then(res => res);
+		return await get_dp("/debiai/projects").then(res => res);
 	})
 	.then(projs=>{return res.status(200).send(projs);})
 	.catch(err => {return res.status(400).send(err);})
@@ -198,10 +150,11 @@ async function projects_from_dataprovider(req, res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function selections_from_dataprovider(req, res) {
-	await checkAdmin(req, async () => {
+	return await checkAdmin(req, async () => {
 		console.log('##### Importing selections from dataprovider');
 		//console.log('##### BR req.params:', req.params);
-		return await get_dp(dp_host+"/debiai/view/"+req.params.project_name+"/selections").then(res => res);
+		// params_id ?
+		return await get_dp("/debiai/projects/"+req.params.project_name+"/selections").then(res => res);
 	})
 	.then((selections)=>{return res.status(200).send(selections);})
 	.catch(err => {return res.status(400).send(err);})
@@ -223,43 +176,90 @@ async function selections_from_dataprovider(req, res) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function id_list_from_dataprovider(req, res) {
-	await checkAdmin(req, async () => {
+	return await checkAdmin(req, async () => {
 		console.log('##### Importing id list from dataprovider');
 		//console.log('##### BR req.params:', req.params);
-		return await get_dp(dp_host+"/debiai/view/"+req.params.project_name+"/selection/"+req.params.sel_id+"/selectedDataIdList").then(res => res);
+		return await get_dp("/debiai/projects/"+req.params.project_name+"/selections/"+req.params.sel_id+"/selected-data-id-list").then(res => res);
 	})
-	.then((selections)=>{return res.status(200).send(selections);})
-	.catch(err => { return res.status(400).send(err);})
+	.then(async (selections)=>{
+		task = await process_selection(res, req.params.project_name, req.params.sel_name, selections)
+		.then(res => {return res})
+		.catch(err => {throw err})
+		//console.log("Created Task", task);
+		return res.status(200).send(task);
+	})
+	.catch(err => {
+		console.log("ERREUR in id_list_from_dataprovider:", err);
+		return res.status(400).json({ message: err });
+	})
 }
 
-/**
- * @api {post} /datasets/minio_uris_from_dataprovider get minio uris from confiance dp
- * @apiName GetMinioUrisFromDP
- * @apiGroup Dataset
- * @apiPermission admin
- * 
- * @apiParam {RestDataset} body
- * 
- * @apiSuccessExample Success-Response:
- *     HTTP/1.1 201 OK
- * 
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Error in DP import
- *     HTTP/1.1 401 Unauthorized
- */
-async function minio_uris_from_dataprovider(req, res) {
-	await checkAdmin(req, async () => {
-		console.log('##### Importing Minio uris from dataprovider');
-		//console.log('##### BR req.params:', req.params);  //OK
-		//console.log('##### BR req.body:', req.body); //OK
-		return await get_dp_minio_uris(dp_host, req.params.project_name, req.body).then(res => {return res});
+//// remaniement, ce n'est plus une API --nom temporaire, j'ai pas mieux en stock
+// get infos on "selections" from data-provider (dp_info)
+// extract minio paths from dp_info
+// get images from minio
+// create Dataset
+// extract annotations from dp_info
+// create Task
+async function process_selection(res, project_name, sel_name, selections) {
+	console.log('##### Importing Minio uris from dataprovider');
+	dp_res =  await get_dp_minio_uris(project_name, selections).then(res => {return res});
+
+	bucket_names = []
+	bucket_paths = []
+	filenames = []
+	if (!dp_res  || dp_res.length == 0) { throw "ERREUR dp_res empty"; }
+	Object.keys(dp_res).forEach(key => {
+		console.log("dp_res[", key, "]", dp_res[key].storage);
+		//console.log("dp_res[", key, "].annotations", dp_res[key].annotations);
+		if(!dp_res[key].storage) { throw "No storage info in selection, import aborted";}
+		if(!dp_res[key].storage.minio) { throw "No minio storage info in selection, import aborted";}
+		if(!dp_res[key].storage.minio.bucket_name) { throw "No minio bucket_name info in selection, import aborted";}
+		if(!dp_res[key].storage.minio.basepath) { throw "No minio basepath info in selection, import aborted";}
+		bname = dp_res[key].storage.minio.bucket_name;
+		bpath = dp_res[key].storage.minio.basepath;
+		if (bpath.startsWith(bname)) {
+			//slice parce que le bucket est mis en prefixe du path !!
+			bpath = bpath.slice(bname.length);
+		}
+		bucket_names.push(bname);
+		bucket_paths.push(bpath);
+		filenames.push(dp_res[key].storage.filename);
+	});
+	console.log(" - buckets:", bucket_names);
+	console.log(" - paths:", bucket_paths);
+	console.log(" - filenames:", filenames);
+
+	console.log('# 1) Create a new dataset');
+	console.log('# 1.1) get/set members');
+	sel_name = sel_name.replace(/\s/g, '_');
+	let dataset = {};
+	dataset.date = Date.now();
+	dataset.path = 'importedFromDebiai/' + sel_name;
+	dataset.id = project_name.replace(/\s/g, '_') + "_" + sel_name;
+	//dataset.data_type = kafkaSelection.data_type ? kafkaSelection.data_type : dataset.data_type = 'image';// ... TODO : set to 'remote_image' when minio will work without local copy
+	dataset.data_type = 'image'   // TODO: gérer autres cas...
+	console.log("dataset=",dataset);
+	console.log('# 1.2) getPathFromIds');
+	dataset.urlList = await downloadFilesFromMinio(filenames, workspace, sel_name, bucket_names[0], bucket_paths[0]).catch((e) => {
+		console.error('Error in Minio import\n'+e);
+		throw 'Error in Minio import\n'+e;
 	})
-	.then((selections)=>{return res.status(200).send(selections);})
-	.catch(err => { return res.status(400).send(err);})
+	console.log('# 1.3) getImagesFromPath');
+	const newDataset = await getOrcreateDataset(dataset, workspace);
+	if (newDataset) {
+		return await createTasksFromDPImport(dp_res, newDataset)
+		.then(task => {return task})
+		.catch(err => {
+			console.log("Error while creating task", err);
+			throw 'Error while creating task:' + err;
+		});
+	} else throw 'Error while creating dataset';
 }
 
 async function get_dp(url) {
-	return await fetch(url, { method: 'get', headers: { 'Content-Type': 'application/json' } })
+	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
+	return await fetch(dp_host + url, { method: 'get', headers: { 'Content-Type': 'application/json' } })
 	.then(res => {
 		if (res.statusText == 'OK') { return res.json().then(data => Promise.resolve(data)); }
 		else { return res.status(200).json({ message: 'Response error: '+res });}
@@ -267,7 +267,8 @@ async function get_dp(url) {
 	.catch(err => {	return Promise.reject(err);});
 }
 
-async function get_dp_minio_uris(dp_host, project_name, ids) {
+async function get_dp_minio_uris(project_name, ids) {
+	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
 	return await fetch(dp_host+"/project/"+project_name+"/data", { 
 		method: 'POST', 
 		headers: { 'Content-Type': 'application/json' },
@@ -653,7 +654,7 @@ const getDatasetFromId = (db, id) => {
  * @param {String} dataset_id
  * @param {String} type
  */
-function getAllDataFromDataset(dataset_id) {
+const getAllDataFromDataset = (dataset_id) => {
 	const dataList = [];
 	const stream = utils.iterateOnDB(db, dbkeys.keyForData(dataset_id), true, false)
 	return new Promise((resolve) => {
@@ -694,7 +695,6 @@ module.exports = {
 	projects_from_dataprovider,
 	selections_from_dataprovider,
 	id_list_from_dataprovider,
-	minio_uris_from_dataprovider,
 	get_dataset,
 	delete_dataset,
 	get_data,

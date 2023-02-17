@@ -34,8 +34,7 @@ async function elise_isRunning(req, res) {
  */
 async function elise_index_image(url,id,datasetId,f) {
 	//BR
-	console.log("BR Elise indexing");
-	
+	//console.log("BR Elise indexing");
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'index');
@@ -55,7 +54,10 @@ async function elise_index_image(url,id,datasetId,f) {
 			else console.log("KO :\n",res);
 		})
 		.then(res => console.log(res))
-		.catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
+		.catch((err) => {
+			console.error("ERROR while calling ELISE for indexing => is ELISE server running ?")
+			//console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err)
+		});
 }
 
 /**
@@ -73,7 +75,7 @@ async function elise_index_image(url,id,datasetId,f) {
 			else console.log("KO :\n",res);
 		})
 		.then(res => console.log(res))
-		.catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err));
+		.catch((err) => console.error("ERROR while calling ELISE => is ELISE server running ? ")); // \nError was:",err)); //BR clearing logs...
 }
 
 /**

@@ -80,8 +80,8 @@ router.get('/profile', middleware.checkToken, get_profile);
 //for Confiance data provider
 router.get('/dataprovider/projects_from_dataprovider', middleware.checkToken, projects_from_dataprovider);
 router.get('/dataprovider/selections_from_dataprovider/:project_name', middleware.checkToken, selections_from_dataprovider);
-router.get('/dataprovider/id_list_from_dataprovider/:project_name/:sel_id', middleware.checkToken, id_list_from_dataprovider);
-router.post('/dataprovider/minio_uris_from_dataprovider/:project_name', middleware.checkToken, minio_uris_from_dataprovider);
+router.get('/dataprovider/id_list_from_dataprovider/:project_name/:sel_id/:sel_name', middleware.checkToken, id_list_from_dataprovider);
+//router.post('/dataprovider/minio_uris_from_dataprovider/:project_name', middleware.checkToken, minio_uris_from_dataprovider);
 
 router.get('/datasets', middleware.checkToken, get_datasets);
 router.post('/datasets', middleware.checkToken, post_datasets);

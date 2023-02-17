@@ -97,7 +97,8 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 				this.datasets = datasets
 				// refresh displayed items
 				if (this.datasets.length) {
-					if (this.datasetIdx===-1) this.datasetIdx = 0;//select the first one if nothing was selected
+					//select the last one if nothing was selected, or if unexpexcted behaviour
+					if (this.datasetIdx===-1 || this.datasetIdx >= this.datasets.length) this.datasetIdx = this.datasets.length-1;
 					store.dispatch(updateDatasetId(this.datasets[this.datasetIdx].id));
 					store.dispatch(fetchRangeDatas(this.page, this.pageSize))
 						.then((data) => {
@@ -308,6 +309,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 			this.dialog_projsel_template.push(html`<mwc-list-item dialogAction='ok'>${key}</mwc-list-item>`);
 		};
 		const projSelectorElem = this.shadowRoot.getElementById('dialog-project-selector');
+		console.log("SelectorElement", projSelectorElem)
 		projSelectorElem.open = true;
 	}
 
@@ -341,25 +343,27 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 
 	onSelectionSelected(selected) {
 		const sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index]]
+		console.log("  selected selection full:", sel);
 		console.log("  selected selection:", sel.id);
+		store.dispatch(id_listFromDP(this.project_name, sel)).then((newtask) => {
+			console.log("id_listFromDP", newtask);
+			this.datasetIdx = this.datasets.length;//select the newly created dataset
+			this.onActivate();
+			// update local copy of Redux
+			this.tasks = getState('application').tasks;
+			this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
+		}).catch(error => {
+			this.errorPopup(error.message)
+		});
 
-		store.dispatch(id_listFromDP(this.project_name, sel.id)).then((ids) => {
-			console.log("id_listFromDP", ids);
-			store.dispatch(minio_urisFromDP(this.project_name, ids)).then((uris) => {
-				console.log("minio_urisFromDP", uris);
-
-				//YATTA !! we got it !
-				//TODO -> le reste (minio, creer dataset...)
-				//FAKE image en attendant qu'on ait des uris minio
-				
-				//TMP
-				// bucket uc-renault-welding-inspection  (attention, il est dans le path...)
-				// path : "uc-renault-welding-inspection/First_Sample_of_Dataset/DATASET Bench/train/OK"
-				//question: j'importe les images ici ou je garde une connection ouverte avec Minio ??
-
-
-			}).catch(error => this.errorPopup(error.message));
-		}).catch(error => this.errorPopup(error.message));
+		/***
+		//tmp test... maintenant on crée une task, pas juste un dataset, alors faut gerer différemment (voire tout deplacer dans tasks.js ?)
+		store.dispatch(importTaskFromKafka(task)).then((newtask) => {
+			// update local copy of Redux
+			this.tasks = getState('application').tasks;
+			this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
+		}).catch((error) => this.errorPopup(error.message));
+		**/
 	}
 
 	/**
@@ -850,7 +854,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	get dialogProjectSelector() {
 		return html`
 			<mwc-dialog heading="Select a project" id="dialog-project-selector">
-				<mwc-list id='list-project-selector' @selected=${this.onProjectSelected} style="height: 55vh; overflow-y: auto;">
+				<mwc-list id='list-project-selector' @action=${this.onProjectSelected} style="height: 55vh; overflow-y: auto;">
 				${this.dialog_projsel_template}
 				</mwc-list>
 			</mwc-dialog>
@@ -860,7 +864,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 	get dialogSelectionSelector() {
 		return html`
 			<mwc-dialog heading="Select a selection" id="dialog-selection-selector">
-				<mwc-list id='list-selection-selector' @selected=${this.onSelectionSelected} style="height: 55vh; overflow-y: auto;">
+				<mwc-list id='list-selection-selector' @action=${this.onSelectionSelected} style="height: 55vh; overflow-y: auto;">
 				${this.dialog_selsel_template}
 				</mwc-list>
 			</mwc-dialog>

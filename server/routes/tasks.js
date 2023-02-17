@@ -7,12 +7,12 @@ const batchManager = require('../helpers/batch-manager');
 const utils = require('../helpers/utils');
 const { checkAdmin } = require('./users');
 const { getOrcreateSpec } = require('./specs');
-const { getOrcreateDataset } = require('./datasets');
-const { createJob } = require('./jobs');
-const { getAllDataFromDataset,
+const { getOrcreateDataset, getAllDataFromDataset,
 	getAllPathsFromDataset,
 	getDataDetails } = require('./datasets');
+const { createJob } = require('./jobs');
 const fetch = require("node-fetch");
+
 
 const annotation_format_version = "0.9";
 
@@ -252,6 +252,120 @@ async function import_tasks(req, res) {
 		res.sendStatus(200);
 	});
 }
+
+
+async function createTasksFromDPImport(dp_res, dataset) {
+	let dp_info = []
+	//TODO gerer le fait qu'on recupère pleins de fois les infos de task...
+	// que faire si différentes ?
+	const task_types = new Set()
+
+	Object.keys(dp_res).forEach(key => {
+		Object.keys(dp_res[key].annotations).forEach(ann_key => {
+			console.log("ZZZZ", key, ann_key);
+			//console.log("ZQQ", dp_res[key]);
+			console.log("ZZAA", dp_res[key]['annotations'][ann_key]);
+
+			let task_type = dp_res[key]['annotations'][ann_key].type;
+			//tmp
+			if (!task_type) {
+				task_type = 'classification';
+			}
+			if (task_type === "classification") {
+				dp_info.push({
+					id: key,  //ou plutot dp_res[key].storage. ?? imageid ?
+					name: ann_key,   //TODO checker si on a besoin de ça, et ce qu'il y a dedans au juste...
+					type: task_type,
+					anns: dp_res[key]['annotations'][ann_key].value,
+					//actorId etc.
+				});
+			} else if (task_type === "object_detection") {
+				ann_type = dp_res[key]['annotations'][ann_key].geometry['type'];
+				if (ann_type == "rectangle") {
+					task_type = "rectangle";
+				}
+				//TODO
+				dp_info.push({
+					id: key,   //ou plutot dp_res[key].storage. ?? imageid ?
+					name: ann_key,
+					type: task_type,
+					anns: dp_res[key]['annotations'][ann_key].items,
+					//...
+				})
+			}
+			task_types.add(task_type)
+		});
+	});
+	console.log("dataset", dataset);
+	console.log("dataset id", dataset['id']);
+	//tmp
+	classif_label_value = {
+		category: [
+			{
+				name: 'classification', color: "black", properties: [
+					{ name: 'checkbox example', type: 'checkbox', default: false },
+					{ name: 'dropdown example', type: 'dropdown', enum: ['something', 'something else', 'anything else'], default: 'something' },
+					{ name: 'textfield example', type: 'textfield', default: 'some text' }
+				]
+			}
+		],
+		default: 'classification'
+	}
+
+
+	for (let task_type of task_types) {
+		const plugin_name = task_type;
+		const task_name = dataset['id']; // + "_task";
+		const task = {
+			name : task_name,
+			spec: {
+				plugin_name,
+				label_schema: classif_label_value,  // defaultLabelValues(plugin_name),
+				settings: {},  //TMP defaultSettings(plugin_name),
+				data_type: dataset.type
+			},
+			dataset: dataset
+		};
+
+		const spec = await getOrcreateSpec(task.spec);
+		try {
+			await db.get(dbkeys.keyForTask(task_name));
+			return res.status(400).json({message: 'Taskname already existing'});
+		} catch(e) {}//catch === everything is ok (Taskname not in use)
+
+		console.log('# 2) Push the new task + dataset');
+		// Task does not exist create it
+		const newTask = {name: task_name, dataset_id: dataset.id, spec_id: spec.id}
+		await db.put(dbkeys.keyForTask(newTask.name), newTask);
+		// Generate first job list
+		await generateJobResultAndLabelsLists(newTask);
+		// Send back the created task
+		const taskDetail = await getTaskDetails(newTask.name);
+		console.log('Task created', taskDetail.name)
+
+		for (dp in dp_info) {
+			if (dp.type === task_type) {
+				// Create Labels
+				const newLabels = {
+					task_name: newTask.name,
+					data_id: dp.id,
+					annotations: dp.anns
+				};
+
+				await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels });
+				if (ann.data.status) {//if existing, get status back
+					resultData = await db.get(dbkeys.keyForResult(newTask.name, newLabels.data_id));//get the status for this data
+					resultData.status = ann.data.status;//add the status
+					await bm.add({ type: 'put', key: dbkeys.keyForResult(newTask.name, newLabels.data_id), value: resultData });
+				}
+			}
+		}
+		await bm.flush();
+		importedTasks.push(newTaskName);
+	}
+}
+
+
 
 
 /**
@@ -734,6 +848,7 @@ const getTaskDetails = async (taskName) => {
  * @param {Object} task 
  */
 async function generateJobResultAndLabelsLists(task) {
+	console.log("TTTT", getAllDataFromDataset)
 	const dataIdList = await getAllDataFromDataset(task.dataset_id);
 	const bm = new batchManager.BatchManager(db);
 	const bar = new cliProgress.SingleBar({
@@ -848,5 +963,6 @@ module.exports = {
 	delete_task,
 	import_tasks,
 	export_tasks,
-	getAllTasksDetails
+	getAllTasksDetails,
+	createTasksFromDPImport
 }
