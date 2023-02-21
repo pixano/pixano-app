@@ -38,7 +38,7 @@ const downloadFilesFromMinio = async (listIds,workspace,selection_name, bucket_n
 	// console.log("Minio config:", minio_config);
 	const minioClient = new Client(minio_config);
 
-	console.log("Minio :", minioClient);
+	//console.log("Minio :", minioClient);
 
 
 	// check if bucket exists/can be accessed

@@ -31,10 +31,6 @@ import {
 	importDataset,
 	createDatasetFrom,
 	importFromKafka,
-	projsFromDP,
-	selectionsFromDP,
-	id_listFromDP,
-	minio_urisFromDP,	
 	deleteDataset
 } from '../actions/media';
 
@@ -51,9 +47,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 			datasetIdx: { type: Number },
 			pathOrURL: { type: String },
 			nbSelectedRows: { type: Number },
-			items: { type: Array },
-			dialog_projsel_template: { type: Array },
-			dialog_selsel_template: { type: Array }
+			items: { type: Array }
 		};
 	}
 
@@ -64,7 +58,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		this.pathOrURL = "undetermined";
 		this.default_path = "";
 		this.nbSelectedRows = 0;
-		this.dialog_projsel_template = null;
 
 		// ELISE
 		this.similarityLevel = 0;//similarity in %
@@ -287,83 +280,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 				this.onActivate();
 			})
 			.catch(error => this.errorPopup(error.message));
-	}
-
-	/**
-	 * Fired when clic on import from DP
-	 */
-	async onImportFromDP() {
-		store.dispatch(projsFromDP()).then((projs) => {
-			console.log("projsFromDP", projs);
-			//project selector 
-			this.project_list = projs;
-			if (Object.entries(projs).length > 0) {
-				this.fillProjectList(projs);
-			} else { this.errorPopup("No available project !") }
-		}).catch(error => this.errorPopup(error.message));
-	}
- 
-	fillProjectList(projs) {
-		this.dialog_projsel_template = []
-		for (const [key, _] of Object.entries(projs)) {
-			this.dialog_projsel_template.push(html`<mwc-list-item dialogAction='ok'>${key}</mwc-list-item>`);
-		};
-		const projSelectorElem = this.shadowRoot.getElementById('dialog-project-selector');
-		console.log("SelectorElement", projSelectorElem)
-		projSelectorElem.open = true;
-	}
-
-	fillSelectionList(sels) {
-		this.dialog_selsel_template = []
-		for (const [_, value] of Object.entries(sels)) {
-			this.dialog_selsel_template.push(html`<mwc-list-item twoline dialogAction='ok'>
-				<span>${value.name}</span>
-				<span slot='secondary'>id: ${value.id}, nb_samples: ${value.nbSamples}</span></mwc-list-item>`);
-
-		};
-		const selSelectorElem = this.shadowRoot.getElementById('dialog-selection-selector');
-		selSelectorElem.open = true;
-	}
-
-	onProjectSelected(selected) {
-		const proj = this.project_list[Object.keys(this.project_list)[selected.detail.index]]
-		this.project_name = proj.name;
-		console.log("  selected project: ", this.project_name);
-
-		store.dispatch(selectionsFromDP(this.project_name)).then((sels) => {
-			console.log("selectionsFromDP", sels);
-			//selection selector 
-			this.selection_list = sels;
-
-			if (this.selection_list.length > 0) {
-				this.fillSelectionList(this.selection_list);
-			} else { this.errorPopup("No available selection !")}
-		}).catch(error => this.errorPopup(error.message));
-	}
-
-	onSelectionSelected(selected) {
-		const sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index]]
-		console.log("  selected selection full:", sel);
-		console.log("  selected selection:", sel.id);
-		store.dispatch(id_listFromDP(this.project_name, sel)).then((newtask) => {
-			console.log("id_listFromDP", newtask);
-			this.datasetIdx = this.datasets.length;//select the newly created dataset
-			this.onActivate();
-			// update local copy of Redux
-			this.tasks = getState('application').tasks;
-			this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
-		}).catch(error => {
-			this.errorPopup(error.message)
-		});
-
-		/***
-		//tmp test... maintenant on crée une task, pas juste un dataset, alors faut gerer différemment (voire tout deplacer dans tasks.js ?)
-		store.dispatch(importTaskFromKafka(task)).then((newtask) => {
-			// update local copy of Redux
-			this.tasks = getState('application').tasks;
-			this.taskIdx = getState('application').tasks.findIndex((t) => t.name === getState('application').taskName);
-		}).catch((error) => this.errorPopup(error.message));
-		**/
 	}
 
 	/**
@@ -695,14 +611,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					@click="${this.onImportFromKafka}">
 				Import from Kafka
 			</mwc-button>
-			<mwc-button outlined
-					class="newDataset"
-					type="button"
-					icon="add"
-					title="Import a new dataset from DebiAI DP"
-					@click="${this.onImportFromDP}">
-				Import from DebiAI
-			</mwc-button>
 		`;
 	}
 
@@ -850,27 +758,6 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 			</mwc-dialog>
 		`;
 	}
-
-	get dialogProjectSelector() {
-		return html`
-			<mwc-dialog heading="Select a project" id="dialog-project-selector">
-				<mwc-list id='list-project-selector' @action=${this.onProjectSelected} style="height: 55vh; overflow-y: auto;">
-				${this.dialog_projsel_template}
-				</mwc-list>
-			</mwc-dialog>
-		`;
-	}
-
-	get dialogSelectionSelector() {
-		return html`
-			<mwc-dialog heading="Select a selection" id="dialog-selection-selector">
-				<mwc-list id='list-selection-selector' @action=${this.onSelectionSelected} style="height: 55vh; overflow-y: auto;">
-				${this.dialog_selsel_template}
-				</mwc-list>
-			</mwc-dialog>
-		`;
-	}
-
 }
 customElements.define('app-datasets-manager', AppDatasetsManager);
 

@@ -18,6 +18,7 @@ import '@material/mwc-tab';
 import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
 import '@material/mwc-select';
+import '@material/mwc-list/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-switch';
 import '@trystan2k/fleshy-jsoneditor/fleshy-jsoneditor.js';
@@ -34,7 +35,12 @@ import {
 	putTask,
 	getTasks
 } from '../actions/application';
-import { getDatasets } from '../actions/media';
+import { 
+	getDatasets,
+	projsFromDP,
+	selectionsFromDP,
+	id_listFromDP
+} from '../actions/media';
 
 
 class AppProjectManager extends connect(store)(TemplatePage) {
@@ -45,6 +51,8 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 			creatingTask: { type: Boolean },
 			importExportText: { type: String },
 			pathOrURL: { type: String },
+			dialog_projsel_template: { type: Array },
+			dialog_selsel_template: { type: Array }
 		};
 	}
 
@@ -65,6 +73,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		this.pathOrURL = "undetermined";
 		this.default_path = "";
 		this.datasetIds = [];
+		this.dialog_projsel_template = null;
 	}
 
 	onActivate() {
@@ -110,6 +119,74 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		this.importExportText = 'import';
 		browserElem.mode = 'import';
 		browserElem.open = true;
+	}
+
+	/**
+	 * Fired when clic on import from DP
+	 */
+	onImportFromDP() {
+		store.dispatch(projsFromDP()).then((projs) => {
+			console.log("projsFromDP", projs);
+			//project selector 
+			this.project_list = projs;
+			if (Object.entries(projs).length > 0) {
+				this.fillProjectList(projs);
+			} else { this.errorPopup("No available project !") }
+		}).catch(error => this.errorPopup(error.message));
+	}
+ 
+	fillProjectList(projs) {
+		this.dialog_projsel_template = []
+		for (const [key, val] of Object.entries(projs)) {
+			this.dialog_projsel_template.push(html`<mwc-list-item twoline dialogAction='ok'>
+				<span>${key}</span>
+				<span slot='secondary'>nb_samples: ${val.nbSamples}, nb_sel: ${val.nbSelections}</span></mwc-list-item>`);
+		};
+		const projSelectorElem = this.shadowRoot.getElementById('dialog-project-selector');
+		console.log("SelectorElement", projSelectorElem)
+		projSelectorElem.open = true;
+	}
+
+	fillSelectionList(sels) {
+		this.dialog_selsel_template = []
+		for (const [_, value] of Object.entries(sels)) {
+			this.dialog_selsel_template.push(html`<mwc-list-item twoline dialogAction='ok'>
+				<span>${value.name}</span>
+				<span slot='secondary'>id: ${value.id}, nb_samples: ${value.nbSamples}</span></mwc-list-item>`);
+
+		};
+		const selSelectorElem = this.shadowRoot.getElementById('dialog-selection-selector');
+		selSelectorElem.open = true;
+	}
+
+	onProjectSelected(selected) {
+		const proj = this.project_list[Object.keys(this.project_list)[selected.detail.index]]
+		this.project_name = proj.name;
+		console.log("  selected project: ", this.project_name);
+
+		store.dispatch(selectionsFromDP(this.project_name)).then((sels) => {
+			console.log("selectionsFromDP", sels);
+			//selection selector 
+			this.selection_list = sels;
+
+			if (this.selection_list.length > 0) {
+				this.fillSelectionList(this.selection_list);
+			} else { this.errorPopup("No available selection !")}
+		}).catch(error => this.errorPopup(error.message));
+	}
+
+	onSelectionSelected(selected) {
+		const sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index]]
+		console.log("  selected selection full:", sel);
+		console.log("  selected selection:", sel.id);
+		store.dispatch(id_listFromDP(this.project_name, sel)).then(() => {
+			store.dispatch(getTasks()).then(() => {
+				this.onActivate();
+			})
+		}).catch(error => {
+			this.errorPopup(error.message);
+			store.dispatch(getTasks());
+		});
 	}
 
 	/**
@@ -338,6 +415,11 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                         type="button"
                         title="Import annotations from json files"
                         @click="${this.onImport}">Import from files</mwc-button>
+			<mwc-button outlined
+						class="newDataset"
+						type="button"
+						title="Import a new dataset from Confiance DataBase"
+						@click="${this.onImportFromDP}">Import from Confiance DB</mwc-button>
         </div>
       </div>
     `;
@@ -481,6 +563,27 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 						<mwc-button slot="secondaryAction" dialogAction="close" @click=${() => this.shadowRoot.getElementById('mwc-select').select(-1)}> Cancel </mwc-button>
 					</div>
 				</div>
+			</mwc-dialog>
+			${this.dialogProjectSelector}
+			${this.dialogSelectionSelector}
+		`;
+	}
+	get dialogProjectSelector() {
+		return html`
+			<mwc-dialog heading="Select a project" id="dialog-project-selector">
+				<mwc-list id='list-project-selector' @action=${this.onProjectSelected} style="height: 55vh; overflow-y: auto;">
+				${this.dialog_projsel_template}
+				</mwc-list>
+			</mwc-dialog>
+		`;
+	}
+
+	get dialogSelectionSelector() {
+		return html`
+			<mwc-dialog heading="Select a selection" id="dialog-selection-selector">
+				<mwc-list id='list-selection-selector' @action=${this.onSelectionSelected} style="height: 55vh; overflow-y: auto;">
+				${this.dialog_selsel_template}
+				</mwc-list>
 			</mwc-dialog>
 		`;
 	}
