@@ -1,8 +1,0 @@
-{
-	"fake": false,
-	"endPoint": "minio",
-	"port": 9000,
-	"useSSL": false,
-	"accessKey": "bwR5Xts5PBSIj8lM",
-	"secretKey": "F0J4f9MaFwXXI9UiVIm0zDxZbbgoDnvi"
-}

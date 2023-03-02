@@ -41,7 +41,7 @@ export function cli(argv) {
 		.option('minio-endpoint', 'Minio endpoint', 'minio-storage.apps.confianceai-public.irtsysx.fr')
 		.option('minio-accessKey', 'Minio accessKey', "developer")
 		.option('minio-secretKey', 'Minio secretKey', "password")
-		.option('data-provider', 'Data Provider url', 'http://localhost:3011')  //  'http://192.168.102.130:3010')
+		.option('data-provider', 'Data Provider url', 'http://localhost:3010')  //  'http://192.168.102.130:3010')
 		//.option('data-provider', 'Data Provider url', ' http://debiai-data-provider-os:3011')  //version interne Kubernetes, ecrasé par YAML
 		.example('pixano /path/to/workspace','The most common way to use Pixano:')
 		.example('pixano --workspace /path/to/workspace --port 5001','Run on a specific port:')

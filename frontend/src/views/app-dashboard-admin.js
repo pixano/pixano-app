@@ -705,7 +705,7 @@ class AppDashboardAdmin extends TemplatePage {
 		return html`
 			<div id="overview" class="section">
 				<h1 class="display-4" style="margin: auto;">Select a task: </h1>
-				<mwc-select label='Task' @selected=${(e) => {
+				<mwc-select label='Task' style='width: 400px' @selected=${(e) => {
 						if (tasks[e.detail.index] && tasks[e.detail.index].name !== taskName) {
 							store.dispatch(updateTaskName(tasks[e.detail.index].name));
 							this.refreshGrid();

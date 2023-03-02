@@ -13,6 +13,7 @@ const { getOrcreateDataset, getAllDataFromDataset,
 const { downloadFilesFromMinio } = require('./minio_plugin').default;
 const { createJob } = require('./jobs');
 const fetch = require("node-fetch");
+const palette = require('google-palette');
 
 
 const annotation_format_version = "0.9";
@@ -382,13 +383,16 @@ async function process_selection(project_name, sel_name, selections) {
 	dp_res =  await get_dp_minio_uris(project_name, selections)
 	.then(res => {return res})
 	.catch(err=>{ throw "Error in get_dp_minio_uris "+ err});
-	console.log("dp_res FULL", dp_res);
+	//console.log("dp_res FULL", dp_res);
+	let minio_files = {}
+	/*
 	bucket_names = []
 	bucket_paths = []
 	filenames = []
+	*/
 	if (!dp_res  || dp_res.length == 0) { throw "ERROR empty data for selection"; }
 	Object.keys(dp_res).forEach(key => {
-		console.log("dp_res[", key, "]", dp_res[key].storage);
+		//console.log("dp_res[", key, "].storage", dp_res[key].storage);
 		//console.log("dp_res[", key, "].annotations", dp_res[key].annotations);
 		if(!dp_res[key].storage) { throw "No storage info in selection, import aborted";}
 		if(!dp_res[key].storage.minio) { throw "No minio storage info in selection, import aborted";}
@@ -403,15 +407,22 @@ async function process_selection(project_name, sel_name, selections) {
 		bpath = dp_res[key].storage.minio.basepath;
 		if (bpath.startsWith(bname)) {
 			//slice parce que le bucket est mis en prefixe du path !!
-			bpath = bpath.slice(bname.length);
+			bpath_clean = bpath.slice(bname.length);
 		}
+		if (!(bpath in minio_files)) { minio_files[bpath] = [] }
+		minio_files[bpath].push({'bucket': bname, 'path': bpath_clean, 'file': dp_res[key].storage.filename})
+		/*
 		bucket_names.push(bname);
 		bucket_paths.push(bpath);
 		filenames.push(dp_res[key].storage.filename);
+		*/
 	});
+	/*
 	console.log(" - buckets:", bucket_names);
 	console.log(" - paths:", bucket_paths);
 	console.log(" - filenames:", filenames);
+	*/
+	console.log("XXXXX - buckets:", minio_files);
 
 	console.log('# 1) Create a new dataset');
 	console.log('# 1.1) get/set members');
@@ -423,7 +434,7 @@ async function process_selection(project_name, sel_name, selections) {
 	dataset.data_type = 'image'   // TODO: gérer autres cas...
 	console.log("dataset=",dataset);
 	console.log('# 1.2) getPathFromIds');
-	dataset.urlList = await downloadFilesFromMinio(filenames, workspace, sel_name, bucket_names[0], bucket_paths[0]).catch((e) => {
+	dataset.urlList = await downloadFilesFromMinio(minio_files, workspace, sel_name).catch((e) => {
 		console.error('Error in Minio import\n'+e);
 		throw 'Error in Minio import\n'+e;
 	})
@@ -447,16 +458,15 @@ async function createTasksFromDPImport(dp_res, dataset) {
 	const task_types = new Set();
 	const class_list = new Set();
 	const class_defs = {};
-	console.log("DSQFS", dp_res);
+	//console.log("DP_RES FULL", dp_res);
 	Object.keys(dp_res).forEach(key => {
 		Object.keys(dp_res[key].annotations).forEach(ann_key => {
 			// TMP we take [0] because it's a list for several annotator, we take the first (???)
-			console.log("dsqd", dp_res[key].annotations[ann_key]);
+			//console.log("dp_res annotation", dp_res[key].annotations[ann_key]);
 			let ann = dp_res[key].annotations[ann_key];
 			if(Array.isArray(ann)) {
 				ann = ann[0];   //case of different annotators, we take first(last?) one only for now
 			} 
-			console.log("ZAEER", ann);
 			let task_type = String(ann.type).toLowerCase();
 			//tmp
 			if (!task_type) {
@@ -484,7 +494,6 @@ async function createTasksFromDPImport(dp_res, dataset) {
 				const geom_types = new Set();
 				for(it of ann.items) {
 					class_list.add(it['category']); 
-					console.log("AZAZA", it, it['geometry']);
 					class_defs[it['category']] = it['geometry'].type; //keep it because we need to differentiate polygon/mpolygon
 					// mapping geometry -> plugin
 					geom = it['geometry'].type
@@ -549,14 +558,16 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			};
 		} else { //cas non classif
 			let cats = [];
+			let icol = 0;
+			const col_seq = palette('mpn65', class_list.size);
 			for (let classe of class_list) {
 				cats.push({
 					name: classe,
-					color: "black",
+					color: "#"+col_seq[icol],
 					properties: []
 				});
+				icol++;
 			}
-			console.log("DEDE", cats);
 
 			objdetect_label_value = {
 				category: cats,
@@ -591,15 +602,13 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			// task with this updated name does not exist, use this name
 			task.name = newTaskName;
 		}
-		//console.log("AAAAAAAAA", task);
-
 
 		console.log('# 2) Push the new task + dataset');
 		// Task does not exist create it
-		const newTask = {name: task_name, dataset_id: dataset.id, spec_id: spec.id}
+		const newTask = {name: newTaskName, dataset_id: dataset.id, spec_id: spec.id}
 		const bm = new batchManager.BatchManager(db);
 		await bm.add({ type: 'put', key: dbkeys.keyForTask(newTask.name), value: newTask })  //why ???
-		//await db.put(dbkeys.keyForTask(newTask.name), newTask);
+		await db.put(dbkeys.keyForTask(newTask.name), newTask);
 		// Generate first job list
 		await generateJobResultAndLabelsLists(newTask);
 		// Send back the created task
@@ -613,7 +622,7 @@ async function createTasksFromDPImport(dp_res, dataset) {
 					data_id: dp.id,
 					annotations: dp.anns
 				};
-				console.log("Label to add", newLabels, newLabels.annotations);
+				//console.log("Label to add", newLabels, newLabels.annotations);
 				await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels });
 				/** TMP On ne gere pas encore le statut (to_validate, to_annotate, ...) 
 				if (ann.data.status) {//if existing, get status back
@@ -631,6 +640,210 @@ async function createTasksFromDPImport(dp_res, dataset) {
 }
 
 
+
+/**********************************************************************************/
+/*****************************   DATA PROVIDER EXPORT  ****************************/
+/**********************************************************************************/
+
+async function patch_dp(project_id, ann) {
+	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
+	console.log('AAA', dp_host);
+	return await fetch(dp_host + "/project/"+project_id+"/annotations", { 
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(ann)
+	 })
+	.then(res => {
+		console.log('BBB', res);
+		if (res.statusText == 'OK') { 
+			console.log('BBB1');
+			return res.json().then(data => { 
+				console.log('BBB1.1');
+				return Promise.resolve(data)
+			}).catch(e2 => {console.log('BBB1.2', e2); });
+		} else { 
+			console.log('BBB2');
+			return Promise.reject(res); 
+		}
+	})
+	.catch(async err => {	
+		return Promise.reject(err);
+	});
+}
+
+/**
+ * @api {post} /tasks/partial_export_to_dataprovider Export annotations for an image (/sequence?) to Confiance DP
+ * @apiName PostPartialExportTasksToDP
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiParam Task name
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Failed to create export folder
+ */
+async function partial_export_to_dataprovider(req, res) {
+	checkAdmin(req, async () => {
+		console.log("partial_export_to_dataprovider", req.params);
+		const task_name = req.params.task_name;
+		const media_id = req.params.media_id
+		//get projects list from DP to select project corresponding with current task
+		
+		const projs =  await get_dp("/debiai/projects").then(res => res)
+		.catch(err => {throw "Unable to get project list for matching with task, aborting export" + err;})
+		//console.log("projs", Object.keys(projs));
+		const projects_name = Object.keys(projs).filter((p) => task_name.startsWith(p));
+		let project_name = ""
+		if (projects_name.length == 1) {
+			project_name = projects_name[0];
+		} else if (projects_name.length > 1) {
+			console.log("Warning, several projects match this task name, choosing first one amongst", projects_name);
+			project_name = projects_name[0];
+		} else {
+			throw "Error, no projects match this task name, aborting export";
+		}
+		//TMP pendant wiping OS
+		//project_name = "welding_v5_test";
+		//console.log("proj", project_name);
+
+		const task = await db.get(dbkeys.keyForTask(task_name));
+		const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
+		delete spec.id;
+		const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
+		const datasetId = dataset.id;
+		delete dataset.id;
+		const taskJson = { name: task.name, version: annotation_format_version, spec, dataset };
+		//console.log("task", taskJson);
+
+
+		// Write annotations
+		let ann = {};
+		const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
+		//BR
+		//console.log("BR streamLabels arg = ", dbkeys.keyForLabels(task.name));
+		//console.log("BR streamLabels = ", streamLabels);
+
+		//NB: "false" loop, as we will export only one "labels" od the stream
+		for await (const labels of streamLabels) {
+			//TODO: streamLabels is a stream, I haven't found a better way to filter than 
+			//loop all stream... There is probably more clever ways...
+			if(labels.data_id !== media_id) continue;
+
+			//console.log("BR label = ", labels);
+			/*
+			resultData = await db.get(dbkeys.keyForResult(task.name, labels.data_id));//get the status for this data
+			const data = await getDataDetails(datasetId, labels.data_id, true);
+			console.log("BR data = ", data);
+			delete data.id;
+			delete data.dataset_id;
+			delete data.thumbnail;
+			data.status = resultData.status;//add the status
+			let path = data.path;
+			path = Array.isArray(path) ? path[0] : path;
+			path = path.replace(dataset.path, '')
+			const filename = utils.pathToFilename(path);
+
+			let labelsJson = { ...labels, data };
+			*/
+			//TMP ?? pas besoin data pour cas welding
+			let labelsJson = { ...labels };
+
+			// EXPORT task json
+			/* REF: cas export to json file *
+			const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
+			if (err) {
+				return res.status(400).json({
+					error: 'cannot_write',
+					message: `Cannot write json file ${taskFolder}/${filename}.json`
+				});
+			}
+			*/
+			// wanted output:
+			/*
+			{
+				"actorId": "string",
+				"actorType": "string",
+				"samplesAnnotations": [
+					{
+						"id": "string",
+						"name": "blurred",
+						"value": [
+							"true",
+							[
+								0,
+								1,
+								2
+							]
+						]
+					}
+				]
+			}
+			*/
+			const labelsJson_confiance = {
+				actorId: "pixano",
+				actorType: 'annotator',
+				samplesAnnotations: []
+			}
+			for (const annotation of labelsJson.annotations) {
+				//for ref, when VDP
+				//category: annotation.category,
+				//geometry: annotation.geometry,
+				//options: annotation.options
+				const cls_name = Object.keys(annotation.options)[0];
+				const cls_val = annotation.options[cls_name];
+				labelsJson_confiance.samplesAnnotations.push({
+					id: labelsJson.data_id,
+					name: cls_name,
+					value: [`${cls_val}`]
+				});
+			}
+			//console.log("labelsJson_confiance=", JSON.stringify(labelsJson_confiance));
+
+			ann = labelsJson_confiance;
+		} //end labels
+
+		console.log("jsonified ann=", JSON.stringify(ann));
+
+		patch_dp(project_name, ann)
+		.then(res => {
+			if (res.ok) return res.json();
+			else {
+				throw new Error(res);//we have to throw ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+			}
+		}).catch(async (err) => {
+			const err_txt = await err.text();
+			console.log("ERROR partial export :", err_txt);
+			return res.status(400).json({message: `ERROR while exporting to Confiance DB.\n${err_txt}`});
+		})
+	})
+	return "Done";
+}
+
+
+
+/**
+ * @api {post} /tasks/export_tasks_to_dataprovider Export annotations to Confiance DP
+ * @apiName PostExportTasksToDP
+ * @apiGroup Tasks
+ * @apiPermission admin
+ * 
+ * @apiParam {string} [path] Relative path to tasks folder OR [url] destination URL for online export
+ * 
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 OK
+ * 
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Failed to create export folder
+ */
+async function export_tasks_to_dataprovider(req, res) {
+	checkAdmin(req, async () => {
+		//TODO
+		// on va d'abord faire l'export incrémental (sur chaque "submit")
+	})
+}
 
 
 /**
@@ -1226,6 +1439,8 @@ module.exports = {
 	put_task,
 	delete_task,
 	import_tasks,
+	partial_export_to_dataprovider,
+	export_tasks_to_dataprovider,
 	projects_from_dataprovider,
 	selections_from_dataprovider,
 	id_list_from_dataprovider,

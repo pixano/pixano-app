@@ -571,7 +571,7 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 		return html`
 			<div id="overview" class="section">
 				<h1 class="display-4" style="margin: auto;">Select a dataset: </h1>
-				<mwc-select label='Dataset' @selected=${(e) => {
+				<mwc-select label='Dataset' style='width: 400px' @selected=${(e) => {
 						if (this.datasets[e.detail.index] && this.datasets[e.detail.index].id !== datasetId) {
 							this.datasetIdx = e.detail.index;
 							this.refreshGrid();

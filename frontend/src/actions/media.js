@@ -85,6 +85,14 @@ export const importFromKafka = () => (dispatch) => {
 }
 
 /**
+ * partial (by image) export to Data Provider (Confiance).
+ */
+export const partialExporttoDP = (task_name, media_id) => (dispatch) => {	
+	//console.log("partialExporttoDP");
+	return GET('/api/v1/dataprovider/partial_export_to_dataprovider/'+task_name+'/'+media_id, dispatch);
+}
+
+/**
  * get project list from Data Provider (Confiance).
  */
 export const projsFromDP = () => (dispatch) => {	

@@ -34,6 +34,7 @@
     "fs": "0.0.1-security",
     "git-rev-sync": "^3.0.2",
     "glob": "^7.1.6",
+    "google-palette": "^1.1.0",
     "image-thumbnail": "1.0.14",
     "jsonwebtoken": "^8.5.1",
     "kafkajs": "^1.15.0",

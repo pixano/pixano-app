@@ -40,6 +40,8 @@ const { get_tasks,
 	projects_from_dataprovider,
 	selections_from_dataprovider,
 	id_list_from_dataprovider,
+	partial_export_to_dataprovider,
+	export_tasks_to_dataprovider,
 	export_tasks } = require('./routes/tasks');
 const { snapshot_project } = require('./routes/project');
 const { get_results,
@@ -77,6 +79,8 @@ router.delete('/users/:username', middleware.checkToken, delete_user);
 router.get('/profile', middleware.checkToken, get_profile);
 
 //for Confiance data provider
+router.get('/dataprovider/export_tasks_to_dataprovider/:task_name', middleware.checkToken, export_tasks_to_dataprovider);
+router.get('/dataprovider/partial_export_to_dataprovider/:task_name/:media_id', middleware.checkToken, partial_export_to_dataprovider);
 router.get('/dataprovider/projects_from_dataprovider', middleware.checkToken, projects_from_dataprovider);
 router.get('/dataprovider/selections_from_dataprovider/:project_name', middleware.checkToken, selections_from_dataprovider);
 router.get('/dataprovider/id_list_from_dataprovider/:project_name/:sel_id/:sel_name', middleware.checkToken, id_list_from_dataprovider);

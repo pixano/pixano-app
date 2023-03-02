@@ -1,9 +1,0 @@
-{
-	"fake": false,
-	"endPoint": "minio",
-	"port": 9000,
-	"useSSL": false,
-	"accessKey": "developer",
-	"secretKey": "password",
-	"bucket_name": "pixanoimagesselection"
-}

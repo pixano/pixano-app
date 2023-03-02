@@ -13,6 +13,8 @@ import '@material/mwc-icon-button';
 import '@material/mwc-snackbar';
 
 import { AppExplore } from './app-explore';
+import { partialExporttoDP } from '../actions/media';
+
 
 class AppLabel extends AppExplore {
 	static get properties() {
@@ -114,6 +116,18 @@ class AppLabel extends AppExplore {
 			console.log('_submissionHelper');
 			await store.dispatch(putJob(objective));
 			await store.dispatch(putLabels());
+
+			//Confiance DP export 
+			//TODO: test si on est dans Confiance (mais pour le moment on va dire que oui)
+			//TODO: export sur Submit only (+validate/Reject)? sur skip too ?
+			if(objective !== 'skip') {
+				const taskName = getState().application.taskName;
+				const media_id = getState('media').info.id;
+				await store.dispatch(partialExporttoDP(taskName, media_id))
+				.then(ret => { console.log("Export OK"+ ret); })
+				.catch(err => { console.log("ERROR Export", err); this.errorPopup("EXPORT ERROR\n" + err.message); })
+			}
+
 		} // Job has either been reassigned to someone else or is dead.
 		catch (err) { console.log('err1', err); this.errorPopup(err.message); }
 
@@ -152,7 +166,7 @@ class AppLabel extends AppExplore {
 	}
 
 	/**
-	 * Submit job.
+	 * Skip job.
 	 */
 	skip() {
 		this._submissionHelper('skip');

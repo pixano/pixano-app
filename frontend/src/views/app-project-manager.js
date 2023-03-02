@@ -112,6 +112,16 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	}
 
 	/**
+	 * Fired when exporting a project to Confiance DB
+	 */
+	onExportToDP() {
+		const browserElem = this.shadowRoot.getElementById('dialog-import-export-path');
+		this.importExportText = 'export';
+		browserElem.mode = 'export';
+		browserElem.open = true;
+	}
+
+	/**
 	 * Fired when importing a project
 	 */
 	onImport() {
@@ -407,10 +417,14 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                         type="button"
                         title="Copy database with annotation and their status into an archive"
                         @click="${() => snapshotProject()}">Snapshot</mwc-button>
-            <mwc-button outlined
+			<mwc-button outlined
                         type="button"
                         title="Export annotations only to json files"
                         @click="${this.onExport}">Export</mwc-button>
+            <mwc-button outlined
+                        type="button"
+                        title="Export annotations to Confiance DataBase"
+                        @click="${this.onExportToDP}">Export to Confiance DB</mwc-button>
             <mwc-button outlined
                         type="button"
                         title="Import annotations from json files"
@@ -430,13 +444,13 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		const taskName = t ? t.name : '';
 		const datasetId = t ? t.dataset.id : '';
 		const pluginName = t ? t.spec.plugin_name : '';
+		//Note: style removed from "${this.tasks.map((t) => html`<mwc-tab label="Task ${t.name}" style="max-width: 200px;"></mwc-tab>`)}"
 		return html`
 			<form class="section">
 				${this.taskHeader}
 				<div>
 					<mwc-tab-bar @MDCTabBar:activated=${this.onTabChanged} activeindex="${this.taskIdx}">
-					${this.tasks.map((t) => html`<mwc-tab label="Task ${t.name}" style="max-width: 200px;"></mwc-tab>`)}
-					<mwc-button outlined
+						<mwc-button outlined
 								id="add-task"
 								class="add-task ${this.tasks.length ? 'multi' : 'single'}"
 								style=${this.creatingTask ? 'display: none;' : 'display: flex;'}
@@ -444,6 +458,7 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 								icon="add"
 								title="Add new annotation task"
 								@click="${this.onAddTask}">New task</mwc-button>
+						${this.tasks.map((t) => html`<mwc-tab label="Task ${t.name}"></mwc-tab>`)}    
 					</mwc-tab-bar>
 					<div style="${t != undefined && this.tasks.length ? 'display: block;' : 'display: none;'}">
 						<div class="form-group" style="display: flex; flex-wrap: wrap;">
