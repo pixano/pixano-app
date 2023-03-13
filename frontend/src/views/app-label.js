@@ -113,19 +113,22 @@ class AppLabel extends AppExplore {
 	async _submissionHelper(objective) {
 		// Try to save and update current job
 		try {
-			console.log('_submissionHelper');
+			console.log('_submissionHelper', objective);
 			await store.dispatch(putJob(objective));
 			await store.dispatch(putLabels());
 
 			//Confiance DP export 
 			//TODO: test si on est dans Confiance (mais pour le moment on va dire que oui)
 			//TODO: export sur Submit only (+validate/Reject)? sur skip too ?
-			if(objective !== 'skip') {
+			if(objective === 'done') {    //done for validate
 				const taskName = getState().application.taskName;
 				const media_id = getState('media').info.id;
-				await store.dispatch(partialExporttoDP(taskName, media_id))
-				.then(ret => { console.log("Export OK"+ ret); })
-				.catch(err => { console.log("ERROR Export", err); this.errorPopup("EXPORT ERROR\n" + err.message); })
+				partialExporttoDP(taskName, media_id)
+				.then((r) => { console.log(`Export for ${media_id} done (${r})`); })
+				.catch(async err => {
+					console.log("ERROR Export", err.message);
+					await this.errorPopup("EXPORT ERROR\n" + err.message);
+				});
 			}
 
 		} // Job has either been reassigned to someone else or is dead.

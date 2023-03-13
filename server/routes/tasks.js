@@ -14,6 +14,7 @@ const { downloadFilesFromMinio } = require('./minio_plugin').default;
 const { createJob } = require('./jobs');
 const fetch = require("node-fetch");
 const palette = require('google-palette');
+const turf = require('@turf/turf');
 
 
 const annotation_format_version = "0.9";
@@ -263,28 +264,28 @@ async function import_tasks(req, res) {
 async function get_dp(url) {
 	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
 	return await fetch(dp_host + url, { method: 'get', headers: { 'Content-Type': 'application/json' } })
-	.then(res => {
-		if (res.statusText == 'OK') { return res.json().then(data => Promise.resolve(data)); }
-		else { return res.status(200).json({ message: 'Response error: '+res });}
-	})
-	.catch(err => {	return Promise.reject(err);});
+		.then(res => {
+			if (res.statusText == 'OK') { return res.json().then(data => Promise.resolve(data)); }
+			else { return res.status(200).json({ message: 'Response error: ' + res }); }
+		})
+		.catch(err => { return Promise.reject(err); });
 }
 
 async function get_dp_minio_uris(project_name, ids) {
 	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
-	return await fetch(dp_host+"/project/"+project_name+"/data", { 
-		method: 'POST', 
+	return await fetch(dp_host + "/project/" + project_name + "/data", {
+		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(ids)
-	 })
-	.then(res => {
-		if (res.statusText == 'OK') {
-			return res.json().then(data => {
-				if(data == {}) { return Promise.reject() } else { return Promise.resolve(data) }
-			})
-		} else { return res.status(200).json({ message: 'Response error: '+res }) };
 	})
-	.catch(err => {	return Promise.reject(err);});
+		.then(res => {
+			if (res.statusText == 'OK') {
+				return res.json().then(data => {
+					if (data == {}) { return Promise.reject() } else { return Promise.resolve(data) }
+				})
+			} else { return res.status(200).json({ message: 'Response error: ' + res }) };
+		})
+		.catch(err => { return Promise.reject(err); });
 }
 
 /**
@@ -303,12 +304,12 @@ async function get_dp_minio_uris(project_name, ids) {
  *     HTTP/1.1 401 Unauthorized
  */
 async function projects_from_dataprovider(req, res) {
-	return await checkAdmin(req, async () => {
+	checkAdmin(req, async () => {
 		console.log('##### Importing project list from dataprovider');
-		return await get_dp("/debiai/projects").then(res => res);
+		return await get_dp("/debiai/projects");
 	})
-	.then(projs=>{return res.status(200).send(projs);})
-	.catch(err => {return res.status(400).send(err);})
+		.then(projs => { return res.status(200).send(projs); })
+		.catch(err => { return res.status(400).send(err); })
 }
 
 /**
@@ -330,10 +331,10 @@ async function selections_from_dataprovider(req, res) {
 	return await checkAdmin(req, async () => {
 		console.log('##### Importing selections from dataprovider');
 		//console.log('##### BR req.params:', req.params);
-		return await get_dp("/debiai/projects/"+req.params.project_name+"/selections").then(res => res);
+		return await get_dp("/debiai/projects/" + req.params.project_name + "/selections").then(res => res);
 	})
-	.then((selections)=>{return res.status(200).send(selections);})
-	.catch(err => {return res.status(400).send(err);})
+		.then((selections) => { return res.status(200).send(selections); })
+		.catch(err => { return res.status(400).send(err); })
 }
 
 /**
@@ -356,19 +357,19 @@ async function id_list_from_dataprovider(req, res) {
 	return await checkAdmin(req, async () => {
 		console.log('##### Importing id list from dataprovider');
 		//console.log('##### BR req.params:', req.params);
-		return await get_dp("/debiai/projects/"+req.params.project_name+"/selections/"+req.params.sel_id+"/selected-data-id-list").then(res => res);
+		return await get_dp("/debiai/projects/" + req.params.project_name + "/selections/" + req.params.sel_id + "/selected-data-id-list").then(res => res);
 	})
-	.then(async (selections)=>{
-		task = await process_selection(req.params.project_name, req.params.sel_name, selections)
-		.then(res => {return res})
-		.catch(err => {throw err})
-		console.log("Created Task", task);
-		return res.status(200).send(task);
-	})
-	.catch(err => {
-		console.log("ERREUR in id_list_from_dataprovider:", err);
-		return res.status(400).json({ message: err });
-	})
+		.then(async (selections) => {
+			task = await process_selection(req.params.project_name, req.params.sel_name, selections)
+				//.then(res => { return res })
+				.catch(err => { throw err })
+			console.log("Created Task", task);
+			return res.status(200).send(task);
+		})
+		.catch(err => {
+			console.log("ERREUR in id_list_from_dataprovider:", err);
+			return res.status(400).json({ message: err });
+		})
 }
 
 //// remaniement, ce n'est plus une API --nom temporaire, j'ai pas mieux en stock
@@ -380,26 +381,21 @@ async function id_list_from_dataprovider(req, res) {
 // create Task
 async function process_selection(project_name, sel_name, selections) {
 	console.log('##### Importing Minio uris from dataprovider');
-	dp_res =  await get_dp_minio_uris(project_name, selections)
-	.then(res => {return res})
-	.catch(err=>{ throw "Error in get_dp_minio_uris "+ err});
+	dp_res = await get_dp_minio_uris(project_name, selections)
+		.catch(err => { throw "Error in get_dp_minio_uris " + err });
 	//console.log("dp_res FULL", dp_res);
 	let minio_files = {}
-	/*
-	bucket_names = []
-	bucket_paths = []
-	filenames = []
-	*/
-	if (!dp_res  || dp_res.length == 0) { throw "ERROR empty data for selection"; }
+
+	if (!dp_res || dp_res.length == 0) { throw "ERROR empty data for selection"; }
 	Object.keys(dp_res).forEach(key => {
-		//console.log("dp_res[", key, "].storage", dp_res[key].storage);
-		//console.log("dp_res[", key, "].annotations", dp_res[key].annotations);
-		if(!dp_res[key].storage) { throw "No storage info in selection, import aborted";}
-		if(!dp_res[key].storage.minio) { throw "No minio storage info in selection, import aborted";}
-		if(!dp_res[key].storage.minio.bucket_name && !dp_res[key].storage.minio.bucket) { throw "No minio bucket[_name] info in selection, import aborted";}
-		if(!dp_res[key].storage.minio.basepath) { throw "No minio basepath info in selection, import aborted";}
+		console.log("dp_res[", key, "].storage", dp_res[key].storage);
+		console.log("dp_res[", key, "].annotations", dp_res[key].annotations);
+		if (!dp_res[key].storage) { throw "No storage info in selection, import aborted"; }
+		if (!dp_res[key].storage.minio) { throw "No minio storage info in selection, import aborted"; }
+		if (!dp_res[key].storage.minio.bucket_name && !dp_res[key].storage.minio.bucket) { throw "No minio bucket[_name] info in selection, import aborted"; }
+		if (!dp_res[key].storage.minio.basepath) { throw "No minio basepath info in selection, import aborted"; }
 		bname = "";
-		if(dp_res[key].storage.minio.bucket) {
+		if (dp_res[key].storage.minio.bucket) {
 			bname = dp_res[key].storage.minio.bucket;
 		} else {
 			bname = dp_res[key].storage.minio.bucket_name;
@@ -410,18 +406,8 @@ async function process_selection(project_name, sel_name, selections) {
 			bpath_clean = bpath.slice(bname.length);
 		}
 		if (!(bpath in minio_files)) { minio_files[bpath] = [] }
-		minio_files[bpath].push({'bucket': bname, 'path': bpath_clean, 'file': dp_res[key].storage.filename})
-		/*
-		bucket_names.push(bname);
-		bucket_paths.push(bpath);
-		filenames.push(dp_res[key].storage.filename);
-		*/
+		minio_files[bpath].push({ 'bucket': bname, 'path': bpath_clean, 'file': dp_res[key].storage.filename })
 	});
-	/*
-	console.log(" - buckets:", bucket_names);
-	console.log(" - paths:", bucket_paths);
-	console.log(" - filenames:", filenames);
-	*/
 	console.log("XXXXX - buckets:", minio_files);
 
 	console.log('# 1) Create a new dataset');
@@ -432,20 +418,20 @@ async function process_selection(project_name, sel_name, selections) {
 	dataset.path = 'importedFromDebiai/' + sel_name;
 	dataset.id = project_name.replace(/\s/g, '_') + "_" + sel_name;
 	dataset.data_type = 'image'   // TODO: gérer autres cas...
-	console.log("dataset=",dataset);
+	console.log("dataset=", dataset);
 	console.log('# 1.2) getPathFromIds');
 	dataset.urlList = await downloadFilesFromMinio(minio_files, workspace, sel_name).catch((e) => {
-		console.error('Error in Minio import\n'+e);
-		throw 'Error in Minio import\n'+e;
+		console.error('Error in Minio import\n' + e);
+		throw 'Error in Minio import\n' + e;
 	})
 	console.log('# 1.3) getImagesFromPath');
 	const newDataset = await getOrcreateDataset(dataset, workspace);
 	if (newDataset) {
 		const task = await createTasksFromDPImport(dp_res, newDataset)
-		.catch(err => {
-			console.log("Error while creating task", err);
-			throw 'Error while creating task:' + err;
-		});
+			.catch(err => {
+				console.log("Error while creating task", err);
+				throw 'Error while creating task:' + err;
+			});
 		//console.log("Task", task);
 		return task;
 	} else throw 'Error while creating dataset';
@@ -461,17 +447,24 @@ async function createTasksFromDPImport(dp_res, dataset) {
 	//console.log("DP_RES FULL", dp_res);
 	Object.keys(dp_res).forEach(key => {
 		Object.keys(dp_res[key].annotations).forEach(ann_key => {
-			// TMP we take [0] because it's a list for several annotator, we take the first (???)
-			//console.log("dp_res annotation", dp_res[key].annotations[ann_key]);
 			let ann = dp_res[key].annotations[ann_key];
-			if(Array.isArray(ann)) {
+			console.log("dp_res annotation", ann);
+			if (Array.isArray(ann)) {
+				// TMP we take [0] because it's a list for several annotator, we take the first (???)
 				ann = ann[0];   //case of different annotators, we take first(last?) one only for now
-			} 
+			}
 			let task_type = String(ann.type).toLowerCase();
 			//tmp
-			if (!task_type) {
-				console.log("ERROR annotation type not defined, default to classification")
-				task_type = 'classification';
+			const accepted_types = ['classification', 'object_detection']
+			if (!accepted_types.includes(task_type)) {
+				//try to infer type based on first annotation
+				if (ann.items && ann.items.length > 0 && ann.items[0].geometry) {
+					console.log("WARNING annotation type not defined, geometry detected, type = object_detection")
+					task_type = 'object_detection';
+				} else {
+					console.log("WARNING annotation type not defined, default to classification")
+					task_type = 'classification';
+				}
 			}
 			if (task_type === "classification") {
 				options = {};
@@ -483,7 +476,8 @@ async function createTasksFromDPImport(dp_res, dataset) {
 				}
 				dp_info.push({
 					//id: key,  //ou plutot dp_res[key].storage. ?? imageid ?
-					id: dp_res[key].storage.filename,
+					file: dp_res[key].storage.filename,
+					id: dp_res[key].id,
 					//name: ann_key,   //-> blurred, object_detection_vdp, ... 
 					type: task_type,
 					anns: [cl_ann]
@@ -492,28 +486,35 @@ async function createTasksFromDPImport(dp_res, dataset) {
 				class_defs[ann_key] = typeof ann.value;
 			} else if (task_type === "object_detection") {
 				const geom_types = new Set();
-				for(it of ann.items) {
-					class_list.add(it['category']); 
+				//TOADD if(ann.subitems// == true)
+				console.log("WWWW object_detection", ann.items);
+				for (it of ann.items) {
+					class_list.add(it['category']);
 					class_defs[it['category']] = it['geometry'].type; //keep it because we need to differentiate polygon/mpolygon
 					// mapping geometry -> plugin
 					geom = it['geometry'].type
-					if(geom === "mpolygon") geom = "polygon"
+					if (geom === "mpolygon") geom = "polygon"
 					geom_types.add(geom);
 				}
-				if(geom_types.size>1) {
+				if (geom_types.size > 1) {
 					console.log("WARNING: Several types of object geometry, this is not implemented yet")
 				}
 				task_type = geom_types.values().next().value;
 				//TODO
 				dp_info.push({
 					//id: key,   //ou plutot dp_res[key].storage. ?? imageid ?
-					id: dp_res[key].storage.filename,
+					file: dp_res[key].storage.filename,
+					id: dp_res[key].id,
 					//name: ann_key,
 					type: task_type,
 					anns: ann.items,
 					//...
 				})
-			} //TODO else ... autres types d'annotations
+			} else {
+				//TODO ... autres types d'annotations
+				console.log("Unimplemented annotation type:"), task_type;
+			}
+
 			task_types.add(task_type);
 		});
 	});
@@ -529,10 +530,10 @@ async function createTasksFromDPImport(dp_res, dataset) {
 		if (task_type === "classification") {
 			let props = [];
 			for (let classe of class_list) {
-				if(class_defs[classe] === 'boolean') {
-					props.push({name: classe, type: 'checkbox', default: false})
-				} else if(class_defs[classe] === 'string') {
-					props.push({name: classe, type: 'textfield', default: ""})
+				if (class_defs[classe] === 'boolean') {
+					props.push({ name: classe, type: 'checkbox', default: false })
+				} else if (class_defs[classe] === 'string') {
+					props.push({ name: classe, type: 'textfield', default: "" })
 				} //... else ???
 			}
 			classif_label_value = {
@@ -547,7 +548,7 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			}
 
 			task = {
-				name : task_name,
+				name: task_name,
 				spec: {
 					plugin_name: plugin_name,
 					label_schema: classif_label_value,  // defaultLabelValues(plugin_name),
@@ -563,7 +564,7 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			for (let classe of class_list) {
 				cats.push({
 					name: classe,
-					color: "#"+col_seq[icol],
+					color: "#" + col_seq[icol],
 					properties: []
 				});
 				icol++;
@@ -575,7 +576,7 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			}
 
 			task = {
-				name : task_name,
+				name: task_name,
 				spec: {
 					plugin_name: plugin_name,
 					label_schema: objdetect_label_value,  // defaultLabelValues(plugin_name),
@@ -594,7 +595,7 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			// check if task already exist and search for another name
 			let cpt = 1;
 			do {
-				const task = await db.get(dbkeys.keyForTask(newTaskName));
+				await db.get(dbkeys.keyForTask(newTaskName));
 				newTaskName = `${task.name}-${cpt}`;
 				cpt += 1;
 			} while (true)
@@ -605,7 +606,7 @@ async function createTasksFromDPImport(dp_res, dataset) {
 
 		console.log('# 2) Push the new task + dataset');
 		// Task does not exist create it
-		const newTask = {name: newTaskName, dataset_id: dataset.id, spec_id: spec.id}
+		const newTask = { name: newTaskName, dataset_id: dataset.id, spec_id: spec.id }
 		const bm = new batchManager.BatchManager(db);
 		await bm.add({ type: 'put', key: dbkeys.keyForTask(newTask.name), value: newTask })  //why ???
 		await db.put(dbkeys.keyForTask(newTask.name), newTask);
@@ -619,10 +620,11 @@ async function createTasksFromDPImport(dp_res, dataset) {
 				// Create Labels
 				const newLabels = {
 					task_name: newTask.name,
-					data_id: dp.id,
+					data_id: dp.file,
+					dp_id: dp.id,
 					annotations: dp.anns
 				};
-				//console.log("Label to add", newLabels, newLabels.annotations);
+				console.log("Label to add", newLabels, newLabels.annotations);
 				await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels });
 				/** TMP On ne gere pas encore le statut (to_validate, to_annotate, ...) 
 				if (ann.data.status) {//if existing, get status back
@@ -647,29 +649,119 @@ async function createTasksFromDPImport(dp_res, dataset) {
 
 async function patch_dp(project_id, ann) {
 	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
-	console.log('AAA', dp_host);
-	return await fetch(dp_host + "/project/"+project_id+"/annotations", { 
+	//console.log('PATCH_DP host', dp_host);
+	return await fetch(dp_host + "/project/" + project_id + "/annotations", {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(ann)
-	 })
-	.then(res => {
-		console.log('BBB', res);
-		if (res.statusText == 'OK') { 
-			console.log('BBB1');
-			return res.json().then(data => { 
-				console.log('BBB1.1');
-				return Promise.resolve(data)
-			}).catch(e2 => {console.log('BBB1.2', e2); });
-		} else { 
-			console.log('BBB2');
-			return Promise.reject(res); 
-		}
 	})
-	.catch(async err => {	
-		return Promise.reject(err);
-	});
+		.then(res => {
+			if (res.statusText == 'OK') {
+				return Promise.resolve(res);
+			} else {
+				return Promise.reject(res);
+			}
+		})
+		.catch(async err => {
+			return Promise.reject(err);
+		});
 }
+
+
+function get_polygon_centroid2(poly) {
+	// poly : [ x0, y0, x1 , y1, ...]  --> [{x: x0, y: y0}, {x: x1, y: y1}, ...]
+	let pts = []
+	for (let i = 0; i<poly.length; i=i+2) {
+		pts.push({x: poly[i], y: poly[i+1]});
+	}
+
+	var first = pts[0], last = pts[pts.length-1];
+	if (first.x != last.x || first.y != last.y) pts.push(first);
+	var twicearea=0,
+	x=0, y=0,
+	nPts = pts.length,
+	p1, p2, f;
+	for ( var i=0, j=nPts-1 ; i<nPts ; j=i++ ) {
+	   p1 = pts[i]; p2 = pts[j];
+	   f = p1.x*p2.y - p2.x*p1.y;
+	   twicearea += f;          
+	   x += ( p1.x + p2.x ) * f;
+	   y += ( p1.y + p2.y ) * f;
+	}
+	f = twicearea * 3;
+	return { x:x/f, y:y/f };
+ }
+
+function get_polygon_centroid(poly) {
+	// poly : [ x0, y0, x1 , y1, ...]  --> [{x: x0, y: y0}, {x: x1, y: y1}, ...]
+	let pts = []
+	for (let i = 0; i<poly.length; i=i+2) {
+		pts.push({x: poly[i], y: poly[i+1]});
+	}
+
+	var first = pts[0], last = pts[pts.length-1];
+	if (first.x != last.x || first.y != last.y) pts.push(first);
+	var twicearea=0,
+	x=0, y=0,
+	nPts = pts.length,
+	p1, p2, f;
+	for ( var i=0, j=nPts-1 ; i<nPts ; j=i++ ) {
+	   p1 = pts[i]; p2 = pts[j];
+	   f = (p1.y - first.y) * (p2.x - first.x) - (p2.y - first.y) * (p1.x - first.x);
+	   twicearea += f;
+	   x += (p1.x + p2.x - 2 * first.x) * f;
+	   y += (p1.y + p2.y - 2 * first.y) * f;
+	}
+	f = twicearea * 3;
+	return { x:x/f + first.x, y:y/f + first.y };
+ }
+
+function polygonArea(poly)  {    
+	// poly = [ x0, y0, x1 , y1, ...]
+	const numPoints = poly.length / 2;
+	let area = 0;  // Accumulates area in the loop   
+	j = numPoints-1;  // The last vertex is the 'previous' one to the first
+
+	for (i=0; i<numPoints; i++) {
+		area = area +  (poly[2*j]+poly[2*i]) * (poly[2*j+1]-poly[2*i+1]); 
+      	j = i;  //j is previous vertex to i
+  	}   
+  	return Math.abs(area/2); 
+}
+
+function computeDebiAIFeats(geometry) {
+	const mpoly = (geometry.mvertices && geometry.mvertices.length>0)? geometry.mvertices : [geometry.vertices];
+	//group mpoly by points [x1, y1, x2, y2] -> [[x1, y1], [x2, y2]]
+	let formated_mpoly = [];
+	for (poly of mpoly) {
+		console.log(" AA area:", polygonArea(poly));
+		console.log(" AA centroids:", get_polygon_centroid(poly));
+		console.log(" AA centroids2:", get_polygon_centroid2(poly));
+		let formated_poly = [];
+		for(let i = 0; i<poly.length-1; i = i+2) {
+			formated_poly.push([poly[i], poly[i+1]]);
+		}
+		formated_mpoly.push(formated_poly);
+	}
+	console.log("formatted mpoly", formated_mpoly);
+
+	//turf marche pas, il veut des coords WGS84 (lat/long) et fait des calculs en mode elliptique, ca le fait pas...
+	//on va calculer ça nous meme !!
+	
+	const turf_mpoly = turf.multiPolygon(formated_mpoly);
+	console.log("turf mpoly", turf_mpoly);
+	console.log("turf mpoly coords", turf_mpoly.geometry.coordinates);
+
+	const bounds = turf.envelope(turf_mpoly)
+	console.log("bounds", bounds);
+	console.log("bounds coords", bounds.geometry.coordinates);
+	
+	console.log("area", turf.area(turf_mpoly));
+	
+	console.log("centroid", turf.centroid(turf_mpoly));
+	return [];
+}
+
 
 /**
  * @api {post} /tasks/partial_export_to_dataprovider Export annotations for an image (/sequence?) to Confiance DP
@@ -686,14 +778,13 @@ async function patch_dp(project_id, ann) {
  *     HTTP/1.1 400 Failed to create export folder
  */
 async function partial_export_to_dataprovider(req, res) {
-	checkAdmin(req, async () => {
+	const ret = await checkAdmin(req, async () => {
 		console.log("partial_export_to_dataprovider", req.params);
 		const task_name = req.params.task_name;
-		const media_id = req.params.media_id
+		const media_id = req.params.media_id;
+
 		//get projects list from DP to select project corresponding with current task
-		
-		const projs =  await get_dp("/debiai/projects").then(res => res)
-		.catch(err => {throw "Unable to get project list for matching with task, aborting export" + err;})
+		const projs = await get_dp("/debiai/projects").catch(err => { throw "Unable to get project list from Confiance DB, aborting export\n"+ err;})
 		//console.log("projs", Object.keys(projs));
 		const projects_name = Object.keys(projs).filter((p) => task_name.startsWith(p));
 		let project_name = ""
@@ -703,126 +794,109 @@ async function partial_export_to_dataprovider(req, res) {
 			console.log("Warning, several projects match this task name, choosing first one amongst", projects_name);
 			project_name = projects_name[0];
 		} else {
-			throw "Error, no projects match this task name, aborting export";
+			throw "Error, no matching project, aborting export";
 		}
-		//TMP pendant wiping OS
-		//project_name = "welding_v5_test";
-		//console.log("proj", project_name);
 
 		const task = await db.get(dbkeys.keyForTask(task_name));
 		const spec = await db.get(dbkeys.keyForSpec(task.spec_id));
-		delete spec.id;
-		const dataset = await db.get(dbkeys.keyForDataset(task.dataset_id));
-		const datasetId = dataset.id;
-		delete dataset.id;
-		const taskJson = { name: task.name, version: annotation_format_version, spec, dataset };
-		//console.log("task", taskJson);
-
 
 		// Write annotations
 		let ann = {};
 		const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name), false, true);
-		//BR
-		//console.log("BR streamLabels arg = ", dbkeys.keyForLabels(task.name));
-		//console.log("BR streamLabels = ", streamLabels);
-
-		//NB: "false" loop, as we will export only one "labels" od the stream
+		//The following SHOULD work, so we could get rid of the "NOT media_id (skipping)"" hack... But it doesn't work badly!!
+		//const streamLabels = utils.iterateOnDB(db, dbkeys.keyForLabels(task.name, media_id), false, true);
 		for await (const labels of streamLabels) {
-			//TODO: streamLabels is a stream, I haven't found a better way to filter than 
-			//loop all stream... There is probably more clever ways...
-			if(labels.data_id !== media_id) continue;
+			if (labels.data_id !== media_id) {
+				//console.log("NOT", media_id, "(skipping)");
+				continue;
+			}
 
 			//console.log("BR label = ", labels);
-			/*
+			
 			resultData = await db.get(dbkeys.keyForResult(task.name, labels.data_id));//get the status for this data
+			const user = await db.get(dbkeys.keyForUser(resultData.validator));   //BR? validator or annotator
+			//console.log("resultData", resultData);
+			//console.log("user", user);
+
+			//some info that we actually don't need to export
+			/*  
 			const data = await getDataDetails(datasetId, labels.data_id, true);
-			console.log("BR data = ", data);
 			delete data.id;
 			delete data.dataset_id;
 			delete data.thumbnail;
 			data.status = resultData.status;//add the status
-			let path = data.path;
-			path = Array.isArray(path) ? path[0] : path;
-			path = path.replace(dataset.path, '')
-			const filename = utils.pathToFilename(path);
-
-			let labelsJson = { ...labels, data };
+			console.log("DATA", data);
+			//let labelsJson = { ...labels, data };
 			*/
-			//TMP ?? pas besoin data pour cas welding
 			let labelsJson = { ...labels };
+			//console.log("LabelsJson", labelsJson);
 
-			// EXPORT task json
-			/* REF: cas export to json file *
-			const err = utils.writeJSON(labelsJson, `${taskFolder}/${filename}.json`);
-			if (err) {
-				return res.status(400).json({
-					error: 'cannot_write',
-					message: `Cannot write json file ${taskFolder}/${filename}.json`
-				});
-			}
-			*/
-			// wanted output:
-			/*
-			{
-				"actorId": "string",
-				"actorType": "string",
-				"samplesAnnotations": [
-					{
-						"id": "string",
-						"name": "blurred",
-						"value": [
-							"true",
-							[
-								0,
-								1,
-								2
-							]
-						]
-					}
-				]
-			}
-			*/
 			const labelsJson_confiance = {
-				actorId: "pixano",
-				actorType: 'annotator',
+				actorId: user.username,
+				actorType: 'annotator',  //BR? user.role (admin | user)  or [annotator | validator]
 				samplesAnnotations: []
 			}
-			for (const annotation of labelsJson.annotations) {
-				//for ref, when VDP
-				//category: annotation.category,
-				//geometry: annotation.geometry,
-				//options: annotation.options
-				const cls_name = Object.keys(annotation.options)[0];
-				const cls_val = annotation.options[cls_name];
+			//TODO completer liste plugins "objet detection" compatibles avec ce format
+			const object_detection_plugins = ["polygon", "segmentation", "smart-polygon", "smart-segmentation"];
+			if (spec.plugin_name === "classification") {
+				for (const annotation of labelsJson.annotations) {
+					labelsJson_confiance.samplesAnnotations.push({
+						id: labelsJson.dp_id,
+						type: spec.plugin_name,
+						name: Object.keys(annotation.options)[0],
+						value: annotation.options[cls_name]
+					});
+				}
+			} else if (object_detection_plugins.includes(spec.plugin_name)) {
+				//VDP case, we have all our pixano items in 'obstacles'
 				labelsJson_confiance.samplesAnnotations.push({
-					id: labelsJson.data_id,
-					name: cls_name,
-					value: [`${cls_val}`]
+					id: labelsJson.data_id,   //or .dp_id,  which one??
+					name: 'obstacles',    //TMP, we can get this in import
+					type: 'object_detection',
+					value: []
 				});
+				//TODO: compute centroids etc.
+				for (const annotation of labelsJson.annotations) {
+					console.log("ANN", annotation);
+					const feats = computeDebiAIFeats(annotation.geometry);
+					console.log("FEATS", feats);
+					labelsJson_confiance.samplesAnnotations[0].value.push({
+						id: annotation.id,
+						category: annotation.category,
+						geometry: annotation.geometry,
+						options: annotation.options
+					})
+				}
+			} else {
+				throw "ERROR Unsupported plugin for Confiance Export" + spec.plugin_name;
 			}
-			//console.log("labelsJson_confiance=", JSON.stringify(labelsJson_confiance));
-
-			ann = labelsJson_confiance;
+			//console.log("labelsJson_confiance=", labelsJson_confiance);
+			//console.log("jsonified ann=", JSON.stringify(labelsJson_confiance));
+			console.log("proj=", project_name);
+			
+			const result = await patch_dp(project_name, {}) //labelsJson_confiance)
+				.catch(async err => {
+					const err_txt = await err.text();
+					console.log("ERROR (A) partial export :", err_txt);
+					return `ERROR (A) while exporting to Confiance DB.\n${err_txt}`;
+					//throw res; //we have to throw ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+				});
+			if (result.statusText !== 'OK') {
+				const err_txt = err.message + "\n" + err.idList;
+				console.log("ERROR (B) partial export :", err_txt);
+				return `ERROR (B) while exporting to Confiance DB.\n${err_txt}`;
+			}
+			
 		} //end labels
-
-		console.log("jsonified ann=", JSON.stringify(ann));
-
-		patch_dp(project_name, ann)
-		.then(res => {
-			if (res.ok) return res.json();
-			else {
-				throw new Error(res);//we have to throw ourself because fetch only throw on network errors, not on 4xx or 5xx errors
-			}
-		}).catch(async (err) => {
-			const err_txt = await err.text();
-			console.log("ERROR partial export :", err_txt);
-			return res.status(400).json({message: `ERROR while exporting to Confiance DB.\n${err_txt}`});
-		})
-	})
-	return "Done";
+		console.log("Partial export OK");
+		return "OK";
+	}).catch(err => { console.log("CATCH", err); return err});
+	if(ret === "OK") return res.json({ message: ret });
+	else {
+		const ret_txt = `${ret}`;
+		return res.status(500).json({ message: ret_txt });
+	}
 }
-
-
 
 /**
  * @api {post} /tasks/export_tasks_to_dataprovider Export annotations to Confiance DP
@@ -1175,12 +1249,12 @@ async function export_tasks(req, res) {
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify(labelsJson)
 					})// send POST request
-					.then(res => {
-						if (res.ok) return res.json();
-						else {
-							throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
-						}
-					}).catch((e) => { err = e; });
+						.then(res => {
+							if (res.ok) return res.json();
+							else {
+								throw new Error(res);//we have to trow ourself because fetch only throw on network errors, not on 4xx or 5xx errors
+							}
+						}).catch((e) => { err = e; });
 					if (err) {
 						return res.status(400).json({
 							error: 'cannot_write',

@@ -129,7 +129,7 @@ const downloadFilesFromMinio = async (minio_files, workspace, selection_name) =>
 						const obj_flat_name = obj.name.split('/').pop();
 						minioClient.fGetObject(bucket_name, obj.name, pixano_local_save_image_directory + obj_flat_name, function (e) {							
 							if (e) {
-								console.log("ERERERER", e);
+								console.log("ERROR Minio fGetObject", e);
 								throw "Error while importing from Minio: " + e;
 							}
 							//console.info('append:',{url: pixano_local_save_image_directory + obj.name, id: sample});

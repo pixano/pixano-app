@@ -189,13 +189,22 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		const sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index]]
 		console.log("  selected selection full:", sel);
 		console.log("  selected selection:", sel.id);
-		store.dispatch(id_listFromDP(this.project_name, sel)).then(() => {
+		// mouse cursor in "wait" style
+		document.body.style.cursor = "wait";
+		store.dispatch(id_listFromDP(this.project_name, sel)).then((tasks) => {
 			store.dispatch(getTasks()).then(() => {
+				//we may have imported several task: first one become current task
+				store.dispatch(updateTaskName(tasks[0].name))
 				this.onActivate();
+				this.updateDisplayedSettings();
+				// stop mouse cursor "wai"t style
+				document.body.style.cursor = "auto";
 			})
 		}).catch(error => {
 			this.errorPopup(error.message);
 			store.dispatch(getTasks());
+			// stop mouse cursor "wai"t style
+			document.body.style.cursor = "auto";
 		});
 	}
 
@@ -423,10 +432,6 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                         @click="${this.onExport}">Export</mwc-button>
             <mwc-button outlined
                         type="button"
-                        title="Export annotations to Confiance DataBase"
-                        @click="${this.onExportToDP}">Export to Confiance DB</mwc-button>
-            <mwc-button outlined
-                        type="button"
                         title="Import annotations from json files"
                         @click="${this.onImport}">Import from files</mwc-button>
 			<mwc-button outlined
@@ -437,7 +442,15 @@ class AppProjectManager extends connect(store)(TemplatePage) {
         </div>
       </div>
     `;
-	}
+
+/* BR: export to Confiance - disabled (only partial export)
+            <mwc-button outlined
+                        type="button"
+                        title="Export annotations to Confiance DataBase"
+                        @click="${this.onExportToDP}">Export to Confiance DB</mwc-button>
+*/
+
+}
 
 	get taskSection() {
 		const t = this.tasks[this.taskIdx];
