@@ -388,8 +388,8 @@ async function process_selection(project_name, sel_name, selections) {
 
 	if (!dp_res || dp_res.length == 0) { throw "ERROR empty data for selection"; }
 	Object.keys(dp_res).forEach(key => {
-		console.log("dp_res[", key, "].storage", dp_res[key].storage);
-		console.log("dp_res[", key, "].annotations", dp_res[key].annotations);
+		//console.log("dp_res[", key, "].storage", dp_res[key].storage);
+		//console.log("dp_res[", key, "].annotations", dp_res[key].annotations);
 		if (!dp_res[key].storage) { throw "No storage info in selection, import aborted"; }
 		if (!dp_res[key].storage.minio) { throw "No minio storage info in selection, import aborted"; }
 		if (!dp_res[key].storage.minio.bucket_name && !dp_res[key].storage.minio.bucket) { throw "No minio bucket[_name] info in selection, import aborted"; }
@@ -408,7 +408,7 @@ async function process_selection(project_name, sel_name, selections) {
 		if (!(bpath in minio_files)) { minio_files[bpath] = [] }
 		minio_files[bpath].push({ 'bucket': bname, 'path': bpath_clean, 'file': dp_res[key].storage.filename })
 	});
-	console.log("XXXXX - buckets:", minio_files);
+	//console.log("XXXXX - buckets:", minio_files);
 
 	console.log('# 1) Create a new dataset');
 	console.log('# 1.1) get/set members');
@@ -444,11 +444,12 @@ async function createTasksFromDPImport(dp_res, dataset) {
 	const task_types = new Set();
 	const class_list = new Set();
 	const class_defs = {};
+	const found_options = {};
 	//console.log("DP_RES FULL", dp_res);
 	Object.keys(dp_res).forEach(key => {
 		Object.keys(dp_res[key].annotations).forEach(ann_key => {
 			let ann = dp_res[key].annotations[ann_key];
-			console.log("dp_res annotation", ann);
+			//console.log("dp_res annotation", ann);
 			if (Array.isArray(ann)) {
 				// TMP we take [0] because it's a list for several annotator, we take the first (???)
 				ann = ann[0];   //case of different annotators, we take first(last?) one only for now
@@ -487,17 +488,19 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			} else if (task_type === "object_detection") {
 				const geom_types = new Set();
 				//TOADD if(ann.subitems// == true)
-				console.log("WWWW object_detection", ann.items);
+				//console.log("WWWW object_detection", ann.items);
 				for (it of ann.items) {
 					class_list.add(it['category']);
-					class_defs[it['category']] = it['geometry'].type; //keep it because we need to differentiate polygon/mpolygon
+					class_defs[it['category']] = it['geometry'].type; //keep it (? : unused actually) because we need to differentiate polygon/mpolygon 
 					// mapping geometry -> plugin
 					geom = it['geometry'].type
-					if (geom === "mpolygon") geom = "polygon"
+					if (geom === "mpolygon" || geom === "multi_polygon") geom = "polygon"
 					geom_types.add(geom);
+					if (!found_options.hasOwnProperty(it['category'])) found_options[it['category']] = new Set();
+					Object.entries(it['options']).forEach(([k, v]) => found_options[it['category']].add(JSON.stringify([k, typeof(v)])));
 				}
 				if (geom_types.size > 1) {
-					console.log("WARNING: Several types of object geometry, this is not implemented yet")
+					console.log("WARNING: Several types of object geometry, this is not implemented yet", geom_types)
 				}
 				task_type = geom_types.values().next().value;
 				//TODO
@@ -562,10 +565,30 @@ async function createTasksFromDPImport(dp_res, dataset) {
 			let icol = 0;
 			const col_seq = palette('mpn65', class_list.size);
 			for (let classe of class_list) {
+				//console.log("Classe", classe, icol);
+				//console.log(" class [option, type]:", found_options[classe]);
+				let props = [];
+				const computed_opts = ['min_x', 'max_x', 'min_y', 'max_y', 'centroid_x', 'centroid_y', 'area'];
+				if(found_options.hasOwnProperty(classe)) {
+					for(opt_json of found_options[classe]) {
+						opt = JSON.parse(opt_json);
+						opt_name = opt[0];
+						opt_type = opt[1];
+						if(!computed_opts.includes(opt_name)) {
+							if (opt_type === 'boolean') {
+								props.push({ name: opt_name, type: 'checkbox', default: false })
+							} else if (opt_type === 'string') {
+								props.push({ name: opt_name, type: 'textfield', default: "" })
+							} else if (opt_type === 'number') {
+								props.push({ name: opt_name, type: 'textfield', default: "" })
+							} //... else ???
+						}
+					}
+				}
 				cats.push({
 					name: classe,
 					color: "#" + col_seq[icol],
-					properties: []
+					properties: props
 				});
 				icol++;
 			}
@@ -624,7 +647,7 @@ async function createTasksFromDPImport(dp_res, dataset) {
 					dp_id: dp.id,
 					annotations: dp.anns
 				};
-				console.log("Label to add", newLabels, newLabels.annotations);
+				//console.log("Label to add", newLabels, newLabels.annotations);
 				await bm.add({ type: 'put', key: dbkeys.keyForLabels(newTask.name, newLabels.data_id), value: newLabels });
 				/** TMP On ne gere pas encore le statut (to_validate, to_annotate, ...) 
 				if (ann.data.status) {//if existing, get status back
@@ -668,30 +691,6 @@ async function patch_dp(project_id, ann) {
 }
 
 
-function get_polygon_centroid2(poly) {
-	// poly : [ x0, y0, x1 , y1, ...]  --> [{x: x0, y: y0}, {x: x1, y: y1}, ...]
-	let pts = []
-	for (let i = 0; i<poly.length; i=i+2) {
-		pts.push({x: poly[i], y: poly[i+1]});
-	}
-
-	var first = pts[0], last = pts[pts.length-1];
-	if (first.x != last.x || first.y != last.y) pts.push(first);
-	var twicearea=0,
-	x=0, y=0,
-	nPts = pts.length,
-	p1, p2, f;
-	for ( var i=0, j=nPts-1 ; i<nPts ; j=i++ ) {
-	   p1 = pts[i]; p2 = pts[j];
-	   f = p1.x*p2.y - p2.x*p1.y;
-	   twicearea += f;          
-	   x += ( p1.x + p2.x ) * f;
-	   y += ( p1.y + p2.y ) * f;
-	}
-	f = twicearea * 3;
-	return { x:x/f, y:y/f };
- }
-
 function get_polygon_centroid(poly) {
 	// poly : [ x0, y0, x1 , y1, ...]  --> [{x: x0, y: y0}, {x: x1, y: y1}, ...]
 	let pts = []
@@ -716,7 +715,7 @@ function get_polygon_centroid(poly) {
 	return { x:x/f + first.x, y:y/f + first.y };
  }
 
-function polygonArea(poly)  {    
+ function polygonArea(poly)  {    
 	// poly = [ x0, y0, x1 , y1, ...]
 	const numPoints = poly.length / 2;
 	let area = 0;  // Accumulates area in the loop   
@@ -729,37 +728,47 @@ function polygonArea(poly)  {
   	return Math.abs(area/2); 
 }
 
+function polygonMinMax(poly)  {    
+	// poly = [ x0, y0, x1 , y1, ...]
+	let minx, miny, maxx, maxy;
+	for (i=0; i<poly.length; i++) {
+		if (i%2 == 0) {
+			minx = minx ? Math.min(minx, poly[i]) : poly[i]
+			maxx = maxx ? Math.max(maxx, poly[i]) : poly[i]
+		} else {
+			miny = miny ? Math.min(miny, poly[i]) : poly[i]
+			maxy = maxy ? Math.max(maxy, poly[i]) : poly[i]
+		}
+  	}   
+  	return [minx, maxx, miny, maxy];
+}
+
 function computeDebiAIFeats(geometry) {
 	const mpoly = (geometry.mvertices && geometry.mvertices.length>0)? geometry.mvertices : [geometry.vertices];
-	//group mpoly by points [x1, y1, x2, y2] -> [[x1, y1], [x2, y2]]
-	let formated_mpoly = [];
-	for (poly of mpoly) {
-		console.log(" AA area:", polygonArea(poly));
-		console.log(" AA centroids:", get_polygon_centroid(poly));
-		console.log(" AA centroids2:", get_polygon_centroid2(poly));
-		let formated_poly = [];
-		for(let i = 0; i<poly.length-1; i = i+2) {
-			formated_poly.push([poly[i], poly[i+1]]);
-		}
-		formated_mpoly.push(formated_poly);
+	let minx, miny, maxx, maxy;
+	let centroidx = 0, centroidy = 0, area = 0;
+	for (poly of mpoly) { 
+		const minmax = polygonMinMax(poly);
+		const centroid = get_polygon_centroid(poly);
+		minx =  minx ? Math.min(minmax[0], minx): minmax[0];
+		maxx =  maxx ? Math.max(minmax[1], maxx): minmax[1];
+		miny =  miny ? Math.min(minmax[2], miny): minmax[2];
+		maxy =  maxy ? Math.max(minmax[3], maxy): minmax[3];
+		centroidx += centroid.x;
+		centroidy += centroid.y;
+		area += polygonArea(poly);
 	}
-	console.log("formatted mpoly", formated_mpoly);
-
-	//turf marche pas, il veut des coords WGS84 (lat/long) et fait des calculs en mode elliptique, ca le fait pas...
-	//on va calculer ça nous meme !!
-	
-	const turf_mpoly = turf.multiPolygon(formated_mpoly);
-	console.log("turf mpoly", turf_mpoly);
-	console.log("turf mpoly coords", turf_mpoly.geometry.coordinates);
-
-	const bounds = turf.envelope(turf_mpoly)
-	console.log("bounds", bounds);
-	console.log("bounds coords", bounds.geometry.coordinates);
-	
-	console.log("area", turf.area(turf_mpoly));
-	
-	console.log("centroid", turf.centroid(turf_mpoly));
-	return [];
+	centroidx = centroidx / mpoly.length;
+	centroidy = centroidy / mpoly.length;
+	return {
+		min_x: minx,
+		max_x: maxx,
+		min_y: miny,
+		max_y: maxy,
+		centroid_x: centroidx,
+		centroid_y: centroidy,
+		area: area
+	}
 }
 
 
@@ -857,14 +866,14 @@ async function partial_export_to_dataprovider(req, res) {
 				});
 				//TODO: compute centroids etc.
 				for (const annotation of labelsJson.annotations) {
-					console.log("ANN", annotation);
-					const feats = computeDebiAIFeats(annotation.geometry);
-					console.log("FEATS", feats);
+					//console.log("ANN", annotation.options);
+					const computed_options = computeDebiAIFeats(annotation.geometry);
+					let new_options = {...annotation.options, ...computed_options};
 					labelsJson_confiance.samplesAnnotations[0].value.push({
 						id: annotation.id,
 						category: annotation.category,
 						geometry: annotation.geometry,
-						options: annotation.options
+						options: new_options
 					})
 				}
 			} else {
@@ -872,7 +881,7 @@ async function partial_export_to_dataprovider(req, res) {
 			}
 			//console.log("labelsJson_confiance=", labelsJson_confiance);
 			//console.log("jsonified ann=", JSON.stringify(labelsJson_confiance));
-			console.log("proj=", project_name);
+			//console.log("proj=", project_name);
 			
 			const result = await patch_dp(project_name, {}) //labelsJson_confiance)
 				.catch(async err => {
@@ -886,7 +895,6 @@ async function partial_export_to_dataprovider(req, res) {
 				console.log("ERROR (B) partial export :", err_txt);
 				return `ERROR (B) while exporting to Confiance DB.\n${err_txt}`;
 			}
-			
 		} //end labels
 		console.log("Partial export OK");
 		return "OK";
