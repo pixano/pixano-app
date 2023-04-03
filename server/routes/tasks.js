@@ -261,8 +261,12 @@ async function import_tasks(req, res) {
 /*****************************   DATA PROVIDER IMPORT  ****************************/
 /**********************************************************************************/
 
-async function get_dp(url) {
+async function get_dp(url, queryparams = {}) {
 	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
+	let final_url = dp_host + url;
+	if(queryparams.length > 0) {
+		final_url = final_url + new URLSearchParams(queryparams);
+	} 
 	return await fetch(dp_host + url, { method: 'get', headers: { 'Content-Type': 'application/json' } })
 		.then(res => {
 			if (res.statusText == 'OK') { return res.json().then(data => Promise.resolve(data)); }
@@ -272,6 +276,7 @@ async function get_dp(url) {
 }
 
 async function get_dp_minio_uris(project_name, ids) {
+	//TODO: slice ids in batches !
 	const dp_host = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.dataProvider });
 	return await fetch(dp_host + "/project/" + project_name + "/data", {
 		method: 'POST',
@@ -357,7 +362,12 @@ async function id_list_from_dataprovider(req, res) {
 	return await checkAdmin(req, async () => {
 		console.log('##### Importing id list from dataprovider');
 		//console.log('##### BR req.params:', req.params);
-		return await get_dp("/debiai/projects/" + req.params.project_name + "/selections/" + req.params.sel_id + "/selected-data-id-list").then(res => res);
+		if (req.params.sel_id === "ALL" && req.params.sel_name === "ALL") {
+			//return --Full list of ids--
+			return await get_dp("/debiai/projects/" + req.params.project_name + "/data-id-list", {from: 0, to: req.params.sel_nbSamples}).then(res => res);
+		} else {
+			return await get_dp("/debiai/projects/" + req.params.project_name + "/selections/" + req.params.sel_id + "/selected-data-id-list").then(res => res);
+		}
 	})
 		.then(async (selections) => {
 			task = await process_selection(req.params.project_name, req.params.sel_name, selections)
@@ -417,7 +427,7 @@ async function process_selection(project_name, sel_name, selections) {
 	dataset.date = Date.now();
 	dataset.path = 'importedFromDebiai/' + sel_name;
 	dataset.id = project_name.replace(/\s/g, '_') + "_" + sel_name;
-	dataset.data_type = 'image'   // TODO: gérer autres cas...
+	dataset.data_type = 'image'  // TODO: gérer autres cas... //'remote_image'
 	console.log("dataset=", dataset);
 	console.log('# 1.2) getPathFromIds');
 	dataset.urlList = await downloadFilesFromMinio(minio_files, workspace, sel_name).catch((e) => {

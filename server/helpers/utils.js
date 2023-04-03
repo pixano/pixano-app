@@ -117,6 +117,15 @@ const removeDir = function (path) {
 	}
 }
 
+const isValidUrl = urlString=> {
+	try { 
+		return Boolean(new URL(urlString)); 
+	}
+	catch(e){ 
+		return false; 
+	}
+}
+
 const isSubFolder = function (parent, dir) {
 	const relative = path.relative(parent, dir);
 	return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
@@ -261,6 +270,7 @@ module.exports = {
 	removeDir,
 	readJSON,
 	writeJSON,
+	isValidUrl,
 	isSubFolder,
 	pathToFilename
 }

@@ -21,6 +21,7 @@ async function remote_image(db, mediaRelativePath, hostWorkspacePath, datasetId,
 
 const data_types = [//list of available data types (implemented in data-papulator)
 	"image",
+	"remote_image",
 	"pcl",
 	"pcl_image",
 	"sequence_image",

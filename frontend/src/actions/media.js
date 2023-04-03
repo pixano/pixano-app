@@ -113,7 +113,7 @@ export const selectionsFromDP = (project_name) => (dispatch) => {
  */
 export const id_listFromDP = (project_name, sel) => (dispatch) => {	
 	//console.log("id_listFromDP", project_name, sel);
-	return GET('/api/v1/dataprovider/id_list_from_dataprovider/'+project_name+'/'+sel.id+'/'+sel.name, dispatch);
+	return GET('/api/v1/dataprovider/id_list_from_dataprovider/'+project_name+'/'+sel.id+'/'+sel.name+'/'+sel.nbSamples, dispatch);
 }
 
 /**

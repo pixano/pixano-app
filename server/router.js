@@ -83,7 +83,7 @@ router.get('/dataprovider/export_tasks_to_dataprovider/:task_name', middleware.c
 router.get('/dataprovider/partial_export_to_dataprovider/:task_name/:media_id', middleware.checkToken, partial_export_to_dataprovider);
 router.get('/dataprovider/projects_from_dataprovider', middleware.checkToken, projects_from_dataprovider);
 router.get('/dataprovider/selections_from_dataprovider/:project_name', middleware.checkToken, selections_from_dataprovider);
-router.get('/dataprovider/id_list_from_dataprovider/:project_name/:sel_id/:sel_name', middleware.checkToken, id_list_from_dataprovider);
+router.get('/dataprovider/id_list_from_dataprovider/:project_name/:sel_id/:sel_name/:sel_nbSamples', middleware.checkToken, id_list_from_dataprovider);
 //router.post('/dataprovider/minio_uris_from_dataprovider/:project_name', middleware.checkToken, minio_uris_from_dataprovider);
 
 router.get('/datasets', middleware.checkToken, get_datasets);

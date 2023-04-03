@@ -38,7 +38,7 @@ async function elise_index_image(url,id,datasetId,f) {
 	const eliseUrl = await db.get(dbkeys.keyForCliOptions).then((options) => { return options.elise });
 	let formData = new FormData();// create the form to send to Elise
 	formData.append('action', 'index');
-	if (url.includes('http:')) {
+	if (utils.isValidUrl(url)) {
 		const response = await fetch(url);
 		const blob = await response.blob();
 		const arrayBuffer = await blob.arrayBuffer();

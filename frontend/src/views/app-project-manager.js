@@ -159,6 +159,9 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 
 	fillSelectionList(sels) {
 		this.dialog_selsel_template = []
+		this.dialog_selsel_template.push(html`<mwc-list-item twoline dialogAction='ok'>
+			<span>Full project</span>
+			<span slot='secondary'>nb_samples: ${this.project_nbSamples}</span></mwc-list-item>`);
 		for (const [_, value] of Object.entries(sels)) {
 			this.dialog_selsel_template.push(html`<mwc-list-item twoline dialogAction='ok'>
 				<span>${value.name}</span>
@@ -172,23 +175,28 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 	onProjectSelected(selected) {
 		const proj = this.project_list[Object.keys(this.project_list)[selected.detail.index]]
 		this.project_name = proj.name;
-		console.log("  selected project: ", this.project_name);
+		this.project_nbSamples = proj.nbSamples;
+		console.log(`  selected project: ${this.project_name} (nbSamples: ${this.project_nbSamples})`);
 
 		store.dispatch(selectionsFromDP(this.project_name)).then((sels) => {
 			console.log("selectionsFromDP", sels);
 			//selection selector 
 			this.selection_list = sels;
-
-			if (this.selection_list.length > 0) {
-				this.fillSelectionList(this.selection_list);
-			} else { this.errorPopup("No available selection !")}
+			this.fillSelectionList(this.selection_list);
 		}).catch(error => this.errorPopup(error.message));
 	}
 
 	onSelectionSelected(selected) {
-		const sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index]]
-		console.log("  selected selection full:", sel);
-		console.log("  selected selection:", sel.id);
+		let sel = {}
+		if (selected.detail.index == 0) {
+			console.log("  selected full project");
+			//TODO: get batches of samples (with GET /debiai/projects/{projectId}/data-id-list)
+			//no: get all (it's only ids), we'll batch theses after	
+			sel = {id: "ALL", name: "ALL", nbSamples: this.project_nbSamples};
+		} else {
+			sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index-1]];
+		}
+		console.log("  selected selection:", sel);
 		// mouse cursor in "wait" style
 		document.body.style.cursor = "wait";
 		store.dispatch(id_listFromDP(this.project_name, sel)).then((tasks) => {
@@ -197,13 +205,13 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 				store.dispatch(updateTaskName(tasks[0].name))
 				this.onActivate();
 				this.updateDisplayedSettings();
-				// stop mouse cursor "wai"t style
+				// stop mouse cursor "wait" style
 				document.body.style.cursor = "auto";
 			})
 		}).catch(error => {
 			this.errorPopup(error.message);
 			store.dispatch(getTasks());
-			// stop mouse cursor "wai"t style
+			// stop mouse cursor "wait" style
 			document.body.style.cursor = "auto";
 		});
 	}
