@@ -55,7 +55,7 @@ async function elise_index_image(url,id,datasetId,f) {
 		})
 		.then(res => console.log(res))
 		.catch((err) => {
-			console.error("ERROR while calling ELISE for indexing => is ELISE server running ?")
+			//console.error("ERROR while calling ELISE for indexing => is ELISE server running ?")
 			//console.error("ERROR while calling ELISE => is ELISE server running ?\nError was:",err)
 		});
 }

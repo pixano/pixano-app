@@ -1,15 +1,23 @@
 import { Client } from 'minio';
-import { db, workspace } from '../config/db';
+import { db } from '../config/db';
 import { keyForCliOptions } from '../config/db-keys';
-import { truncate } from 'fs';
 import cliProgress from 'cli-progress';
 
-function waitFor(conditionFunction) {//rajouter un timeout
-	const poll = resolve => {
-		if (conditionFunction()) resolve();
-		else setTimeout(_ => poll(resolve), 400);
-	}
-	return new Promise(poll);
+function getMinioObj(bar, minioClient, bucket_name, bucket_path, pixano_local_save_image_directory, file) {
+	return new Promise((resolve, reject) => {
+		const minio_obj = bucket_path.slice(1) + "/" + file
+		const obj_outpath = pixano_local_save_image_directory + file
+		minioClient.fGetObject(bucket_name, minio_obj, obj_outpath, function (e) {
+			if (e) {
+				console.log("ERROR Minio fGetObject", e);
+				reject("Error while importing from Minio: " + e);
+			} else {
+				//console.log("Minio imported file:", file)
+				bar.increment();
+				resolve({url: obj_outpath, id: file})
+			}
+		});	
+	});
 }
 
 /**
@@ -20,17 +28,14 @@ function waitFor(conditionFunction) {//rajouter un timeout
  * @return ["url1","url2",...]: returns the list of the corresponding URLs
  * @doc https://docs.min.io/docs/javascript-client-api-reference
  */
-const downloadFilesFromMinio = async (minio_files, workspace, selection_name) => {
+const downloadFilesFromMinio = async (minio_files, workspace, outpath) => {
 	//TODO : wrong, need to iterate and sum in each array
 	let num_ids = 0;
 	for (const k in minio_files) {
 		num_ids += minio_files[k].length;
 	}
-	console.log("downloadFilesFromMinio (",selection_name,") - nbSamples", num_ids);
-
-	const pixano_local_save_image_directory = workspace+'/minio_saved_images/importedFromDebiai/'+selection_name+'/';//... TODO
-	var listOfURLs = [];
-
+	console.log("downloadFilesFromMinio (",outpath,") - nbSamples", num_ids);
+	const pixano_local_save_image_directory = workspace+'/minio_saved_images/importedFromDebiai/'+outpath+'/';//... TODO
 	// Instantiate the minio client with the endpoint
 	// and access keys as shown below.
 	const minio_config = await db.get(keyForCliOptions)
@@ -44,15 +49,6 @@ const downloadFilesFromMinio = async (minio_files, workspace, selection_name) =>
 	//console.log("Minio config:", minio_config);
 
 	const minioClient = new Client(minio_config);
-
-	//console.log("Minio :", minioClient);
-	/** test: list availble buckets
-	minioClient.listBuckets(function(err, buckets) {
-		if (err) return console.log(err);
-		console.log('available buckets :', buckets);
-	})
-	*/
-
 	// check if bucket(s) exists/can be accessed
 	const unique_buckets = new Set()
 	for (const k in minio_files) {
@@ -68,102 +64,52 @@ const downloadFilesFromMinio = async (minio_files, workspace, selection_name) =>
 	}
 
 	// Extract the list of image from the bucket
-
 	const bar = new cliProgress.SingleBar({
 		format: 'Image retrieval from Minio | {bar} | {percentage}% || {value}/{total} jobs'
 	});
 	bar.start(num_ids, 0);
+	let minio_dl_Proms = []
+
 	for(const k in minio_files) {
 		//assume (by construction) unique bucket / path for each key in minio_files
 		const bucket_name = minio_files[k][0]['bucket'];
 		const bucket_path = minio_files[k][0]['path'];
-		const listIds = []
-		var data = [];
-		var doneData = 0;
-	
+		let minio_dl_Proms_batch = []
+		const batch_size = 50;  //not more than 64, else Minio complains 
 		for( const f of minio_files[k]) {
-			listIds.push(f['file']);
+			minio_dl_Proms_batch.push(getMinioObj(bar, minioClient, bucket_name, bucket_path, pixano_local_save_image_directory, f['file']))
+			if(minio_dl_Proms_batch.length === batch_size) {
+				//await for batch to finish before next one
+				minio_dl_Proms.push.apply(minio_dl_Proms, await Promise.all(minio_dl_Proms_batch))
+				minio_dl_Proms_batch = []
+			}
 		}
-		console.log(`Seek in ${bucket_name} path: ${bucket_path}`);
-		var stream = minioClient.listObjects(bucket_name, bucket_path, true);
-		stream.on('error', function (e) { throw(e); });
-		stream.on('data', function (obj) { data.push(obj); });
-		stream.on('end', function () {
-			if (data.length===0) throw "Minio: no data found in bucket "+bucket_name;
-			data.forEach(obj => {//search for urls that correspond to the input list and get them
-				//const obj = data[i];
-				if ('name' in obj) {
-					// console.log("name in obj");
-					var corresponding = false;
-					// FORMAT of sample_ids :
-					//	"sample_ids": [ 
-					//		{
-					//			"dataset": "not_labeled",                 
-					//			"subject": "c34", 
-					//			"relative_path": "not_labeled/c34/", 
-					//			"url": "", 
-					//			"type": "image",
-					//			"id": "191003-2237_2953236_ - C101_OK.jpgImage" 
-					//		}, ... ]
-					var sample;
-					for (var i=0; i<listIds.length ; i++) {
-						sample = listIds[i];
-						if (!sample) throw(e);
-						// console.log("sample=",sample);
-						// console.log("sample.id.replace('.jpgImage', '.jpg')=",sample.id.replace('.jpgImage', '.jpg'));
-						if (obj.name.includes(sample.replace('.jpgImage', '.jpg'))) {
-							//console.log(`obj.name ${obj.name} includes sample ${sample}`);
-							corresponding=true;
-							break;
-						}
-					}
-					if (corresponding) {
-						console.log("corresponding sample=",sample);
-						//Download image in current directory//... TODO : use web links when available
-
-						//minioClient.fGetObject(bucket_name, obj.name, pixano_local_save_image_directory + obj.name, function (e) {
-						//TMP  On applati l'arborescence Minio. Ce n'est pas solution optimale dans tout les cas
-						//     mais c'est le + simple dans le cadre d'une selection DP
-						//  -> on vire les répertoires du path, on ne garde que le filename
-						const obj_flat_name = obj.name.split('/').pop();
-						minioClient.fGetObject(bucket_name, obj.name, pixano_local_save_image_directory + obj_flat_name, function (e) {
-							if (e) {
-								console.log("ERROR Minio fGetObject", e);
-								throw "Error while importing from Minio: " + e;
-							}
-							//console.info('append:',{url: pixano_local_save_image_directory + obj.name, id: sample});
-							//////TMP applati listOfURLs.push({url: pixano_local_save_image_directory + obj.name, id: sample});
-							listOfURLs.push({url: pixano_local_save_image_directory + obj_flat_name, id: sample});
-							doneData++;
-						});
-						//TEST avec une URL vers Minio (attention il y a une date d'expiration du lien par defaut à 7 jours)
-						/*
-						minioClient.presignedGetObject(bucket_name, obj.name, function (e, presignedUrl) {
-							if (e) {
-								console.log("ERROR Minio presignedGetObject", e);
-								throw "Error while importing from Minio: " + e;
-							}
-							//console.info('append:',{url: pixano_local_save_image_directory + obj.name, id: sample});
-							//////TMP applati listOfURLs.push({url: pixano_local_save_image_directory + obj.name, id: sample});
-							listOfURLs.push({url: presignedUrl, id: sample});
-							doneData++;
-						});
-						*/
-						bar.increment();
-					} else doneData++;
-				} else doneData++;
-			});//throw errors further
-		});//throw errors further
-		console.log("waitFor",doneData,data.length);
-		await waitFor(() => { console.log("test",doneData,data.length); if (data.length>0) return(doneData === data.length); });	
+		if(minio_dl_Proms_batch.length > 0) {
+			//this part length < batch_size, we await for it
+			minio_dl_Proms.push.apply(minio_dl_Proms, await Promise.all(minio_dl_Proms_batch))
+		}
 	}
-	console.log("listOfURLs=",listOfURLs);
-	console.log("url0: "+listOfURLs[0].url);
-	console.info("Minio: got "+listOfURLs.length+" images over "+num_ids+" in the input list");
-	bar.stop();
-	if (listOfURLs.length===0) throw "Minio: no corresponding data found in bucket "+bucket_name;
 
-	return listOfURLs;
+	const final_listurl = await Promise.all(minio_dl_Proms)
+	.then((res_list) => {
+		//console.log("all resolved", res_list);
+		var listOfURLs = [];
+		for(const res of res_list) {
+			listOfURLs.push(res);
+		}
+		console.info("Minio: got "+listOfURLs.length+" images over "+num_ids+" in the input list");
+		bar.stop();
+		if (listOfURLs.length===0) throw "Minio: no corresponding data found in bucket "+bucket_name;
+		return listOfURLs;	
+	})
+	.catch((e_list) => {
+		console.log("all rejected", e_list);
+		for(const e of e_list) {
+			console.log("ERROR Minio fGetObject", e);
+			throw "Error while importing from Minio: " + e;
+		}
+	});
+	return final_listurl;
 }
 
 

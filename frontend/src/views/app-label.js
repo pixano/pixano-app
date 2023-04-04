@@ -124,7 +124,13 @@ class AppLabel extends AppExplore {
 				const taskName = getState().application.taskName;
 				const media_id = getState('media').info.id;
 				partialExporttoDP(taskName, media_id)
-				.then((r) => { console.log(`Export for ${media_id} done (${r})`); })
+				.then((r) => {
+					if(r.hasOwnProperty('message')) { 
+						console.log(`Export for ${media_id} done (${r.message})`);
+					} else {
+						console.log(`Export for ${media_id} done (${r})`);
+					}
+				})
 				.catch(async err => {
 					console.log("ERROR Export", err.message);
 					await this.errorPopup("EXPORT ERROR\n" + err.message);

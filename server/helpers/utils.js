@@ -257,7 +257,9 @@ const pathToFilename = (path, removeExt = true) => {
 	return filename;
 }
 
-
+const extract_body = (html_string) => {
+    return /<body.*?>([\s\S]*)<\/body>/.exec(html_string)[1];
+}
 
 module.exports = {
 	generateKey,
@@ -272,5 +274,6 @@ module.exports = {
 	writeJSON,
 	isValidUrl,
 	isSubFolder,
-	pathToFilename
+	pathToFilename,
+	extract_body
 }

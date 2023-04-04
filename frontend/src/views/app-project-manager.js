@@ -438,10 +438,6 @@ class AppProjectManager extends connect(store)(TemplatePage) {
                         type="button"
                         title="Export annotations only to json files"
                         @click="${this.onExport}">Export</mwc-button>
-            <mwc-button outlined
-                        type="button"
-                        title="Import annotations from json files"
-                        @click="${this.onImport}">Import from files</mwc-button>
 			<mwc-button outlined
 						class="newDataset"
 						type="button"
@@ -450,7 +446,12 @@ class AppProjectManager extends connect(store)(TemplatePage) {
         </div>
       </div>
     `;
-
+/* BR: import local/url - disabled (in Confiance we only accept Confiance import)
+	<mwc-button outlined
+	type="button"
+	title="Import annotations from json files"
+	@click="${this.onImport}">Import from files</mwc-button>
+*/
 /* BR: export to Confiance - disabled (only partial export)
             <mwc-button outlined
                         type="button"

@@ -369,17 +369,17 @@ async function id_list_from_dataprovider(req, res) {
 			return await get_dp("/debiai/projects/" + req.params.project_name + "/selections/" + req.params.sel_id + "/selected-data-id-list").then(res => res);
 		}
 	})
-		.then(async (selections) => {
-			task = await process_selection(req.params.project_name, req.params.sel_name, selections)
-				//.then(res => { return res })
-				.catch(err => { throw err })
-			console.log("Created Task", task);
-			return res.status(200).send(task);
-		})
-		.catch(err => {
-			console.log("ERREUR in id_list_from_dataprovider:", err);
-			return res.status(400).json({ message: err });
-		})
+	.then(async (selections) => {
+		task = await process_selection(req.params.project_name, req.params.sel_name, selections)
+			//.then(res => { return res })
+			.catch(err => { throw err })
+		console.log("Created Task", task);
+		return res.status(200).send(task);
+	})
+	.catch(err => {
+		console.log("ERREUR in id_list_from_dataprovider:", err);
+		return res.status(400).json({ message: err });
+	})
 }
 
 //// remaniement, ce n'est plus une API --nom temporaire, j'ai pas mieux en stock
@@ -423,17 +423,21 @@ async function process_selection(project_name, sel_name, selections) {
 	console.log('# 1) Create a new dataset');
 	console.log('# 1.1) get/set members');
 	sel_name = sel_name.replace(/\s/g, '_');
+	outpath = project_name.replace(/\s/g, '_') + "_" + sel_name
 	let dataset = {};
 	dataset.date = Date.now();
-	dataset.path = 'importedFromDebiai/' + sel_name;
-	dataset.id = project_name.replace(/\s/g, '_') + "_" + sel_name;
+	dataset.path = 'importedFromDebiai/' + outpath;
+	dataset.id = outpath;
 	dataset.data_type = 'image'  // TODO: gérer autres cas... //'remote_image'
 	console.log("dataset=", dataset);
 	console.log('# 1.2) getPathFromIds');
-	dataset.urlList = await downloadFilesFromMinio(minio_files, workspace, sel_name).catch((e) => {
+	dataset.urlList = await downloadFilesFromMinio(minio_files, workspace, outpath).catch((e) => {
 		console.error('Error in Minio import\n' + e);
 		throw 'Error in Minio import\n' + e;
 	})
+
+	console.log("dataset.urlList", dataset.urlList);
+
 	console.log('# 1.3) getImagesFromPath');
 	const newDataset = await getOrcreateDataset(dataset, workspace);
 	if (newDataset) {
@@ -893,7 +897,7 @@ async function partial_export_to_dataprovider(req, res) {
 			//console.log("jsonified ann=", JSON.stringify(labelsJson_confiance));
 			//console.log("proj=", project_name);
 			
-			const result = await patch_dp(project_name, {}) //labelsJson_confiance)
+			const result = await patch_dp(project_name, labelsJson_confiance)
 				.catch(async err => {
 					const err_txt = await err.text();
 					console.log("ERROR (A) partial export :", err_txt);
@@ -901,9 +905,8 @@ async function partial_export_to_dataprovider(req, res) {
 					//throw res; //we have to throw ourself because fetch only throw on network errors, not on 4xx or 5xx errors
 				});
 			if (result.statusText !== 'OK') {
-				const err_txt = err.message + "\n" + err.idList;
-				console.log("ERROR (B) partial export :", err_txt);
-				return `ERROR (B) while exporting to Confiance DB.\n${err_txt}`;
+				console.log("ERROR (B) partial export :", utils.extract_body(result));
+				return result;
 			}
 		} //end labels
 		console.log("Partial export OK");
