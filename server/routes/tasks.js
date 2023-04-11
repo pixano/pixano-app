@@ -436,7 +436,8 @@ async function process_selection(project_name, sel_name, selections) {
 		throw 'Error in Minio import\n' + e;
 	})
 
-	console.log("dataset.urlList", dataset.urlList);
+	//console.log("dataset.urlList", dataset.urlList);
+	console.log("dataset.urlList0", dataset.urlList[0]);
 
 	console.log('# 1.3) getImagesFromPath');
 	const newDataset = await getOrcreateDataset(dataset, workspace);
@@ -539,6 +540,19 @@ async function createTasksFromDPImport(dp_res, dataset) {
 	//console.log("dataset id", dataset['id']);
 
 	const importedTasks = [];
+
+	//if we have no annotation, create a default "classification"
+	if (task_types.size === 0) {
+		//TODO: on devrait envoyer ce warning au front, mais visiblement 
+		// il n'y a pas de route pour envoyer de message (autre que le retour de la route)
+		// or dans ce cas la route fait son travail, mais on aimerait qd meme 
+		// informer l'utilisateur...
+		// TODO: créer une/des route(s) pour messages
+		console.log("WARNING: no annotations found. Creating a default classifiation project.")
+		task_types.add("classification");
+		class_list.add("class");
+		class_defs["class"]= 'boolean';
+	}
 	for (let task_type of task_types) {
 		let task;
 		const plugin_name = task_type;
@@ -1479,9 +1493,10 @@ async function remove_task(taskName) {
 	// delete task
 	const key = dbkeys.keyForTask(taskName);
 	const taskData = await db.get(key);
+
 	const bm = new batchManager.BatchManager(db);
 	await bm.add({ type: 'del', key });
-
+	
 	// delete associated jobs
 	const streamJob = utils.iterateOnDB(db, dbkeys.keyForJob(taskName), false, true);
 	for await (const job of streamJob) {

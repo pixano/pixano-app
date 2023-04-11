@@ -40,7 +40,7 @@
     "jsonwebtoken": "^8.5.1",
     "kafkajs": "^1.15.0",
     "level": "^6.0.1",
-    "minio": "^7.0.23",
+    "minio": "^7.0.33",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.1",
     "normalize-path": "^3.0.0",

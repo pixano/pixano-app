@@ -159,9 +159,11 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 
 	fillSelectionList(sels) {
 		this.dialog_selsel_template = []
+		/* desactivation de l'import complet 1/2
 		this.dialog_selsel_template.push(html`<mwc-list-item twoline dialogAction='ok'>
 			<span>Full project</span>
 			<span slot='secondary'>nb_samples: ${this.project_nbSamples}</span></mwc-list-item>`);
+		*/
 		for (const [_, value] of Object.entries(sels)) {
 			this.dialog_selsel_template.push(html`<mwc-list-item twoline dialogAction='ok'>
 				<span>${value.name}</span>
@@ -181,13 +183,18 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 		store.dispatch(selectionsFromDP(this.project_name)).then((sels) => {
 			console.log("selectionsFromDP", sels);
 			//selection selector 
-			this.selection_list = sels;
-			this.fillSelectionList(this.selection_list);
+			if(sels.length == 0) {
+				this.errorPopup("No selection")
+			} else {
+				this.selection_list = sels;
+				this.fillSelectionList(this.selection_list);
+			}
 		}).catch(error => this.errorPopup(error.message));
 	}
 
 	onSelectionSelected(selected) {
 		let sel = {}
+		/* desactivation de l'import complet 2/2
 		if (selected.detail.index == 0) {
 			console.log("  selected full project");
 			//TODO: get batches of samples (with GET /debiai/projects/{projectId}/data-id-list)
@@ -195,7 +202,9 @@ class AppProjectManager extends connect(store)(TemplatePage) {
 			sel = {id: "ALL", name: "ALL", nbSamples: this.project_nbSamples};
 		} else {
 			sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index-1]];
-		}
+		}*/
+		sel = this.selection_list[Object.keys(this.selection_list)[selected.detail.index]];
+
 		console.log("  selected selection:", sel);
 		// mouse cursor in "wait" style
 		document.body.style.cursor = "wait";

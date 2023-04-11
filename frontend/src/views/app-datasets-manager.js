@@ -603,6 +603,9 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					@click="${this.onCreateDatasetFromSelection}">
 				Dataset from selection
 			</mwc-button>
+		`;
+	}
+	/* Import from Kafka désactivé
 			<mwc-button outlined
 					class="newDataset"
 					type="button"
@@ -611,8 +614,8 @@ class AppDatasetsManager extends connect(store)(TemplatePage) {
 					@click="${this.onImportFromKafka}">
 				Import from Kafka
 			</mwc-button>
-		`;
-	}
+	*/
+
 
 	get datasetsGridSection() {
 		return html`

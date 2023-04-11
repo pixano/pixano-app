@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const { db, workspace } = require('../config/db');
 const batchManager = require('../helpers/batch-manager');
@@ -277,6 +278,16 @@ async function get_dataset(req, res) {
 async function delete_dataset(req, res) {
 	checkAdmin(req, async () => {
 		const key = dbkeys.keyForDataset(req.params.dataset_id);
+
+		//delete imported files from Confiance
+		const dsData = await db.get(key);
+		if (dsData.path.startsWith("importedFromDebiai")) {
+			for(item of dsData.urlList) {
+				fs.unlink(item.url, (err)=>{if(err) {console.log("ERROR deleting file:", err)}})
+			}
+			fs.rmdir(workspace + "/minio_saved_images/" + dsData.path, (err)=>{if(err) {console.log("ERROR deleting directory:", err)}})
+		}
+
 		const bm = new batchManager.BatchManager(db);
 		await bm.add({ type: 'del', key });//delete dataset
 		const stream = utils.iterateOnDB(db, dbkeys.keyForData(req.params.dataset_id), true, false);
@@ -287,6 +298,33 @@ async function delete_dataset(req, res) {
 		await bm.flush();
 		return res.status(204).json({});
 	});
+
+	// Confiance: delete dataset and delete imported files (if not used by any other task)
+	/*
+	let foundAssociation_ds = false;
+	let stream_ds = utils.iterateOnDB(db, dbkeys.keyForTask(), false, true);
+	for await (const t of stream_ds) {
+		if (t.name !== taskData.name && t.dataset_id === taskData.dataset_id) {
+			foundAssociation_ds = true;
+			break;
+		}
+	}
+	if (!foundAssociation_ds) {
+		const dskey = dbkeys.keyForDataset(taskData.dataset_id);
+		const dsData = await db.get(dskey);
+		console.log("ZZZ", dsData)
+		if (dsData.path.startsWith("importedFromDebiai")) {
+			//fs.rm(workspace + "/minio_saved_images/" + dsData.path, { recursive:true }, (err)=>{if(err) {console.log("ERROR deleting files:", err)}});
+			for(item of dsData.urlList) {
+				fs.unlinkSync(item.url) //, (err)=>{if(err) {console.log("ERROR deleting file:", err)}})
+			}
+			fs.rmdirSync(workspace + "/minio_saved_images/" + dsData.path) //, (err)=>{if(err) {console.log("ERROR deleting directory:", err)}})
+			await bm.add({ type: 'del', dskey });
+		}
+	}
+	*/
+
+
 }
 
 /**

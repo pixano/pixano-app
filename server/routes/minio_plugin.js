@@ -1,3 +1,4 @@
+const fs = require('fs');
 import { Client } from 'minio';
 import { db } from '../config/db';
 import { keyForCliOptions } from '../config/db-keys';
@@ -7,16 +8,25 @@ function getMinioObj(bar, minioClient, bucket_name, bucket_path, pixano_local_sa
 	return new Promise((resolve, reject) => {
 		const minio_obj = bucket_path.slice(1) + "/" + file
 		const obj_outpath = pixano_local_save_image_directory + file
-		minioClient.fGetObject(bucket_name, minio_obj, obj_outpath, function (e) {
-			if (e) {
-				console.log("ERROR Minio fGetObject", e);
-				reject("Error while importing from Minio: " + e);
-			} else {
-				//console.log("Minio imported file:", file)
+		//if image exist on disk, don't download it
+		fs.stat(obj_outpath, function(err, stat) {
+			if(err == null) {
 				bar.increment();
 				resolve({url: obj_outpath, id: file})
+			} else {
+				minioClient.fGetObject(bucket_name, minio_obj, obj_outpath, function (e) {
+					if (e) {
+						console.log("ERROR Minio fGetObject", e);
+						reject("Error while importing from Minio: " + e);
+					} else {
+						//console.log("Minio imported file:", file)
+						bar.increment();
+						resolve({url: obj_outpath, id: file})
+					}
+				});			
 			}
-		});	
+
+		});
 	});
 }
 
